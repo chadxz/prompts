@@ -1,0 +1,23 @@
+[[language]]
+name = "markdown"
+auto-format = true
+
+[language.formatter]
+command = "mise"
+args = ["exec", "--", "dprint", "fmt", "--stdin", "md"]
+
+[[language]]
+name = "json"
+auto-format = true
+
+[language.formatter]
+command = "mise"
+args = ["exec", "--", "dprint", "fmt", "--stdin", "json"]
+
+[[language]]
+name = "yaml"
+auto-format = true
+
+[language.formatter]
+command = "mise"
+args = ["exec", "--", "dprint", "fmt", "--stdin", "yaml"]

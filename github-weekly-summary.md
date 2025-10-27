@@ -1,3 +1,7 @@
+---
+description: Produce a weekly GitHub activity brief for the convergint organization.
+---
+
 Goal: produce a weekly GitHub activity brief for the authenticated user within
 the `convergint` organization.
 
@@ -15,7 +19,7 @@ the `convergint` organization.
 2. Execute the collector and capture its JSON output:
 
    ```sh
-   activity_json=$(./collect_activity.sh --start "$START_DATE" --end "$END_DATE")
+   activity_json=$(./github-weekly-summary.sh --start "$START_DATE" --end "$END_DATE")
    ```
 
 3. Parse `activity_json`, which contains authored and reviewed pull requests

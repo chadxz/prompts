@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_NAME=$(basename "$0")
+
 usage() {
-  cat <<'USAGE'
-Usage: collect_activity.sh --start YYYY-MM-DD --end YYYY-MM-DD
+  cat <<USAGE
+Usage: $SCRIPT_NAME --start YYYY-MM-DD --end YYYY-MM-DD
 
 Fetch GitHub activity for the authenticated user within the convergint organization
 between the provided inclusive date range.

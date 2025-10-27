@@ -1,3 +1,7 @@
+---
+description: Bootstrap a markdown-first repository that mirrors the prompts repo tooling.
+---
+
 # Bootstrap Markdown Repo Blueprint
 
 ## Goal

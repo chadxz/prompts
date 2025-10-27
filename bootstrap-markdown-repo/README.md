@@ -2,26 +2,36 @@
 
 ## Goal
 
-Use `https://github.com/chadxz/prompts` as the reference blueprint for
-bootstrapping a new markdown-first project. Produce a fresh repository that
-mirrors the structure and tooling (jj, mise, dprint, marksman) while customizing
-names and narrative content to suit the new project.
+Bootstrap a fresh markdown-first repository that mirrors the tooling setup from
+`https://github.com/chadxz/prompts` (jj, mise, dprint, marksman) while keeping
+project-specific content minimal and bespoke to the new repository.
+
+## Interactive Setup
+
+- Start by prompting the user for two inputs:
+  - **Repository name** (required).
+  - **Destination path** (optional, default to the current working directory).
+- Create the target directory only after both answers are confirmed.
 
 ## Reference Acquisition
 
-- Inspect the `https://github.com/chadxz/prompts` repository tree.
-- Copy every file that defines tooling defaults (`.editorconfig`, `mise.toml`,
-  `dprint.json`, `.gitignore`, helper scripts, prompt directories, etc.) into
-  the new workspace.
-- Edit only fields that must change (project name, documentation copy, remote
-  URLs, badges, or links) while preserving formatting and comments.
+- Inspect `https://github.com/chadxz/prompts` solely to copy shared tooling and
+  configuration assets. At a minimum, bring over `.editorconfig`, `.helix/`,
+  `mise.toml`, `dprint.json`, `.gitignore`, helper scripts, and any other files
+  or directories that exist purely to configure editors, tooling, or automation.
+- Do **not** copy prompt content, docs, or any narrative material that is
+  specific to the source repository.
+- Adjust only the values that must change for the new environment (project name,
+  remote URLs, etc.).
 
 ## Repository Initialization
 
-- Create an empty directory for the new project.
-- Run `jj git init` so jj manages history.
-- Add the copied files, use `jj describe` to author the initial change message,
-  and keep the change open for now (do not push yet).
+- After creating the destination directory, run `jj git init` so jj manages
+  history.
+- Immediately capture an initial change description such as `jj describe -m
+  "init"`; this keeps the change open and removes any staging requirement.
+- Copy the configuration files into place and run `jj status` as needed to
+  inspect pending changes while the initial change remains open.
 
 ## mise + Tooling Setup
 
@@ -33,37 +43,36 @@ names and narrative content to suit the new project.
   marksman = "latest"
   ```
 
-- Run `mise install` to materialize the toolchain. If a new runtime or tool is
-  required, update `mise.toml` accordingly and document the change in both the
-  commit description and README.
+- Run `mise trust` followed by `mise install` to materialize the toolchain. If
+  extra runtimes or tools are required, update `mise.toml` and document the
+  adjustments.
 
 ## Documentation
 
-- Update `README.md` so it describes the new project while preserving sections
-  that explain tooling commands (`mise run format`, `dprint fmt`, marksman
-  language server usage, etc.).
-- Carry over additional docs (templates, onboarding notes) from the reference
-  repo, editing only where the new project’s context differs.
+- Author a minimal `README.md` that includes:
+  - The project title.
+  - Brief instructions for installing dependencies via `mise install`.
+  - Formatting instructions (e.g. `mise run format` or `dprint fmt`).
+- Omit any additional narrative copied from the reference repository.
 
 ## Validation
 
 - Execute the formatter helper or `mise run format` to confirm `dprint` leaves a
   clean tree.
-- Verify `jj status` shows no unexpected modifications after formatting.
+- Verify the copied scaffolding (including `.helix/`) exists and that `jj
+  status` shows no unexpected modifications after formatting.
 
 ## Remote Finalization (Manual)
 
-- Instruct the user to run `gh repo create <new-repo>` from the project root.
-  This command prints the canonical HTTPS URL; append `.git` when using it as a
-  remote.
+- Prompt the user to run `gh repo create` (no additional arguments) from the
+  project root and follow the interactive prompts to name the repository.
 - After the remote exists, run
   `jj git remote add origin https://github.com/<owner>/<repo>.git`.
 - Add a bookmark so `main` points at the current change:
   `jj bookmark create main`.
-- Suggest the user run `jj git push --allow-new` to publish the new repository.
+- Suggest the user run `jj git push --allow-new` to publish the repository.
 
 ## Deliverable
 
-A ready-to-push repository that faithfully mirrors this blueprint’s structure
-and automation, differing only where the destination project’s naming or content
-demands it.
+A ready-to-push repository that matches the configuration and tooling baseline
+of the reference project without importing its project-specific content.

@@ -32,8 +32,10 @@ project-specific content minimal and bespoke to the new repository.
 
 - After creating the destination directory, run `jj git init` so jj manages
   history.
-- Immediately capture an initial change description such as `jj describe -m
-  "init"`; this keeps the change open and removes any staging requirement.
+- Immediately capture an initial change description such as
+  `jj describe -m
+  "init"`; this keeps the change open and removes any staging
+  requirement.
 - Copy the configuration files into place and run `jj status` as needed to
   inspect pending changes while the initial change remains open.
 
@@ -63,7 +65,8 @@ project-specific content minimal and bespoke to the new repository.
 
 - Execute the formatter helper or `mise run format` to confirm `dprint` leaves a
   clean tree.
-- Verify the copied scaffolding (including `.helix/`) exists and that `jj
+- Verify the copied scaffolding (including `.helix/`) exists and that
+  `jj
   status` shows no unexpected modifications after formatting.
 
 ## Remote Finalization (Manual)

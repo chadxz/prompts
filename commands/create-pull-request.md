@@ -32,6 +32,6 @@ Then read the file at that path to understand the format.
 Unless I've already specified:
 
 1. Check if I'm on `main` — if so, ask if I want to create a new branch first
-2. Ask if I want to include the **co-authors** section
+2. Ask if I want to include a **co-authors** section
 3. Ask for the **associated ticket number**
 4. Ask what branch to use as the base for the pull request

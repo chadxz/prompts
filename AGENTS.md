@@ -11,6 +11,8 @@
 - Do not perform any Git commit or push or Terraform apply unless explicitly
   requested to do so.
 
+- Never force a git push to main.
+
 - When writing markdown, always wrap at 80 character line length and make sure
   it is easy to read without rendering (tables should line up etc).
 
@@ -23,3 +25,8 @@
 
 - Use `linctl` to lookup details of linear tickets when asked. `linctl docs`
   will show you how to use it.
+
+- When in a monorepo and referring to mise tasks, always use the monorepo
+  syntax. The absolute path form is //apps/my-app:test. The relative form is :test.
+
+- Do not put directory structures in README files.

@@ -35,3 +35,21 @@ Unless I've already specified:
 2. Ask if I want to include a **co-authors** section
 3. Ask for the **associated ticket number**
 4. Ask what branch to use as the base for the pull request
+
+## Ticket Handling
+
+If no ticket number was provided:
+
+1. Draft the commit **title** and **Why?** section first.
+2. Create a new Linear ticket using that title and Why? as the body
+   under the `EE` team:
+   ```bash
+   linctl issue create --title "<commit title>" \
+     --description "<Why? content>" --team EE --assign-me --json
+   ```
+3. Immediately move it to **In Review**:
+   ```bash
+   linctl issue update <TICKET_ID> --state "In Review"
+   ```
+4. Use the returned ticket identifier as the associated ticket for the rest
+   of the commit message.

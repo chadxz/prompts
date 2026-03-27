@@ -4,9 +4,14 @@ description: Create a commit and open a pull request.
 
 # Create Pull Request
 
-Create a commit, then open a pull request using `gh pr create --fill`. The
-`--fill` flag pulls the PR title and description directly from the commit
-message — do not write a separate PR description.
+Create a commit, then open a pull request.
+
+## Pull Request Description
+
+Don't use `--fill`. Instead, use `gh pr create --title` and `--body`
+separately. The PR body should be the same content as the commit
+message body, but with hard line breaks removed so that GitHub's
+markdown renderer can wrap the text naturally.
 
 ## Commit Message
 

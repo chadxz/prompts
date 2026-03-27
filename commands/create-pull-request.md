@@ -22,6 +22,11 @@ git config --get commit.template
 
 Then read the file at that path to understand the format.
 
+### Voice
+
+Apply the writing-in-my-voice skill to all prose sections of the
+commit message.
+
 ### Constraints
 
 - **Title**: Maximum 50 characters

@@ -1,11 +1,14 @@
 ---
 name: writing-in-my-voice
 description:
-  Applies Chad's writing style and voice to prose output. Use when
-  drafting or editing announcements, RFCs, ADRs, developer docs,
-  Notion pages, emails, Slack messages, PR comments, or any other
-  writing task where the user asks to write, draft, rewrite, or
-  review prose.
+  Applies Chad's writing style and voice to any prose output. Use
+  whenever the output includes prose written on Chad's behalf,
+  including but not limited to announcements, RFCs, ADRs, developer
+  docs, Notion pages, emails, Slack messages, GitHub PR comments,
+  GitHub PR reviews, summaries, explanations for colleagues, or
+  messages to other teams. Trigger words include write, draft,
+  rewrite, review, comment, post, summarize, explain, announce,
+  approve with comments, and message.
 user-invocable: true
 allowed-tools: []
 ---

@@ -6,13 +6,6 @@ description: Create a commit and open a pull request.
 
 Create a commit, then open a pull request.
 
-## Pull Request Description
-
-Don't use `--fill`. Instead, use `gh pr create --title` and `--body`
-separately. The PR body should be the same content as the commit
-message body, but with hard line breaks removed so that GitHub's
-markdown renderer can wrap the text naturally.
-
 ## Commit Message
 
 Create a commit message following my personal Git commit template.
@@ -36,6 +29,18 @@ commit message.
 
 - **Title**: Maximum 50 characters
 - **Body**: Line length must not exceed 72 characters
+
+## Pull Request Description
+
+Don't use `--fill`. Instead, use `gh pr create --title` and `--body`
+separately.
+
+The PR body must use the same structure as the commit message body
+(the format from my commit template), with two differences:
+
+1. Remove hard line breaks so GitHub's markdown renderer can wrap
+   text naturally.
+2. Apply the writing-in-my-voice skill to all prose in the PR body.
 
 ## Before Starting
 

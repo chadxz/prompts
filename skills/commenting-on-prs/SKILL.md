@@ -1,0 +1,26 @@
+---
+name: commenting-on-prs
+description:
+  Posts comments and review replies on GitHub pull requests on
+  Chad's behalf. Trigger when replying to PR review comments,
+  leaving PR comments, or responding to review feedback. Applies
+  Chad's writing voice and uses the gh CLI.
+---
+
+# Commenting on PRs
+
+Apply the writing-in-my-voice skill to all comment text.
+
+Use `gh` to post comments. Common patterns:
+
+```bash
+# Reply to a review comment thread
+gh api repos/{owner}/{repo}/pulls/{pr}/comments/{id}/replies \
+  -f body="<comment>"
+
+# Leave a top-level PR comment
+gh pr comment {pr} --repo {owner}/{repo} --body "<comment>"
+```
+
+Keep comments short. A few sentences with enough context to stand
+alone months later.

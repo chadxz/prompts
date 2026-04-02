@@ -9,7 +9,9 @@ description:
 
 # Commenting on PRs
 
-Apply the writing-in-my-voice skill to all comment text.
+Before writing any comment text, load and read the
+writing-in-my-voice skill. Don't rely on memory; read the
+rules fresh every time this skill runs.
 
 Use `gh` to post comments. Common patterns:
 

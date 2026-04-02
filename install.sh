@@ -15,3 +15,14 @@ fi
 mkdir -p "$(dirname "$TARGET_DIR")"
 ln -s "$SCRIPT_DIR/cursor-commands" "$TARGET_DIR"
 echo "Symlinked $SCRIPT_DIR/cursor-commands -> $TARGET_DIR"
+
+# Add bin/ to PATH in .zshrc if not already present
+BIN_LINE="export PATH=\"$SCRIPT_DIR/bin:\$PATH\""
+if ! grep -qF "$SCRIPT_DIR/bin" "$HOME/.zshrc" 2>/dev/null; then
+    echo "" >> "$HOME/.zshrc"
+    echo "# prompts repo bin" >> "$HOME/.zshrc"
+    echo "$BIN_LINE" >> "$HOME/.zshrc"
+    echo "Added $SCRIPT_DIR/bin to PATH in ~/.zshrc"
+else
+    echo "$SCRIPT_DIR/bin already in PATH"
+fi

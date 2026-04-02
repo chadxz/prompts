@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+"""Build a tab-separated index of Claude Code sessions.
+
+Output columns: session_id, date, working_directory, user_messages
+
+Used by cfind to pipe into claude for fuzzy matching.
+"""
+
+import json
+import glob
+import os
+import sys
+from datetime import datetime
+from pathlib import Path
+
+
+def extract_text(content):
+    if isinstance(content, list):
+        for part in content:
+            if isinstance(part, dict) and part.get("type") == "text":
+                return part.get("text", "")
+        return ""
+    return content
+
+
+def parse_session(jsonl_path):
+    sid = Path(jsonl_path).stem
+    mtime = os.path.getmtime(jsonl_path)
+    first_msg = ""
+    cwd = ""
+    user_msgs = []
+
+    with open(jsonl_path, "r") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+
+            if obj.get("type") != "user":
+                continue
+
+            content = extract_text(obj.get("message", {}).get("content", ""))
+            content = content.replace("\n", " ").strip()
+
+            if content.startswith("<"):
+                continue
+
+            if not first_msg:
+                first_msg = content[:200]
+                cwd = obj.get("cwd", "").replace(str(Path.home()), "~")
+
+            if len(user_msgs) < 5:
+                user_msgs.append(content[:150])
+
+    if not first_msg:
+        return None
+
+    dt = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M")
+    msgs = " | ".join(user_msgs)
+    return (mtime, f"{sid}\t{dt}\t{cwd}\t{msgs}")
+
+
+def main():
+    base = Path.home() / ".claude" / "projects"
+    sessions = []
+
+    for jsonl in glob.glob(str(base / "*" / "*.jsonl")):
+        if "/subagents/" in jsonl:
+            continue
+        try:
+            result = parse_session(jsonl)
+            if result:
+                sessions.append(result)
+        except Exception:
+            continue
+
+    sessions.sort(key=lambda x: x[0], reverse=True)
+    for _, line in sessions:
+        print(line)
+
+
+if __name__ == "__main__":
+    main()

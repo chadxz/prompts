@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [[ $# -eq 0 ]]; then
+  echo "Usage: cfind <description of session to find>"
+  echo "Example: cfind the session where I was building the RFC documentation RFC"
+  exit 1
+fi
+
+query="$*"
+echo "Searching sessions for: $query"
+
+index=$("$SCRIPT_DIR/claude-session-index")
+
+if [[ -z "$index" ]]; then
+  echo "No sessions found."
+  exit 1
+fi
+
+prompt="You are a session finder. Given a tab-separated index of Claude Code sessions (columns: session_id, date, working_directory, user_messages) and a search query, output ONLY the session_id (UUID) of the single best matching session.
+
+Rules:
+- Output ONLY the UUID, nothing else — no explanation, no markdown, no newlines before or after.
+- Match based on the user messages and working directory.
+- If no session matches, output: NONE
+
+Search query: \"$query\"
+
+Session index (one per line, tab-separated):
+$index"
+
+session_id=$(echo "$prompt" | claude --dangerously-skip-permissions -p)
+session_id=$(echo "$session_id" | tr -d '[:space:]')
+
+if [[ -z "$session_id" || "$session_id" == "NONE" ]]; then
+  echo "No matching session found."
+  exit 1
+fi
+
+match_line=$(echo "$index" | grep "^$session_id" || true)
+if [[ -n "$match_line" ]]; then
+  echo ""
+  echo "Found: $(echo "$match_line" | cut -f2) in $(echo "$match_line" | cut -f3)"
+  echo "  $(echo "$match_line" | cut -f4)"
+  echo ""
+fi
+
+echo "Resuming session $session_id..."
+exec claude --dangerously-skip-permissions --resume "$session_id"

@@ -26,3 +26,8 @@ gh pr comment {pr} --repo {owner}/{repo} --body "<comment>"
 
 Keep comments short. A few sentences with enough context to stand
 alone months later.
+
+When replying to bot comments (claude[bot], Dependabot, GitHub
+Actions), don't address the bot as a person. No "good catch",
+"thanks for flagging", or "great find". State the facts for the
+humans who'll read the thread later.

@@ -49,12 +49,14 @@ The PR body must use the same structure as the commit message body
 
 ## Before Starting
 
-Unless I've already specified:
+Unless I've already specified otherwise:
 
-1. Check if I'm on `main` — if so, ask if I want to create a new branch first
-2. Ask if I want to include a **co-authors** section
-3. Ask for the **associated ticket number**
-4. Ask what branch to use as the base for the pull request
+1. If I'm on `main`, create a new branch before committing. Come up
+   with a sensible branch name yourself based on the work.
+2. Assume there is no **co-authors** section.
+3. If no associated ticket number was provided, assume you should
+   create one.
+4. Use `main` as the base branch for the pull request.
 
 ## Ticket Handling
 

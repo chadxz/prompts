@@ -1,5 +1,10 @@
 ---
-description: Create a commit with a well-formatted message.
+name: create-commit
+description:
+  Creates a commit using Chad's commit template and writing voice.
+  Use when the user wants to create a commit or needs a commit
+  message formatted to Chad's standards.
+user-invocable: true
 ---
 
 # Create Commit

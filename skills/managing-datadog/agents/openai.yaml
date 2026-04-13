@@ -1,0 +1,4 @@
+interface:
+  display_name: "Manage Datadog"
+  short_description: "Push, pull, and list Datadog resources"
+  default_prompt: "Use $managing-datadog to pull this monitor into datadog/monitors/."

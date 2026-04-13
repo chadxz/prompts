@@ -1,5 +1,9 @@
 ---
-description: Send a macOS notification alert to get my attention.
+name: notify
+description:
+  Sends a macOS notification alert to Chad. Use after completing
+  long-running work or when the user wants to get Chad's attention.
+user-invocable: true
 ---
 
 # Notify

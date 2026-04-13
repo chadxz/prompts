@@ -1,5 +1,10 @@
 ---
-description: Create a commit and open a pull request.
+name: create-pull-request
+description:
+  Creates a commit and opens a pull request using Chad's commit
+  template and PR conventions. Use when the user wants both the
+  commit and the pull request handled together.
+user-invocable: true
 ---
 
 # Create Pull Request

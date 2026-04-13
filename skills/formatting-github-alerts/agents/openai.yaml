@@ -1,0 +1,4 @@
+interface:
+  display_name: "Format GitHub Alerts"
+  short_description: "Format GitHub alert callouts"
+  default_prompt: "Use $formatting-github-alerts to add a GitHub warning callout to this markdown."

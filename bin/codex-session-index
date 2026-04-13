@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+"""Build a tab-separated index of Codex sessions.
+
+Output columns: session_id, date, working_directory, user_messages
+
+Used by cdxfind to pipe into Codex for fuzzy matching.
+"""
+
+import glob
+import json
+import os
+import sys
+from datetime import datetime
+from pathlib import Path
+
+
+def extract_text_from_content(content):
+    texts = []
+
+    if not isinstance(content, list):
+        return texts
+
+    for part in content:
+        if not isinstance(part, dict):
+            continue
+
+        if part.get("type") in {"input_text", "output_text"}:
+            text = part.get("text", "")
+            if text:
+                texts.append(text)
+
+    return texts
+
+
+def is_context_message(text):
+    stripped = text.strip()
+    return stripped.startswith("<") and stripped.endswith(">")
+
+
+def parse_session(jsonl_path):
+    session_id = ""
+    cwd = ""
+    user_msgs = []
+    mtime = os.path.getmtime(jsonl_path)
+
+    with open(jsonl_path, "r") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+
+            try:
+                obj = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+
+            if obj.get("type") == "session_meta":
+                payload = obj.get("payload", {})
+                session_id = payload.get("id", session_id)
+                cwd = payload.get("cwd", cwd)
+                continue
+
+            if obj.get("type") != "response_item":
+                continue
+
+            payload = obj.get("payload", {})
+            if payload.get("type") != "message" or payload.get("role") != "user":
+                continue
+
+            for text in extract_text_from_content(payload.get("content", [])):
+                normalized = text.replace("\n", " ").strip()
+                if not normalized or is_context_message(normalized):
+                    continue
+                if len(user_msgs) < 5:
+                    user_msgs.append(normalized[:150])
+
+    if not session_id or not user_msgs:
+        return None
+
+    dt = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M")
+    rel_cwd = cwd.replace(str(Path.home()), "~")
+    msgs = " | ".join(user_msgs)
+    return (mtime, f"{session_id}\t{dt}\t{rel_cwd}\t{msgs}")
+
+
+def main():
+    base = Path.home() / ".codex" / "sessions"
+    sessions = []
+
+    for jsonl in glob.glob(str(base / "*" / "*" / "*" / "rollout-*.jsonl")):
+        try:
+            result = parse_session(jsonl)
+            if result:
+                sessions.append(result)
+        except Exception:
+            continue
+
+    sessions.sort(key=lambda x: x[0], reverse=True)
+    for _, line in sessions:
+        print(line)
+
+
+if __name__ == "__main__":
+    main()

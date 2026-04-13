@@ -1,0 +1,4 @@
+interface:
+  display_name: "Comment on PRs"
+  short_description: "Post GitHub PR comments and replies"
+  default_prompt: "Use $commenting-on-prs to draft a short reply to this PR review comment."

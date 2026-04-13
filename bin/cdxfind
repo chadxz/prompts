@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [[ $# -eq 0 ]]; then
+  echo "Usage: cdxfind <description of session to find>"
+  echo "Example: cdxfind the session where I was debugging the PR summary script"
+  exit 1
+fi
+
+query="$*"
+echo "Searching sessions for: $query"
+
+index=$("$SCRIPT_DIR/codex-session-index")
+
+if [[ -z "$index" ]]; then
+  echo "No sessions found."
+  exit 1
+fi
+
+tmp_output="$(mktemp)"
+trap 'rm -f "$tmp_output"' EXIT
+
+prompt="You are a session finder. Given a tab-separated index of Codex sessions (columns: session_id, date, working_directory, user_messages) and a search query, output ONLY the session_id (UUID) of the single best matching session.
+
+Rules:
+- Output ONLY the UUID, nothing else.
+- Match based on the user messages and working directory.
+- Prefer the most recent strong match if there are several.
+- If no session matches, output: NONE
+
+Search query: \"$query\"
+
+Session index (one per line, tab-separated):
+$index"
+
+printf '%s' "$prompt" | codex exec --skip-git-repo-check -o "$tmp_output" -
+session_id="$(tr -d '[:space:]' < "$tmp_output")"
+
+if [[ -z "$session_id" || "$session_id" == "NONE" ]]; then
+  echo "No matching session found."
+  exit 1
+fi
+
+match_line="$(printf '%s\n' "$index" | grep "^$session_id" || true)"
+if [[ -n "$match_line" ]]; then
+  echo ""
+  echo "Found: $(echo "$match_line" | cut -f2) in $(echo "$match_line" | cut -f3)"
+  echo "  $(echo "$match_line" | cut -f4)"
+  echo ""
+fi
+
+echo "Resuming session $session_id..."
+exec codex resume "$session_id"

@@ -18,6 +18,9 @@
 
 - Any time you want to look at a github link, use `gh` cli instead.
 
+- I work at a company named "Convergint" spelled exactly like that, and it is
+  not a misspelling.
+
 - When writing C# unit tests, do not add Arrange / Act / Assert comments.
 
 - When you are doing a git push and need to force, always use --force-with-lease.

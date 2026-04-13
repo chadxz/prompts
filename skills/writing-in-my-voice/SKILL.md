@@ -161,15 +161,23 @@ These are always wrong in my writing:
 - No negative parallelism ("It's not X, it's Y"). Includes the causal
   variant "not because X, but because Y" and the cross-sentence
   reframe "The question isn't X. The question is Y."
+- No false agency or disembodied actors ("the decision emerged", "the
+  data tells us", "the conversation moved"). Name who decided, read,
+  changed, or pushed.
 - No "Here's the kicker", "Here's the thing", "Here's where it gets
   interesting", "Here's what most people miss".
 - No "Let's break this down", "Let's unpack this", "Let's explore",
   "Let's dive in".
 - No "Think of it as..." patronizing analogies.
 - No "Imagine a world where..." futurism invitations.
+- No detached lecturer voice ("This is why...", "People tend to...",
+  "Nobody designed this"). Put the reader or team in the room.
 - No "In conclusion", "To sum up", "In summary".
 - No "It's worth noting", "It bears mentioning", "Importantly",
   "Interestingly", "Notably".
+- No sentence-starter crutches like "What makes this hard is...",
+  "How this works is...", paragraph-opening "So", or sentence-opening
+  "Look,". Lead with the subject.
 - No "Despite its challenges..." rigid formula where problems are
   acknowledged only to be immediately dismissed.
 - No bold-first bullets in the AI-generated `**Keyword**: description`
@@ -200,6 +208,10 @@ These are fine once but become a problem in quantity:
 
 - Limit "quietly" and other magic adverbs that convey subtle
   importance: "deeply", "fundamentally", "remarkably", "arguably".
+- Limit lazy extremes: "every", "always", "never", "everyone",
+  "everybody", "nobody". Use specifics instead of sweeping claims.
+- Limit filler adverbs like "really", "just", "actually", "simply",
+  "honestly", "genuinely", and "literally".
 - Limit "tapestry", "landscape", "paradigm", "synergy", "ecosystem",
   "framework" where simpler words would do.
 - Limit the "serves as" dodge: replacing "is" with "serves as",
@@ -208,13 +220,19 @@ These are fine once but become a problem in quantity:
 #### Sentence Structure
 
 - Limit "Not X. Not Y. Just Z." dramatic countdown pattern.
+- Limit negative listing: walking through what something isn't before
+  saying what it is.
 - Limit "The X? A Y." self-posed rhetorical questions answered
   immediately ("The result? Devastating.").
+- Limit softer rhetorical prompts like "What if...", "Here's what I
+  mean:", or "And that's okay."
 - Limit anaphora: repeating the same sentence opening multiple times
   in quick succession ("They could expose... They could offer... They
   could provide...").
 - Limit tricolon: the rule-of-three pattern, especially multiple
   back-to-back tricolons.
+- Limit formulaic constructions like "By the time X, I was Y" or
+  "X that isn't Y."
 - Limit superficial analyses via dangling present participles:
   "highlighting its importance", "reflecting broader trends",
   "contributing to the development of..."
@@ -236,6 +254,8 @@ These are fine once but become a problem in quantity:
   didn't build Spotify...").
 - Limit one-point dilution: restating a single argument 10 different
   ways across thousands of words.
+- Limit pieces where every paragraph lands on a punchline. Vary the
+  cadence and let some sections end plainly.
 
 #### Tone
 

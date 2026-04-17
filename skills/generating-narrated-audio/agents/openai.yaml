@@ -1,0 +1,4 @@
+interface:
+  display_name: "Generate Narrated Audio"
+  short_description: "Turn text files into smooth narrated MP3s"
+  default_prompt: "Use $generating-narrated-audio to narrate this file."

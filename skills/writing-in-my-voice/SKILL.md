@@ -36,9 +36,13 @@ terseness, but every paragraph should still earn its place.
   ("you") when addressing the reader.
 - Conversational but professional. Closer to a Slack message from a
   senior engineer than a Medium blog post.
-- Use contractions: "we're", "don't", "it's", "that's", "you'll",
-  "we've", "isn't", "won't", "can't". Writing without contractions
-  sounds stiff.
+- Use contractions aggressively. Default to the contracted form
+  anywhere natural in spoken written English: "we're", "don't", "it's",
+  "that's", "you'll", "we've", "isn't", "won't", "can't", "I'd",
+  "we'd", "there's", "here's". Expand only when the uncontracted form
+  is clearly better for emphasis, cadence, or ambiguity. Writing
+  without contractions sounds stiff, and underusing them usually means
+  the draft still sounds too formal.
 - Active voice by default. "We completed the migration," not "the
   migration was completed."
 - Humor through understatement or dry observation, not through setups
@@ -71,6 +75,9 @@ fanfare.
   paragraph.
 - Be terse. Say it once and move on. Don't restate, summarize, or
   pad.
+- Do a contraction pass before finishing. If the draft says "we are",
+  "it is", "that is", "do not", "cannot", "will not", "I would", or
+  similar forms, convert them unless there's a real reason not to.
 - Ground everything in specifics: real app names, real URLs, real
   numbers ("over ten integration partners", "~2-hour SEV-1 outage").
   Specifics are more persuasive than adjectives.

@@ -19,15 +19,14 @@ plainspoken, and lightly understated. Keep contractions natural, treat headings
 as quiet transitions, and move cleanly through the document without lingering
 for effect. Pronounce acronyms and initialisms clearly, and assume the audience
 already knows the stack, so do not sound like you are teaching basics.
-Aim for a steady, moderately brisk pace, roughly around 150 words per minute:
-faster than a formal lecture, slower than a hurried status readout. Prioritize
-clarity, accuracy, and momentum. Do not sound rushed.
+Prioritize clarity, accuracy, and momentum. Do not sound rushed.
 EOF
 )"
 
 DEFAULT_DISCLAIMER="$(
   cat <<'EOF'
-[fast] This audio was generated using Google Gemini text to speech.
+[extremely fast] This audio was generated using Google Gemini 2.5 Pro Preview
+TTS.
 EOF
 )"
 

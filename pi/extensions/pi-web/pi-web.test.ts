@@ -18,7 +18,7 @@ import registerExtension, {
 	buildSearchQuery,
 	truncateForToolOutput,
 	WEB_SEARCH_TOOL_NAME,
-} from "./index.ts";
+} from "./pi-web.ts";
 
 const cleanupPaths = new Set<string>();
 const testTheme = {

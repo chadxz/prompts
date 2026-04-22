@@ -7,7 +7,7 @@ export default defineConfig({
 			provider: "v8",
 			reporter: ["text", "html", "json-summary"],
 			reportsDirectory: "reports/coverage",
-			include: ["index.ts"],
+			include: ["pi-web.ts"],
 		},
 	},
 });

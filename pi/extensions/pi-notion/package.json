@@ -20,7 +20,6 @@
   ],
   "pi": {
     "extensions": [
-      "./extensions/pi-notion.ts",
       "./extensions/pi-notion-mcp.ts"
     ],
     "skills": [

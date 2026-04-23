@@ -32,7 +32,7 @@ done
 
 link_path "$PROMPTS_DIR/AGENTS.md" "$PI_DIR/AGENTS.md"
 link_path "$PROMPTS_DIR/pi/extensions" "$PI_DIR/extensions"
-link_path "$PROMPTS_DIR/pi/skills" "$PI_DIR/skills"
+link_path "$PROMPTS_DIR/skills" "$PI_DIR/skills"
 
 # Add bin/ to PATH in .zshrc if not already present
 BIN_LINE="export PATH=\"$PROMPTS_DIR/bin:\$PATH\""

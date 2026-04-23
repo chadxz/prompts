@@ -173,4 +173,5 @@ Read `references/failure-modes.md` for a comprehensive error table. The most com
 3. **SELECT values not in schema** — fetch schema first, add options with `notion-update-data-source`
 4. **Empty filter `{}` on meeting notes** — must have `operator` and `filters` keys
 5. **Trying to fetch `view://` URLs** — use `notion-query-database-view` instead
-6. **Token expired (401)** — run `/notion` to re-authenticate
+6. **Token expired (401)** — pi usually refreshes automatically; if that
+   fails, run `/notion`

@@ -1,8 +1,7 @@
 /**
- * Notion Extension for pi
+ * Notion helper utilities for pi-notion-mcp
  *
  * Features:
- * - SessionStart: checks Notion authentication and prints status
  * - Tool call guardrails: advisory warnings for common Notion mistakes
  */
 
@@ -88,6 +87,8 @@ function getTokenFile(): string {
   return join(getConfigDir(), "notion-tokens.json");
 }
 
+const TOKEN_REFRESH_WINDOW_MS = 5 * 60 * 1000;
+
 // =============================================================================
 // Token Types
 // =============================================================================
@@ -128,12 +129,32 @@ function readJsonIfExists<T>(path: string): T | null {
 }
 
 function getMcpConfigAuthStatus(): AuthStatus | null {
-  const config = readJsonIfExists<{ accessToken?: string; mcpUrl?: string }>(getMcpConfigFile());
+  const config = readJsonIfExists<{
+    accessToken?: string;
+    refreshToken?: string;
+    clientId?: string;
+    expiresAt?: number;
+    mcpUrl?: string;
+  }>(getMcpConfigFile());
   if (typeof config?.accessToken !== "string" || config.accessToken.trim().length === 0) return null;
+
+  const hasRefreshSupport =
+    typeof config.refreshToken === "string" &&
+    config.refreshToken.trim().length > 0 &&
+    typeof config.clientId === "string" &&
+    config.clientId.trim().length > 0;
+  const isExpired =
+    typeof config.expiresAt === "number" && Date.now() >= config.expiresAt - TOKEN_REFRESH_WINDOW_MS;
+
+  if (isExpired && !hasRefreshSupport) {
+    return null;
+  }
 
   return {
     authenticated: true,
-    message: `[notion] MCP config found (${config.mcpUrl ?? "https://mcp.notion.com/mcp"})`,
+    message: isExpired
+      ? `[notion] MCP config found (${config.mcpUrl ?? "https://mcp.notion.com/mcp"}); access token expired but will refresh automatically on next use.`
+      : `[notion] MCP config found (${config.mcpUrl ?? "https://mcp.notion.com/mcp"})`,
   };
 }
 
@@ -266,45 +287,20 @@ async function handleToolGuardrails(
 }
 
 // =============================================================================
-// Exports
+// Guardrail Registration
 // =============================================================================
 
-export { checkNotionAuth, extractShortName, toolChecks };
-
-// =============================================================================
-// Extension Entry Point
-// =============================================================================
-
-export default function notion(pi: ExtensionAPI) {
-  pi.registerFlag("--notion-config-file", {
-    description: "Path to a custom JSON config file for direct-token compatibility overrides.",
-    type: "string",
-  });
-  pi.registerFlag("--notion-config", {
-    description: "Deprecated alias for --notion-config-file.",
-    type: "string",
-  });
-
-  const configFileFlag = pi.getFlag("--notion-config-file");
-  const legacyConfigFlag = pi.getFlag("--notion-config");
-  if (typeof configFileFlag === "string" && configFileFlag.trim().length > 0) {
-    process.env.NOTION_CONFIG_FILE = configFileFlag;
-  } else if (typeof legacyConfigFlag === "string" && legacyConfigFlag.trim().length > 0) {
-    console.warn("[pi-notion] --notion-config is deprecated; use --notion-config-file.");
-    process.env.NOTION_CONFIG_FILE = legacyConfigFlag;
-  }
-
-  // SessionStart: check auth and print status
-  pi.on("session_start", async () => {
-    const auth = checkNotionAuth();
-    console.log(auth.message);
-  });
-
-  // Tool call: advisory guardrails for Notion tools
+function registerNotionGuardrails(pi: ExtensionAPI): void {
   pi.on("tool_call", async (event, ctx) => {
     await handleToolGuardrails(event, ctx);
   });
 }
+
+// =============================================================================
+// Exports
+// =============================================================================
+
+export { checkNotionAuth, extractShortName, registerNotionGuardrails, toolChecks };
 
 // =============================================================================
 // Utility Functions (kept for other extensions/tests)

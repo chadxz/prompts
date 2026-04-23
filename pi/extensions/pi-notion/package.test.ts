@@ -10,9 +10,7 @@ const packageJson = JSON.parse(readFileSync(new URL("./package.json", import.met
 
 describe("package.json", () => {
   it("declares pi metadata so the package loads as an extension", () => {
-    expect(packageJson.pi.extensions).toEqual(
-      expect.arrayContaining(["./extensions/pi-notion.ts", "./extensions/pi-notion-mcp.ts"]),
-    );
+    expect(packageJson.pi.extensions).toEqual(["./extensions/pi-notion-mcp.ts"]);
     expect(packageJson.pi.skills).toEqual(expect.arrayContaining(["./skills"]));
   });
 });

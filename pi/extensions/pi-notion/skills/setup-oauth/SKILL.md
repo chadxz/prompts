@@ -59,7 +59,7 @@ Once connected, use the **workspace-explorer** skill to learn how to:
 | Issue | Solution |
 |-------|----------|
 | Connection failed | Try again - OAuth may have timed out |
-| Token expired | Run `/notion` to re-authenticate |
+| Token expired | Auto-refresh happens; if it fails, run `/notion` |
 | Need to switch workspace | Disconnect first, then reconnect |
 
 ## Available Tools

@@ -7,7 +7,10 @@ import notionMCPClientExtension, {
   buildHtmlResponse,
   coerceNumericProperties,
   connectWithSavedConfig,
+  countOutputLines,
+  createNotionToolRenderer,
   createPkceChallenge,
+  createRegisteredToolDefinition,
   createRegisteredToolExecutor,
   createUiNotifier,
   disconnectClient,
@@ -18,13 +21,21 @@ import notionMCPClientExtension, {
   getConnectionStatusText,
   getDefaultAuthFilePath,
   NotionMCPClient,
+  renderNotionToolCall,
+  renderNotionToolResult,
   resolveAccessToken,
   resolveCallbackResult,
   startOAuthCallbackServer,
   storage,
   toolError,
   toolResult,
+  truncateDisplayText,
 } from "./pi-notion-mcp.js";
+
+const testTheme = {
+  fg: (_token: string, text: string) => text,
+  bold: (text: string) => text,
+} as never;
 
 describe("pi-notion-mcp.ts", () => {
   const originalFetch = global.fetch;
@@ -80,15 +91,109 @@ describe("pi-notion-mcp.ts", () => {
     expect(coerced.list[0]).toBe("1");
     expect((coerced.list[1] as { properties: { count: number } }).properties.count).toBe(2);
 
+    expect(countOutputLines("line 1\n\nline 2")).toBe(2);
+    expect(truncateDisplayText("x".repeat(90))).toHaveLength(84);
+
     expect(toolResult("demo", "ok")).toEqual({
       content: [{ type: "text", text: "ok" }],
-      details: { tool: "demo" },
+      details: { tool: "demo", lineCount: 1, characterCount: 2 },
     });
     expect(toolError("demo", "bad")).toEqual({
       content: [{ type: "text", text: "bad" }],
       isError: true,
       details: { tool: "demo" },
     });
+  });
+
+  it("renders compact summaries for Notion tool calls and results", () => {
+    const renderedCall = renderNotionToolCall(
+      "notion-search",
+      {
+        query: "quarterly roadmap",
+        content_search_mode: "workspace_search",
+        query_type: "internal",
+        page_size: 25,
+      },
+      testTheme,
+    );
+    const renderedResult = renderNotionToolResult(
+      "notion-search",
+      {
+        query: "quarterly roadmap",
+        content_search_mode: "workspace_search",
+        query_type: "internal",
+        page_size: 25,
+      },
+      {
+        content: [{ type: "text", text: "<page>very long hidden body</page>" }],
+        details: {
+          tool: "notion-search",
+          lineCount: 24,
+          characterCount: 5120,
+        },
+      },
+      { expanded: true, isPartial: false },
+      testTheme,
+      { isError: false },
+    );
+
+    expect(renderedCall.render(160).join("\n")).toContain(
+      "notion-search quarterly roadmap (mode=workspace_search, type=internal)",
+    );
+    expect(renderedResult.render(160).join("\n")).toContain(
+      "Search complete (24 lines, 5,120 chars)",
+    );
+    expect(renderedResult.render(160).join("\n")).toContain("query: quarterly roadmap");
+    expect(renderedResult.render(160).join("\n")).not.toContain("very long hidden body");
+
+    expect(
+      renderNotionToolResult(
+        "notion-fetch",
+        { id: "https://www.notion.so/page-1" },
+        { content: [], details: {} },
+        { expanded: false, isPartial: true },
+        testTheme,
+        { isError: false },
+      )
+        .render(120)
+        .join("\n"),
+    ).toContain("Fetching Notion content...");
+
+    expect(
+      renderNotionToolResult(
+        "notion-fetch",
+        { id: "https://www.notion.so/page-1" },
+        { content: [{ type: "text", text: "something blew up badly" }], details: {} },
+        { expanded: false, isPartial: false },
+        testTheme,
+        { isError: true },
+      )
+        .render(120)
+        .join("\n"),
+    ).toContain("something blew up badly");
+
+    const mcpRenderer = createNotionToolRenderer("notion_mcp_status");
+    const renderedStatus = mcpRenderer
+      .renderResult?.(
+        {
+          content: [{ type: "text", text: "Notion MCP Status:\nAvailable tools:\n- notion-search" }],
+          details: {
+            connected: true,
+            toolCount: 1,
+            sessionId: "session-12345678",
+            mcpUrl: "https://mcp.notion.com/mcp",
+          },
+        },
+        { expanded: true, isPartial: false },
+        testTheme,
+        { args: {}, isError: false },
+      )
+      ?.render(160)
+      .join("\n");
+
+    expect(renderedStatus).toContain("Connected (1 tool)");
+    expect(renderedStatus).toContain("url: https://mcp.notion.com/mcp");
+    expect(renderedStatus).not.toContain("Available tools");
   });
 
   it("connects, discovers tools, formats status, and calls tools", async () => {
@@ -177,39 +282,132 @@ describe("pi-notion-mcp.ts", () => {
 
     await expect(client.callTool("https://mcp.notion.com/mcp", "demo", {})).rejects.toThrow("HTTP 500: boom");
 
-    expect(
-      await resolveAccessToken(
+    await expect(
+      resolveAccessToken(
         { accessToken: "direct-token" },
         "http://localhost/callback",
         "verifier",
         { client_id: "client" },
         notify,
       ),
-    ).toBe("direct-token");
+    ).resolves.toMatchObject({ accessToken: "direct-token" });
 
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       headers: new Headers({ "content-type": "application/json" }),
-      json: async () => ({ access_token: "exchanged-token" }),
+      json: async () => ({
+        access_token: "exchanged-token",
+        refresh_token: "refresh-token",
+        token_type: "bearer",
+        expires_in: 3600,
+      }),
     }) as typeof fetch;
 
-    expect(
-      await resolveAccessToken(
+    await expect(
+      resolveAccessToken(
         { code: "code-123" },
         "http://localhost/callback",
         "verifier",
         { client_id: "client" },
         notify,
       ),
-    ).toBe("exchanged-token");
+    ).resolves.toMatchObject({
+      accessToken: "exchanged-token",
+      refreshToken: "refresh-token",
+      tokenType: "bearer",
+    });
     expect(notify).toHaveBeenCalledWith("Exchanging authorization code for token...");
     await expect(
       resolveAccessToken({ error: "denied" }, "http://localhost/callback", "verifier", { client_id: "client" }, notify),
     ).rejects.toThrow("Authorization failed: denied");
   });
 
-  it("creates registered tool executors for connected and disconnected clients", async () => {
+  it("refreshes saved credentials before connect and retries 401 tool calls", async () => {
+    const client = new NotionMCPClient();
+    const saveSpy = vi.spyOn(storage, "save").mockResolvedValue();
+
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: async () => ({
+          access_token: "refreshed-token",
+          refresh_token: "refresh-2",
+          token_type: "bearer",
+          expires_in: 3600,
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ "content-type": "application/json", "mcp-session-id": "session-refresh" }),
+        json: async () => ({ result: { ok: true } }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: async () => ({ result: { tools: [] } }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ "content-type": "application/json" }),
+        text: async () => "",
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        headers: new Headers({ "content-type": "text/plain" }),
+        text: async () => "invalid_token",
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: async () => ({
+          access_token: "refreshed-token-2",
+          refresh_token: "refresh-3",
+          token_type: "bearer",
+          expires_in: 3600,
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: async () => ({ result: { content: [{ type: "text", text: "after refresh" }] } }),
+      }) as typeof fetch;
+
+    await client.connect("https://mcp.notion.com/mcp", "expired-token", {
+      mcpUrl: "https://mcp.notion.com/mcp",
+      accessToken: "expired-token",
+      refreshToken: "refresh-1",
+      clientId: "client-1",
+      clientSecret: "secret-1",
+      expiresAt: Date.now() - 1000,
+    });
+
+    expect(saveSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        accessToken: "refreshed-token",
+        refreshToken: "refresh-2",
+      }),
+    );
+
+    await expect(client.callTool("https://mcp.notion.com/mcp", "demo", {})).resolves.toContain("after refresh");
+    expect(saveSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        accessToken: "refreshed-token-2",
+        refreshToken: "refresh-3",
+      }),
+    );
+  });
+
+  it("creates registered tool executors and definitions with compact renderers", async () => {
     const disconnectedClient = new NotionMCPClient();
     const disconnectedExecute = createRegisteredToolExecutor(disconnectedClient, "https://mcp.notion.com/mcp", {
       name: "notion-search",
@@ -227,8 +425,25 @@ describe("pi-notion-mcp.ts", () => {
       description: "Search",
       inputSchema: {},
     });
-    const success = await execute("id", { query: "docs" }, new AbortController().signal, undefined, undefined);
-    expect(success.content[0]?.text).toBe("done");
+    const onUpdate = vi.fn();
+    const success = await execute("id", { query: "docs" }, new AbortController().signal, onUpdate, undefined);
+    expect(onUpdate).toHaveBeenCalledWith({
+      content: [{ type: "text", text: "Running notion-search..." }],
+      details: { tool: "notion-search", phase: "running" },
+    });
+    expect(success).toEqual({
+      content: [{ type: "text", text: "done" }],
+      details: { tool: "notion-search", lineCount: 1, characterCount: 4 },
+    });
+
+    const definition = createRegisteredToolDefinition(connectedClient, "https://mcp.notion.com/mcp", {
+      name: "notion-fetch",
+      description: "Fetch",
+      inputSchema: {},
+    });
+    expect(definition.renderCall?.({ id: "https://www.notion.so/page-1" }, testTheme, {})?.render(160).join("\n")).toContain(
+      "notion-fetch https://www.notion.so/page-1",
+    );
   });
 
   it("resolves auth file paths from defaults, env vars, and migrated legacy files", () => {
@@ -310,10 +525,10 @@ describe("pi-notion-mcp.ts", () => {
 
     const failingClient = new NotionMCPClient();
     vi.spyOn(storage, "load").mockResolvedValueOnce({ mcpUrl: "https://mcp.notion.com/mcp", accessToken: "token" });
-    vi.spyOn(failingClient, "connect").mockRejectedValueOnce(new Error("bad auth"));
+    vi.spyOn(failingClient, "connect").mockRejectedValueOnce(new Error("HTTP 401: invalid_token"));
     const clearSpy = vi.spyOn(storage, "clear").mockResolvedValueOnce();
     expect(await connectWithSavedConfig(failingClient, notify)).toBe(false);
-    expect(notify).toHaveBeenCalledWith("Connection failed: bad auth", "error");
+    expect(notify).toHaveBeenCalledWith("Connection failed: HTTP 401: invalid_token", "error");
     expect(clearSpy).toHaveBeenCalled();
 
     const finalizedClient = new NotionMCPClient();
@@ -322,7 +537,12 @@ describe("pi-notion-mcp.ts", () => {
     await finalizeConnection(
       finalizedClient,
       { client_id: "client-1", client_secret: "secret-1" },
-      "token-123",
+      {
+        accessToken: "token-123",
+        refreshToken: "refresh-123",
+        tokenType: "bearer",
+        expiresAt: Date.now() + 3600 * 1000,
+      },
       registerTools,
       vi.fn(),
     );
@@ -342,13 +562,14 @@ describe("pi-notion-mcp.ts", () => {
     expect(disconnectClearSpy).toHaveBeenCalled();
   });
 
-  it("registers flags, tools, commands, and reports disconnected status", async () => {
+  it("registers flags, tools, commands, guardrails, and reports disconnected status", async () => {
     const mockPi = {
       registerFlag: vi.fn(),
       getFlag: vi.fn(() => undefined),
       registerTool: vi.fn(),
       registerCommand: vi.fn(),
       getAllTools: vi.fn(() => []),
+      on: vi.fn(),
       events: { emit: vi.fn() },
     };
 
@@ -360,6 +581,16 @@ describe("pi-notion-mcp.ts", () => {
     const tools = mockPi.registerTool.mock.calls.map(([tool]) => tool.name);
     expect(tools).toEqual(expect.arrayContaining(["notion_mcp_connect", "notion_mcp_disconnect", "notion_mcp_status"]));
     expect(mockPi.registerCommand).toHaveBeenCalledWith("notion", expect.any(Object));
+
+    const toolCallHandler = mockPi.on.mock.calls.find(([event]) => event === "tool_call")?.[1] as
+      | ((...args: unknown[]) => Promise<void>)
+      | undefined;
+    const notify = vi.fn();
+    await toolCallHandler?.({ toolName: "mcp__notion-search", input: { query: "meeting notes" } }, { ui: { notify } });
+    expect(notify).toHaveBeenCalledWith(
+      expect.stringContaining("content_search_mode is not 'workspace_search'"),
+      "warning",
+    );
 
     const statusTool = mockPi.registerTool.mock.calls.map(([tool]) => tool).find((tool) => tool.name === "notion_mcp_status");
     const result = await statusTool.execute("id", {}, new AbortController().signal, undefined, undefined);
@@ -375,6 +606,7 @@ describe("pi-notion-mcp.ts", () => {
       registerTool: vi.fn(),
       registerCommand: vi.fn(),
       getAllTools: vi.fn(() => []),
+      on: vi.fn(),
       events: { emit: vi.fn() },
     };
 

@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import notion, {
+import {
   checkNotionAuth,
   formatBlocks,
   formatDatabase,
@@ -10,6 +10,7 @@ import notion, {
   formatSearch,
   getTitleFromProperties,
   loadConfig,
+  registerNotionGuardrails,
   resolveConfigPath,
   toolChecks,
 } from "./pi-notion.js";
@@ -20,9 +21,6 @@ afterEach(() => {
 
 function createMockPi() {
   return {
-    registerFlag: vi.fn(),
-    getFlag: vi.fn(() => undefined),
-    registerTool: vi.fn(),
     on: vi.fn(),
   };
 }
@@ -194,6 +192,28 @@ describe("checkNotionAuth", () => {
     );
   });
 
+  it("treats expired MCP tokens with refresh support as reusable", async () => {
+    await withIsolatedAuthEnv(({ tempHome }) => {
+      const agentDir = join(tempHome, ".pi", "agent");
+
+      writeFileSync(
+        join(agentDir, "notion-mcp-auth.json"),
+        JSON.stringify({
+          mcpUrl: "https://mcp.notion.com/mcp",
+          accessToken: "expired-token",
+          refreshToken: "refresh-token",
+          clientId: "client-123",
+          expiresAt: Date.now() - 1000,
+        }),
+        "utf-8",
+      );
+
+      const result = checkNotionAuth();
+      expect(result.authenticated).toBe(true);
+      expect(result.message).toContain("will refresh automatically on next use");
+    });
+  });
+
   it("detects legacy API keys but still requires MCP OAuth", async () => {
     const result = await withIsolatedAuthEnv(() => checkNotionAuth(), { apiKey: "test-key" });
     expect(result.authenticated).toBe(false);
@@ -227,46 +247,19 @@ describe("tool guardrails", () => {
   });
 });
 
-describe("pi-notion.ts extension runtime", () => {
-  it("registers flags and session/tool handlers", async () => {
+describe("pi-notion.ts guardrail registration", () => {
+  it("registers tool handlers", async () => {
     const mockPi = createMockPi();
-    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
-    notion(mockPi as never);
+    registerNotionGuardrails(mockPi as never);
 
-    const flagNames = mockPi.registerFlag.mock.calls.map(([name]) => name);
-    expect(flagNames).toEqual(expect.arrayContaining(["--notion-config-file", "--notion-config"]));
-
-    const sessionStart = getEventHandler(mockPi, "session_start");
     const toolCall = getEventHandler(mockPi, "tool_call");
     const notify = vi.fn();
 
-    await sessionStart?.();
     await toolCall?.({ toolName: "mcp__notion-search", input: { query: "meeting notes" } }, { ui: { notify } });
 
-    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining("[notion]"));
     expect(notify).toHaveBeenCalledWith(
       expect.stringContaining("content_search_mode is not 'workspace_search'"),
       "warning",
     );
-  });
-
-  it("supports the deprecated notion config flag alias with a warning", () => {
-    const originalConfigFile = process.env.NOTION_CONFIG_FILE;
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    const mockPi = {
-      registerFlag: vi.fn(),
-      getFlag: vi.fn((flag: string) => (flag === "--notion-config" ? "~/legacy-notion-config.json" : undefined)),
-      registerTool: vi.fn(),
-      on: vi.fn(),
-    };
-
-    try {
-      notion(mockPi as never);
-      expect(process.env.NOTION_CONFIG_FILE).toBe("~/legacy-notion-config.json");
-      expect(warnSpy).toHaveBeenCalledWith("[pi-notion] --notion-config is deprecated; use --notion-config-file.");
-    } finally {
-      if (originalConfigFile) process.env.NOTION_CONFIG_FILE = originalConfigFile;
-      else delete process.env.NOTION_CONFIG_FILE;
-    }
   });
 });

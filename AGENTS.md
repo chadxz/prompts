@@ -11,7 +11,7 @@
 - Do not perform any Git commit or push or Terraform apply unless explicitly
   requested to do so.
 
-- Never force a git push to main.
+- Never force a git push to main, unless explicitly requested to do so.
 
 - When you are doing a git push and need to force, always use --force-with-lease.
   If it fails, investigate, but always use --force-with-lease.
@@ -20,6 +20,9 @@
   it is easy to read without rendering (tables should line up etc).
 
 - Any time you want to look at a github link, use `gh` cli instead.
+
+- Any time I paste a notion.so link, use the available Notion tools to access
+  it instead of web tools.
 
 - I work at a company named "Convergint" spelled exactly like that, and it is
   not a misspelling.

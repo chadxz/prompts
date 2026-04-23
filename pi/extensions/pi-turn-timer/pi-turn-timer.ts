@@ -1,5 +1,5 @@
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { Box, Text } from "@mariozechner/pi-tui";
+import { Text } from "@mariozechner/pi-tui";
 
 export const TURN_TIMER_MESSAGE_TYPE = "turn-timer";
 
@@ -191,16 +191,14 @@ export default function registerTurnTimer(pi: ExtensionAPI) {
 		const content =
 			getMessageText((message as CustomMessageLike).content) ||
 			buildTurnTimerContent(elapsedMs, details?.status);
-		const box = new Box(1, 1, (text) => theme.bg("customMessageBg", text));
-		const label = theme.fg("customMessageLabel", theme.bold("⏱ Turn"));
-		const summary = theme.fg("customMessageText", ` ${content}`);
+		const icon = theme.fg("muted", "⏱");
+		let text = `${icon} ${theme.fg("dim", theme.italic(content))}`;
 
-		box.addChild(new Text(label + summary, 0, 0));
 		if (expanded && details) {
-			box.addChild(new Text(theme.fg("dim", `${details.elapsedMs} ms`), 0, 0));
+			text += `\n${theme.fg("dim", theme.italic(`  ${details.elapsedMs} ms`))}`;
 		}
 
-		return box;
+		return new Text(text, 0, 0);
 	});
 
 	pi.on("context", async (event) => {

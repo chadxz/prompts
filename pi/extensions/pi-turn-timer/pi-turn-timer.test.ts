@@ -204,6 +204,7 @@ describe("pi-turn-timer runtime", () => {
 			fg: (_token: string, text: string) => text,
 			bg: (_token: string, text: string) => text,
 			bold: (text: string) => text,
+			italic: (text: string) => `<i>${text}</i>`,
 		} as never;
 
 		const compactComponent = renderer?.(
@@ -235,7 +236,7 @@ describe("pi-turn-timer runtime", () => {
 			theme,
 		);
 
-		expect(compactComponent?.render(120).join("\n")).toContain("Completed in 3.2s.");
-		expect(expandedComponent?.render(120).join("\n")).toContain("3200 ms");
+		expect(compactComponent?.render(120).join("\n")).toContain("<i>Completed in 3.2s.</i>");
+		expect(expandedComponent?.render(120).join("\n")).toContain("<i>  3200 ms</i>");
 	});
 });

@@ -5,24 +5,57 @@ import registerTokenRate, {
 	calculateTokenRate,
 	formatTokenRate,
 	readOutputTokens,
-	TOKEN_RATE_WIDGET_KEY,
 } from "./pi-token-rate.ts";
+
+const theme = {
+	fg: (_token: string, text: string) => text,
+};
 
 function createMockPi() {
 	return {
 		on: vi.fn(),
+		getThinkingLevel: vi.fn(() => "high"),
 	};
 }
 
 function createMockCtx() {
 	return {
 		ui: {
-			setWidget: vi.fn(),
-			theme: {
-				fg: (_token: string, text: string) => text,
-			},
+			setFooter: vi.fn(),
 		},
+		sessionManager: {
+			getCwd: vi.fn(() => "/Users/chad/src/personal/prompts"),
+			getEntries: vi.fn(() => []),
+			getSessionName: vi.fn(() => undefined),
+		},
+		model: {
+			id: "gpt-5.5",
+			provider: "openai-codex",
+			contextWindow: 262_000,
+			reasoning: true,
+		},
+		modelRegistry: {
+			isUsingOAuth: vi.fn(() => false),
+		},
+		getContextUsage: vi.fn(() => ({ contextWindow: 262_000, percent: 6.1 })),
 	};
+}
+
+function mountFooter(ctx: ReturnType<typeof createMockCtx>) {
+	const factory = ctx.ui.setFooter.mock.calls.at(-1)?.[0];
+	expect(factory).toBeTypeOf("function");
+
+	const requestRender = vi.fn();
+	const unsubscribe = vi.fn();
+	const footerData = {
+		getGitBranch: vi.fn(() => "main"),
+		getExtensionStatuses: vi.fn(() => new Map<string, string>()),
+		getAvailableProviderCount: vi.fn(() => 1),
+		onBranchChange: vi.fn(() => unsubscribe),
+	};
+	const footer = factory({ requestRender }, theme, footerData);
+
+	return { footer, requestRender };
 }
 
 function getEventHandler(mockPi: ReturnType<typeof createMockPi>, eventName: string) {
@@ -85,7 +118,7 @@ describe("pi-token-rate runtime", () => {
 		);
 	});
 
-	it("clears the footer status on session start", async () => {
+	it("installs a custom footer on session start", async () => {
 		const mockPi = createMockPi();
 		const ctx = createMockCtx();
 		registerTokenRate(mockPi as never);
@@ -93,13 +126,17 @@ describe("pi-token-rate runtime", () => {
 		const sessionStart = getEventHandler(mockPi, "session_start");
 		await sessionStart?.({ type: "session_start" } as never, ctx as never);
 
-		expect(ctx.ui.setWidget).toHaveBeenCalledWith(TOKEN_RATE_WIDGET_KEY, undefined);
+		expect(ctx.ui.setFooter).toHaveBeenCalledWith(expect.any(Function));
 	});
 
 	it("publishes the measured output token rate after an assistant message finishes", async () => {
 		const mockPi = createMockPi();
 		const ctx = createMockCtx();
 		registerTokenRate(mockPi as never);
+
+		const sessionStart = getEventHandler(mockPi, "session_start");
+		await sessionStart?.({ type: "session_start" } as never, ctx as never);
+		const { footer, requestRender } = mountFooter(ctx);
 
 		const messageStart = getEventHandler(mockPi, "message_start");
 		const messageUpdate = getEventHandler(mockPi, "message_update");
@@ -118,17 +155,62 @@ describe("pi-token-rate runtime", () => {
 			ctx as never,
 		);
 
-		expect(ctx.ui.setWidget).toHaveBeenLastCalledWith(
-			TOKEN_RATE_WIDGET_KEY,
-			["50.0 tok/s"],
-			{ placement: "belowEditor" },
+		expect(footer.render(80).join("\n")).toContain("50.0 tok/s");
+		expect(requestRender).toHaveBeenCalledOnce();
+	});
+
+	it("renders the token rate alongside the built-in token stats", async () => {
+		const mockPi = createMockPi();
+		const ctx = createMockCtx();
+		ctx.sessionManager.getEntries.mockReturnValue([
+			{
+				type: "message",
+				message: {
+					role: "assistant",
+					usage: {
+						input: 32_000,
+						output: 108,
+						cacheRead: 0,
+						cacheWrite: 0,
+						cost: { total: 0 },
+					},
+				},
+			},
+		] as never);
+		registerTokenRate(mockPi as never);
+
+		const sessionStart = getEventHandler(mockPi, "session_start");
+		await sessionStart?.({ type: "session_start" } as never, ctx as never);
+		const { footer } = mountFooter(ctx);
+
+		const messageStart = getEventHandler(mockPi, "message_start");
+		const messageUpdate = getEventHandler(mockPi, "message_update");
+		const messageEnd = getEventHandler(mockPi, "message_end");
+		const nowSpy = vi.spyOn(Date, "now");
+
+		nowSpy.mockReturnValueOnce(1_000);
+		await messageStart?.({ message: { role: "assistant" } } as never, ctx as never);
+
+		nowSpy.mockReturnValueOnce(1_800);
+		await messageUpdate?.({ message: { role: "assistant" } } as never, ctx as never);
+
+		nowSpy.mockReturnValueOnce(4_800);
+		await messageEnd?.(
+			{ message: { role: "assistant", usage: { output: 150 } } } as never,
+			ctx as never,
 		);
+
+		expect(footer.render(120)[1]).toContain("↑32k ↓108 6.1%/262k (auto) 50.0 tok/s");
 	});
 
 	it("falls back to total elapsed time when no streaming update was observed", async () => {
 		const mockPi = createMockPi();
 		const ctx = createMockCtx();
 		registerTokenRate(mockPi as never);
+
+		const sessionStart = getEventHandler(mockPi, "session_start");
+		await sessionStart?.({ type: "session_start" } as never, ctx as never);
+		const { footer } = mountFooter(ctx);
 
 		const messageStart = getEventHandler(mockPi, "message_start");
 		const messageEnd = getEventHandler(mockPi, "message_end");
@@ -143,11 +225,7 @@ describe("pi-token-rate runtime", () => {
 			ctx as never,
 		);
 
-		expect(ctx.ui.setWidget).toHaveBeenLastCalledWith(
-			TOKEN_RATE_WIDGET_KEY,
-			["30.0 tok/s"],
-			{ placement: "belowEditor" },
-		);
+		expect(footer.render(80).join("\n")).toContain("30.0 tok/s");
 	});
 
 	it("clears the footer status when an assistant message has no output usage", async () => {
@@ -155,10 +233,14 @@ describe("pi-token-rate runtime", () => {
 		const ctx = createMockCtx();
 		registerTokenRate(mockPi as never);
 
+		const sessionStart = getEventHandler(mockPi, "session_start");
+		await sessionStart?.({ type: "session_start" } as never, ctx as never);
+		const { footer } = mountFooter(ctx);
+
 		const messageEnd = getEventHandler(mockPi, "message_end");
 		await messageEnd?.({ message: { role: "assistant", usage: {} } } as never, ctx as never);
 
-		expect(ctx.ui.setWidget).toHaveBeenLastCalledWith(TOKEN_RATE_WIDGET_KEY, undefined);
+		expect(footer.render(80).join("\n")).not.toContain("tok/s");
 	});
 
 	it("ignores non-assistant messages", async () => {
@@ -174,13 +256,17 @@ describe("pi-token-rate runtime", () => {
 		await messageUpdate?.({ message: { role: "user" } } as never, ctx as never);
 		await messageEnd?.({ message: { role: "user" } } as never, ctx as never);
 
-		expect(ctx.ui.setWidget).not.toHaveBeenCalled();
+		expect(ctx.ui.setFooter).not.toHaveBeenCalled();
 	});
 
 	it("drops any in-flight assistant state when the session shuts down", async () => {
 		const mockPi = createMockPi();
 		const ctx = createMockCtx();
 		registerTokenRate(mockPi as never);
+
+		const sessionStart = getEventHandler(mockPi, "session_start");
+		await sessionStart?.({ type: "session_start" } as never, ctx as never);
+		const { footer } = mountFooter(ctx);
 
 		const messageStart = getEventHandler(mockPi, "message_start");
 		const sessionShutdown = getEventHandler(mockPi, "session_shutdown");
@@ -197,7 +283,7 @@ describe("pi-token-rate runtime", () => {
 			ctx as never,
 		);
 
-		expect(ctx.ui.setWidget).toHaveBeenNthCalledWith(1, TOKEN_RATE_WIDGET_KEY, undefined);
-		expect(ctx.ui.setWidget).toHaveBeenNthCalledWith(2, TOKEN_RATE_WIDGET_KEY, undefined);
+		expect(ctx.ui.setFooter).toHaveBeenCalledWith(undefined);
+		expect(footer.render(80).join("\n")).not.toContain("tok/s");
 	});
 });

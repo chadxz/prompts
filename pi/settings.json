@@ -1,18 +1,12 @@
 {
   "lastChangelogVersion": "0.70.0",
-  "defaultProvider": "omlx",
-  "defaultModel": "Qwen3.6-27B-MLX-8bit",
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-5.5",
   "defaultThinkingLevel": "high",
   "enabledModels": [
-    "lm-studio/glm-4.7-flash-mlx@6bit",
-    "lm-studio/glm-4.7-flash-mlx@8bit",
-    "mlx-vlm/models/gemma4-26b-a4b-8bit",
-    "mlx-vlm/models/gemma4-26b-a4b-4bit",
-    "mlx-vlm/models/gemma4-31b-8bit",
-    "mlx-vlm/models/gemma4-31b-4bit",
-    "openai-codex/gpt-5.4",
-    "openai/gpt-5-pro",
-    "omlx/Qwen3.6-27B-MLX-8bit"
+    "omlx/Qwen3.6-27B-UD-MLX-6bit",
+    "openai-codex/gpt-5.5",
+    "openai-codex/gpt-5.4"
   ],
   "hideThinkingBlock": false,
   "terminal": {

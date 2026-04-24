@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sending Notifications"
+  short_description: "Send a macOS notification alert."
+  default_prompt: "Use $sending-notifications to send a short macOS notification alert."

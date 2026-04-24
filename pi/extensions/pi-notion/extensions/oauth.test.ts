@@ -297,8 +297,9 @@ describe("oauth.ts", () => {
     };
     expect(await getValidAccessToken(config, emptyStorage)).toBeNull();
 
+    const save = vi.fn();
     const flowStorage: TokenStorage = {
-      save: vi.fn(),
+      save,
       load: vi.fn(async () => null),
       clear: vi.fn(),
       getUserInfo: vi.fn(async () => null),
@@ -327,7 +328,7 @@ describe("oauth.ts", () => {
     });
 
     expect(openBrowser).toHaveBeenCalled();
-    expect(flowStorage.save).toHaveBeenCalled();
+    expect(save).toHaveBeenCalled();
     expect(notify).toHaveBeenCalledWith("OAuth authorization successful!", "success");
     expect(result.tokens.accessToken).toBe("access-token");
     expect(result.userInfo.workspaceId).toBe("ws-1");

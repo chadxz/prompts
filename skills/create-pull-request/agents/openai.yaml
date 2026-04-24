@@ -1,4 +1,0 @@
-interface:
-  display_name: "Create Pull Request"
-  short_description: "Create a commit and open a pull request."
-  default_prompt: "Use $create-pull-request to commit the current changes and open a pull request."

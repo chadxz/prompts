@@ -1,4 +1,0 @@
-interface:
-  display_name: "Notify"
-  short_description: "Send a macOS notification alert."
-  default_prompt: "Use $notify to send a short macOS notification alert."

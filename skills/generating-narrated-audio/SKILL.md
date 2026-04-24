@@ -21,13 +21,17 @@ cleanup.
 
 ## Quick Start
 
-Create a TTS-friendly intermediate text file, then run the script with
-that file:
+Create a TTS-friendly intermediate text file, then run the bundled
+script with that file:
 
 ```bash
-bash ${CLAUDE_SKILL_DIR}/scripts/narrate.sh \
+bash <skill-dir>/scripts/narrate.sh \
   --input <tts-friendly.txt>
 ```
+
+In pi, resolve `scripts/narrate.sh` relative to this skill directory
+and use the resolved absolute path. In Claude-style skill runners,
+`<skill-dir>` can be `${CLAUDE_SKILL_DIR}`.
 
 Use `--output` when the filename must be deterministic. Use
 `--style-file` instead of an inline style prompt when the narration
@@ -73,14 +77,14 @@ instructions are more than a sentence or two.
 Default naming beside the input file:
 
 ```bash
-bash ${CLAUDE_SKILL_DIR}/scripts/narrate.sh \
+bash <skill-dir>/scripts/narrate.sh \
   --input notes-tts.txt
 ```
 
 Explicit output filename:
 
 ```bash
-bash ${CLAUDE_SKILL_DIR}/scripts/narrate.sh \
+bash <skill-dir>/scripts/narrate.sh \
   --input rfc-tts.txt \
   --output rfc.mp3
 ```
@@ -88,7 +92,7 @@ bash ${CLAUDE_SKILL_DIR}/scripts/narrate.sh \
 Custom narration style from a file:
 
 ```bash
-bash ${CLAUDE_SKILL_DIR}/scripts/narrate.sh \
+bash <skill-dir>/scripts/narrate.sh \
   --input transcript-tts.txt \
   --style-file narration-style.txt
 ```

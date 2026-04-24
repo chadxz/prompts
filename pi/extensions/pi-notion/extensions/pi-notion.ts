@@ -226,7 +226,7 @@ function checkNotionSearch(input: Record<string, unknown>): string[] {
 
 function checkNotionFetch(input: Record<string, unknown>): string[] {
   const warnings: string[] = [];
-  const id = String(input.id ?? "");
+  const id = typeof input.id === "string" ? input.id : "";
 
   if (!id) return warnings;
 

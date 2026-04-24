@@ -47,13 +47,14 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "oxlint . --ignore-pattern node_modules --ignore-pattern reports",
+    "lint": "oxlint --type-aware . --ignore-pattern node_modules --ignore-pattern reports",
     "check": "npm run lint && npm run test"
   },
   "devDependencies": {
     "@sinclair/typebox": "*",
     "@types/node": "^25.6.0",
     "oxlint": "^1.61.0",
+    "oxlint-tsgolint": "^0.21.1",
     "vitest": "^4.1.5"
   }
 }

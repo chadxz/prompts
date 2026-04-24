@@ -330,9 +330,10 @@ export async function startCallbackServer(expectedState: string, timeoutMs = 120
     callbackServer.on("error", (err: NodeJS.ErrnoException) => {
       cleanup();
       if (err.code === "EADDRINUSE") {
-        lookupPort({ port: 3001 }).then((newPort: number) => {
-          reject(new Error(`Port ${newPort} already in use`));
-        });
+        void lookupPort({ port: 3001 }).then(
+          (newPort: number) => reject(new Error(`Port ${newPort} already in use`)),
+          (lookupError: unknown) => reject(lookupError),
+        );
         return;
       }
       reject(err);

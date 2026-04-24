@@ -1,15 +1,27 @@
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import {
+	type BashOperations,
+	createLocalBashOperations,
+	type ExtensionAPI,
+} from "@mariozechner/pi-coding-agent";
 import { Text } from "@mariozechner/pi-tui";
 
 export const TURN_TIMER_MESSAGE_TYPE = "turn-timer";
 
 export type TurnTimerStatus = "completed" | "cancelled";
+export type TurnTimerKind = "agent" | "shell";
 
 export interface TurnTimerDetails {
 	elapsedMs: number;
 	startedAt: number;
 	finishedAt: number;
 	status: TurnTimerStatus;
+	kind: TurnTimerKind;
+	command?: string;
+	exitCode?: number | null;
+}
+
+interface RegisterTurnTimerOptions {
+	createUserBashOperations?: () => BashOperations;
 }
 
 interface CustomMessageLike {
@@ -27,6 +39,11 @@ interface TextContentLike {
 interface AssistantMessageLike {
 	role?: unknown;
 	stopReason?: unknown;
+}
+
+interface TimedBashOperationsOptions {
+	command: string;
+	onTiming: (details: TurnTimerDetails) => void;
 }
 
 export function formatElapsed(ms: number) {
@@ -71,12 +88,16 @@ export function createTurnTimerDetails(
 	startedAt: number,
 	finishedAt: number,
 	status: TurnTimerStatus = "completed",
+	kind: TurnTimerKind = "agent",
+	extra: Pick<Partial<TurnTimerDetails>, "command" | "exitCode"> = {},
 ): TurnTimerDetails {
 	return {
 		elapsedMs: finishedAt - startedAt,
 		startedAt,
 		finishedAt,
 		status,
+		kind,
+		...extra,
 	};
 }
 
@@ -89,6 +110,41 @@ export function isTurnTimerMessage(message: unknown): message is CustomMessageLi
 		Reflect.get(message, "role") === "custom" &&
 		Reflect.get(message, "customType") === TURN_TIMER_MESSAGE_TYPE
 	);
+}
+
+export function createTimedBashOperations(
+	baseOperations: BashOperations,
+	options: TimedBashOperationsOptions,
+): BashOperations {
+	return {
+		async exec(command, cwd, execOptions) {
+			const startedAt = Date.now();
+
+			try {
+				const result = await baseOperations.exec(command, cwd, execOptions);
+				const finishedAt = Date.now();
+				options.onTiming(
+					createTurnTimerDetails(startedAt, finishedAt, "completed", "shell", {
+						command: options.command,
+						exitCode: result.exitCode,
+					}),
+				);
+				return result;
+			} catch (error) {
+				const finishedAt = Date.now();
+				options.onTiming(
+					createTurnTimerDetails(
+						startedAt,
+						finishedAt,
+						readShellTimerStatus(error, execOptions.signal),
+						"shell",
+						{ command: options.command },
+					),
+				);
+				throw error;
+			}
+		},
+	};
 }
 
 function getMessageText(content: unknown) {
@@ -116,6 +172,9 @@ function readDetails(details: unknown): TurnTimerDetails | undefined {
 	const startedAt = Reflect.get(details, "startedAt");
 	const finishedAt = Reflect.get(details, "finishedAt");
 	const status = Reflect.get(details, "status");
+	const kind = Reflect.get(details, "kind");
+	const command = Reflect.get(details, "command");
+	const exitCode = Reflect.get(details, "exitCode");
 	if (
 		typeof elapsedMs !== "number" ||
 		typeof startedAt !== "number" ||
@@ -129,6 +188,10 @@ function readDetails(details: unknown): TurnTimerDetails | undefined {
 		startedAt,
 		finishedAt,
 		status: status === "cancelled" ? "cancelled" : "completed",
+		kind: kind === "shell" ? "shell" : "agent",
+		command: typeof command === "string" ? command : undefined,
+		exitCode:
+			typeof exitCode === "number" || exitCode === null ? (exitCode as number | null) : undefined,
 	};
 }
 
@@ -158,15 +221,39 @@ function readTurnTimerStatus(messages: unknown, signal?: AbortSignal): TurnTimer
 	return "completed";
 }
 
-export default function registerTurnTimer(pi: ExtensionAPI) {
+function readShellTimerStatus(error: unknown, signal?: AbortSignal): TurnTimerStatus {
+	if (signal?.aborted) {
+		return "cancelled";
+	}
+
+	if (error instanceof Error) {
+		if (error.message === "aborted" || error.message.startsWith("timeout:")) {
+			return "cancelled";
+		}
+	}
+
+	return "completed";
+}
+
+export default function registerTurnTimer(
+	pi: ExtensionAPI,
+	options: RegisterTurnTimerOptions = {},
+) {
 	let startedAt: number | undefined;
 	let pendingMessageTimer: ReturnType<typeof setTimeout> | undefined;
+	const baseUserBashOperations =
+		options.createUserBashOperations?.() ?? createLocalBashOperations();
 
 	function clearPendingMessageTimer() {
 		if (pendingMessageTimer !== undefined) {
 			clearTimeout(pendingMessageTimer);
 			pendingMessageTimer = undefined;
 		}
+	}
+
+	function resetState() {
+		startedAt = undefined;
+		clearPendingMessageTimer();
 	}
 
 	function scheduleTimingMessage(details: TurnTimerDetails) {
@@ -195,7 +282,15 @@ export default function registerTurnTimer(pi: ExtensionAPI) {
 		let text = `${icon} ${theme.fg("dim", theme.italic(content))}`;
 
 		if (expanded && details) {
-			text += `\n${theme.fg("dim", theme.italic(`  ${details.elapsedMs} ms`))}`;
+			const expandedLines: string[] = [];
+			if (details.kind === "shell" && details.command) {
+				expandedLines.push(`  $ ${details.command}`);
+			}
+			if (details.kind === "shell" && typeof details.exitCode === "number") {
+				expandedLines.push(`  exit ${details.exitCode}`);
+			}
+			expandedLines.push(`  ${details.elapsedMs} ms`);
+			text += `\n${theme.fg("dim", theme.italic(expandedLines.join("\n")))}`;
 		}
 
 		return new Text(text, 0, 0);
@@ -208,13 +303,11 @@ export default function registerTurnTimer(pi: ExtensionAPI) {
 	});
 
 	pi.on("session_start", async () => {
-		startedAt = undefined;
-		clearPendingMessageTimer();
+		resetState();
 	});
 
 	pi.on("session_shutdown", async () => {
-		startedAt = undefined;
-		clearPendingMessageTimer();
+		resetState();
 	});
 
 	pi.on("agent_start", async () => {
@@ -231,5 +324,14 @@ export default function registerTurnTimer(pi: ExtensionAPI) {
 		const details = createTurnTimerDetails(startedAt, finishedAt, status);
 		startedAt = undefined;
 		scheduleTimingMessage(details);
+	});
+
+	pi.on("user_bash", async (event) => {
+		return {
+			operations: createTimedBashOperations(baseUserBashOperations, {
+				command: event.command,
+				onTiming: scheduleTimingMessage,
+			}),
+		};
 	});
 }

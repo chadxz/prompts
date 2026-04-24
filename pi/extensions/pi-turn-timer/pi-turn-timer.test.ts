@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import registerTurnTimer, {
 	buildTurnTimerContent,
+	createTimedBashOperations,
 	createTurnTimerDetails,
 	formatElapsed,
 	TURN_TIMER_MESSAGE_TYPE,
@@ -11,6 +12,12 @@ function createMockPi() {
 		on: vi.fn(),
 		registerMessageRenderer: vi.fn(),
 		sendMessage: vi.fn(),
+	};
+}
+
+function createMockBashOperations() {
+	return {
+		exec: vi.fn(),
 	};
 }
 
@@ -34,7 +41,7 @@ describe("formatElapsed", () => {
 });
 
 describe("turn timer helpers", () => {
-	it("builds message content and details", () => {
+	it("builds message content and details for agent and shell timing", () => {
 		expect(buildTurnTimerContent(3_200)).toBe("Completed in 3.2s.");
 		expect(buildTurnTimerContent(3_200, "cancelled")).toBe("Cancelled after 3.2s.");
 		expect(createTurnTimerDetails(100, 1_600)).toEqual({
@@ -42,6 +49,79 @@ describe("turn timer helpers", () => {
 			startedAt: 100,
 			finishedAt: 1_600,
 			status: "completed",
+			kind: "agent",
+		});
+		expect(
+			createTurnTimerDetails(100, 1_600, "completed", "shell", {
+				command: "git status",
+				exitCode: 0,
+			}),
+		).toEqual({
+			elapsedMs: 1_500,
+			startedAt: 100,
+			finishedAt: 1_600,
+			status: "completed",
+			kind: "shell",
+			command: "git status",
+			exitCode: 0,
+		});
+	});
+
+	it("wraps bash operations and reports shell timing", async () => {
+		vi.useFakeTimers();
+		const onTiming = vi.fn();
+		const baseOperations = createMockBashOperations();
+		baseOperations.exec.mockResolvedValue({ exitCode: 0 });
+		const nowSpy = vi.spyOn(Date, "now");
+
+		nowSpy.mockReturnValueOnce(1_000);
+		nowSpy.mockReturnValueOnce(1_450);
+		const operations = createTimedBashOperations(baseOperations as never, {
+			command: "git status",
+			onTiming,
+		});
+		const result = await operations.exec("git status", "/tmp", {
+			onData: vi.fn(),
+		});
+
+		expect(result).toEqual({ exitCode: 0 });
+		expect(onTiming).toHaveBeenCalledWith({
+			elapsedMs: 450,
+			startedAt: 1_000,
+			finishedAt: 1_450,
+			status: "completed",
+			kind: "shell",
+			command: "git status",
+			exitCode: 0,
+		});
+	});
+
+	it("marks aborted shell commands as cancelled", async () => {
+		const onTiming = vi.fn();
+		const baseOperations = createMockBashOperations();
+		baseOperations.exec.mockRejectedValue(new Error("aborted"));
+		const nowSpy = vi.spyOn(Date, "now");
+
+		nowSpy.mockReturnValueOnce(2_000);
+		nowSpy.mockReturnValueOnce(2_900);
+		const operations = createTimedBashOperations(baseOperations as never, {
+			command: "sleep 30",
+			onTiming,
+		});
+
+		await expect(
+			operations.exec("sleep 30", "/tmp", {
+				onData: vi.fn(),
+				signal: new AbortController().signal,
+			}),
+		).rejects.toThrow("aborted");
+		expect(onTiming).toHaveBeenCalledWith({
+			elapsedMs: 900,
+			startedAt: 2_000,
+			finishedAt: 2_900,
+			status: "cancelled",
+			kind: "shell",
+			command: "sleep 30",
 		});
 	});
 });
@@ -63,6 +143,7 @@ describe("pi-turn-timer runtime", () => {
 				"session_shutdown",
 				"agent_start",
 				"agent_end",
+				"user_bash",
 			]),
 		);
 	});
@@ -118,6 +199,7 @@ describe("pi-turn-timer runtime", () => {
 					startedAt: 1_000,
 					finishedAt: 4_200,
 					status: "completed",
+					kind: "agent",
 				},
 			},
 			{ triggerTurn: false },
@@ -155,6 +237,52 @@ describe("pi-turn-timer runtime", () => {
 					startedAt: 1_000,
 					finishedAt: 2_500,
 					status: "cancelled",
+					kind: "agent",
+				},
+			},
+			{ triggerTurn: false },
+		);
+	});
+
+	it("sends a timing message when a user shell command completes", async () => {
+		vi.useFakeTimers();
+		const mockPi = createMockPi();
+		const baseOperations = createMockBashOperations();
+		baseOperations.exec.mockResolvedValue({ exitCode: 0 });
+		registerTurnTimer(mockPi as never, {
+			createUserBashOperations: () => baseOperations as never,
+		});
+
+		const userBash = getEventHandler(mockPi, "user_bash");
+		const nowSpy = vi.spyOn(Date, "now");
+
+		const bashResponse = (await userBash?.(
+			{ type: "user_bash", command: "git status" } as never,
+			{} as never,
+		)) as { operations: { exec: (...args: unknown[]) => Promise<unknown> } };
+
+		nowSpy.mockReturnValueOnce(10_000);
+		nowSpy.mockReturnValueOnce(10_450);
+		await bashResponse.operations.exec("git status", "/tmp", {
+			onData: vi.fn(),
+		});
+
+		expect(mockPi.sendMessage).not.toHaveBeenCalled();
+		await vi.runAllTimersAsync();
+
+		expect(mockPi.sendMessage).toHaveBeenCalledWith(
+			{
+				customType: TURN_TIMER_MESSAGE_TYPE,
+				content: "Completed in 450ms.",
+				display: true,
+				details: {
+					elapsedMs: 450,
+					startedAt: 10_000,
+					finishedAt: 10_450,
+					status: "completed",
+					kind: "shell",
+					command: "git status",
+					exitCode: 0,
 				},
 			},
 			{ triggerTurn: false },
@@ -216,6 +344,7 @@ describe("pi-turn-timer runtime", () => {
 					startedAt: 1_000,
 					finishedAt: 4_200,
 					status: "completed",
+					kind: "agent",
 				},
 			},
 			{ expanded: false },
@@ -230,13 +359,22 @@ describe("pi-turn-timer runtime", () => {
 					startedAt: 1_000,
 					finishedAt: 4_200,
 					status: "completed",
+					kind: "shell",
+					command: "git status",
+					exitCode: 0,
 				},
 			},
 			{ expanded: true },
 			theme,
 		);
 
-		expect(compactComponent?.render(120).join("\n")).toContain("<i>Completed in 3.2s.</i>");
-		expect(expandedComponent?.render(120).join("\n")).toContain("<i>  3200 ms</i>");
+		expect(compactComponent?.render(120).join("\n")).toContain(
+			"<i>Completed in 3.2s.</i>",
+		);
+		const expandedRender = expandedComponent?.render(120).join("\n") ?? "";
+		expect(expandedRender).toContain("<i>Completed in 3.2s.</i>");
+		expect(expandedRender).toContain("$ git status");
+		expect(expandedRender).toContain("exit 0");
+		expect(expandedRender).toContain("3200 ms");
 	});
 });

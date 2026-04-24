@@ -21,9 +21,6 @@
   "pi": {
     "extensions": [
       "./extensions/pi-notion-mcp.ts"
-    ],
-    "skills": [
-      "./skills"
     ]
   },
   "peerDependencies": {

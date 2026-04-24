@@ -14,6 +14,7 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "
 import { createServer } from "node:net";
 import { homedir } from "node:os";
 import { dirname, isAbsolute, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { Text } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
@@ -27,6 +28,7 @@ import { registerNotionGuardrails } from "./pi-notion.js";
 const NOTION_MCP_URL = "https://mcp.notion.com/mcp";
 const NOTION_MCP_TOKEN_URL = "https://mcp.notion.com/token";
 const HTTP_REQUEST_COMPLETE_MARKER = "\r\n\r\n";
+const SKILLS_DIRECTORY = resolve(dirname(fileURLToPath(import.meta.url)), "..", "skills");
 const CALLBACK_PATH_PREFIX = "GET /callback?";
 const NOTION_MCP_AUTH_FILE_ENV = "NOTION_MCP_AUTH_FILE";
 const NOTION_MCP_AUTH_FILE_LEGACY_ENV = "NOTION_MCP_AUTH";
@@ -1480,6 +1482,7 @@ export {
   renderNotionToolResult,
   resolveAccessToken,
   resolveCallbackResult,
+  SKILLS_DIRECTORY,
   startOAuthCallbackServer,
   storage,
   toolError,
@@ -1509,6 +1512,10 @@ export default function notionMCPClientExtension(pi: ExtensionAPI) {
   mcpClient = new NotionMCPClient();
   const notify = createUiNotifier(pi);
   registerNotionGuardrails(pi);
+
+  pi.on("resources_discover", async () => ({
+    skillPaths: [SKILLS_DIRECTORY],
+  }));
 
   // Register dynamic MCP tools after connection
   const registerMCPTools = () => {

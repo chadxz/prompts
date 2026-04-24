@@ -25,6 +25,7 @@ import notionMCPClientExtension, {
   renderNotionToolResult,
   resolveAccessToken,
   resolveCallbackResult,
+  SKILLS_DIRECTORY,
   startOAuthCallbackServer,
   storage,
   toolError,
@@ -581,6 +582,13 @@ describe("pi-notion-mcp.ts", () => {
     const tools = mockPi.registerTool.mock.calls.map(([tool]) => tool.name);
     expect(tools).toEqual(expect.arrayContaining(["notion_mcp_connect", "notion_mcp_disconnect", "notion_mcp_status"]));
     expect(mockPi.registerCommand).toHaveBeenCalledWith("notion", expect.any(Object));
+
+    const resourceDiscoverHandler = mockPi.on.mock.calls.find(([event]) => event === "resources_discover")?.[1] as
+      | ((...args: unknown[]) => Promise<{ skillPaths?: string[] }>)
+      | undefined;
+    await expect(resourceDiscoverHandler?.({}, {})).resolves.toEqual({
+      skillPaths: [SKILLS_DIRECTORY],
+    });
 
     const toolCallHandler = mockPi.on.mock.calls.find(([event]) => event === "tool_call")?.[1] as
       | ((...args: unknown[]) => Promise<void>)

@@ -6,7 +6,7 @@ context: fork
 
 # Notion Workspace Explorer
 
-Explore and navigate Notion workspaces after connecting with the setup-oauth skill.
+Explore and navigate Notion workspaces after connecting to Notion MCP.
 
 For detailed reference on specific operations, see:
 - `references/databases.md` — Database schemas, DDL types, views, queries, property formats
@@ -19,7 +19,7 @@ Ensure Notion MCP is connected:
 ```
 notion_mcp_status
 ```
-If not connected, use the **setup-oauth** skill first.
+If not connected, run `/notion` or use `notion_mcp_connect` first.
 
 ## Search (Critical: Get This Right)
 

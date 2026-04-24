@@ -224,9 +224,17 @@ describe("checkNotionAuth", () => {
 
 describe("tool guardrails", () => {
   it("warns for incorrect notion-search inputs", () => {
-    const warnings = toolChecks["notion-search"]({ query: "meeting notes" });
+    const warnings = toolChecks["notion-search"]({
+      query: "meeting notes",
+      content_search_mode: "ai_search",
+    });
     expect(warnings.some((warning) => warning.includes("content_search_mode"))).toBe(true);
     expect(warnings.some((warning) => warning.includes("filters"))).toBe(true);
+  });
+
+  it("does not warn when notion-search omits content_search_mode", () => {
+    const warnings = toolChecks["notion-search"]({ query: "meeting notes", filters: {} });
+    expect(warnings.some((warning) => warning.includes("content_search_mode"))).toBe(false);
   });
 
   it("warns for raw notion-fetch ids and empty meeting note filters", () => {
@@ -255,7 +263,13 @@ describe("pi-notion.ts guardrail registration", () => {
     const toolCall = getEventHandler(mockPi, "tool_call");
     const notify = vi.fn();
 
-    await toolCall?.({ toolName: "mcp__notion-search", input: { query: "meeting notes" } }, { ui: { notify } });
+    await toolCall?.(
+      {
+        toolName: "mcp__notion-search",
+        input: { query: "meeting notes", content_search_mode: "ai_search" },
+      },
+      { ui: { notify } },
+    );
 
     expect(notify).toHaveBeenCalledWith(
       expect.stringContaining("content_search_mode is not 'workspace_search'"),

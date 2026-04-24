@@ -14,7 +14,6 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "
 import { createServer } from "node:net";
 import { homedir } from "node:os";
 import { dirname, isAbsolute, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { Text } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
@@ -28,7 +27,6 @@ import { registerNotionGuardrails } from "./pi-notion.js";
 const NOTION_MCP_URL = "https://mcp.notion.com/mcp";
 const NOTION_MCP_TOKEN_URL = "https://mcp.notion.com/token";
 const HTTP_REQUEST_COMPLETE_MARKER = "\r\n\r\n";
-const SKILLS_DIRECTORY = resolve(dirname(fileURLToPath(import.meta.url)), "..", "skills");
 const CALLBACK_PATH_PREFIX = "GET /callback?";
 const NOTION_MCP_AUTH_FILE_ENV = "NOTION_MCP_AUTH_FILE";
 const NOTION_MCP_AUTH_FILE_LEGACY_ENV = "NOTION_MCP_AUTH";
@@ -1312,6 +1310,16 @@ Session: ${sessionId?.slice(0, 8)}...
 Tools: ${tools.length} available`;
 }
 
+function applyToolDefaults(toolName: string, params: unknown): Record<string, unknown> {
+  const input = isRecord(params) ? { ...params } : {};
+
+  if (toolName === "notion-search" && !getStringValue(input, "content_search_mode")) {
+    input.content_search_mode = "workspace_search";
+  }
+
+  return input;
+}
+
 function createRegisteredToolExecutor(
   client: NotionMCPClient,
   mcpUrl: string,
@@ -1339,7 +1347,8 @@ function createRegisteredToolExecutor(
     });
 
     try {
-      const result = await client.callTool(mcpUrl, tool.name, params as Record<string, unknown>);
+      const normalizedParams = applyToolDefaults(tool.name, params);
+      const result = await client.callTool(mcpUrl, tool.name, normalizedParams);
       return toolResult(tool.name, result || "", { tool: tool.name });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -1349,10 +1358,18 @@ function createRegisteredToolExecutor(
 }
 
 function createRegisteredToolDefinition(client: NotionMCPClient, mcpUrl: string, tool: MCPTool) {
+  const promptGuidelines =
+    tool.name === "notion-search"
+      ? [
+          "Use notion-search with content_search_mode set to workspace_search unless the user explicitly asks for ai_search or connected-source search.",
+        ]
+      : undefined;
+
   return {
     name: tool.name,
     label: `Notion: ${tool.name.replace(/_/g, " ")}`,
     description: tool.description || `Notion MCP tool: ${tool.name}`,
+    promptGuidelines,
     parameters: Type.Unsafe(tool.inputSchema),
     execute: createRegisteredToolExecutor(client, mcpUrl, tool),
     ...createNotionToolRenderer(tool.name),
@@ -1375,17 +1392,17 @@ function shouldClearSavedConfig(message: string): boolean {
   );
 }
 
-async function connectWithSavedConfig(client: NotionMCPClient, notify: NotifyFn): Promise<boolean> {
+async function connectWithSavedConfig(client: NotionMCPClient, notify?: NotifyFn): Promise<boolean> {
   const savedConfig = await storage.load();
   if (!savedConfig) return false;
 
-  notify("Connecting to saved Notion MCP...");
+  notify?.("Connecting to saved Notion MCP...");
   try {
     await client.connect(savedConfig.mcpUrl, savedConfig.accessToken, savedConfig);
     return true;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    notify(`Connection failed: ${message}`, "error");
+    notify?.(`Connection failed: ${message}`, "error");
     if (shouldClearSavedConfig(message)) {
       await storage.clear();
     }
@@ -1482,7 +1499,7 @@ export {
   renderNotionToolResult,
   resolveAccessToken,
   resolveCallbackResult,
-  SKILLS_DIRECTORY,
+  applyToolDefaults,
   startOAuthCallbackServer,
   storage,
   toolError,
@@ -1513,12 +1530,8 @@ export default function notionMCPClientExtension(pi: ExtensionAPI) {
   const notify = createUiNotifier(pi);
   registerNotionGuardrails(pi);
 
-  pi.on("resources_discover", async () => ({
-    skillPaths: [SKILLS_DIRECTORY],
-  }));
-
   // Register dynamic MCP tools after connection
-  const registerMCPTools = () => {
+  const registerMCPTools = ({ notifyRegistration = true }: { notifyRegistration?: boolean } = {}) => {
     if (!mcpClient?.state.mcpUrl) return;
 
     const tools = mcpClient.getTools();
@@ -1530,10 +1543,19 @@ export default function notionMCPClientExtension(pi: ExtensionAPI) {
       pi.registerTool(createRegisteredToolDefinition(mcpClient, mcpUrl, tool));
     }
 
-    if (tools.length > 0) {
+    if (notifyRegistration && tools.length > 0) {
       notify(`Registered ${tools.length} Notion MCP tools!`);
     }
   };
+
+  pi.on("session_start", async () => {
+    if (!mcpClient || mcpClient.state.connected) return;
+
+    const connected = await connectWithSavedConfig(mcpClient);
+    if (connected) {
+      registerMCPTools({ notifyRegistration: false });
+    }
+  });
 
   // /notion command
   pi.registerCommand("notion", {

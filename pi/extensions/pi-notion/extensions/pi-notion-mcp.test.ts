@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import notionMCPClientExtension, {
+  applyToolDefaults,
   buildAuthorizationUrl,
   buildHtmlResponse,
   coerceNumericProperties,
@@ -25,7 +26,6 @@ import notionMCPClientExtension, {
   renderNotionToolResult,
   resolveAccessToken,
   resolveCallbackResult,
-  SKILLS_DIRECTORY,
   startOAuthCallbackServer,
   storage,
   toolError,
@@ -408,6 +408,20 @@ describe("pi-notion-mcp.ts", () => {
     );
   });
 
+  it("defaults notion-search to workspace_search unless ai_search is explicit", () => {
+    expect(applyToolDefaults("notion-search", { query: "docs" })).toEqual({
+      query: "docs",
+      content_search_mode: "workspace_search",
+    });
+    expect(
+      applyToolDefaults("notion-search", { query: "docs", content_search_mode: "ai_search" }),
+    ).toEqual({
+      query: "docs",
+      content_search_mode: "ai_search",
+    });
+    expect(applyToolDefaults("notion-fetch", { id: "page-1" })).toEqual({ id: "page-1" });
+  });
+
   it("creates registered tool executors and definitions with compact renderers", async () => {
     const disconnectedClient = new NotionMCPClient();
     const disconnectedExecute = createRegisteredToolExecutor(disconnectedClient, "https://mcp.notion.com/mcp", {
@@ -420,7 +434,7 @@ describe("pi-notion-mcp.ts", () => {
 
     const connectedClient = new NotionMCPClient();
     connectedClient.state.connected = true;
-    vi.spyOn(connectedClient, "callTool").mockResolvedValue("done");
+    const callToolSpy = vi.spyOn(connectedClient, "callTool").mockResolvedValue("done");
     const execute = createRegisteredToolExecutor(connectedClient, "https://mcp.notion.com/mcp", {
       name: "notion-search",
       description: "Search",
@@ -428,6 +442,14 @@ describe("pi-notion-mcp.ts", () => {
     });
     const onUpdate = vi.fn();
     const success = await execute("id", { query: "docs" }, new AbortController().signal, onUpdate, undefined);
+    expect(callToolSpy).toHaveBeenCalledWith(
+      "https://mcp.notion.com/mcp",
+      "notion-search",
+      {
+        query: "docs",
+        content_search_mode: "workspace_search",
+      },
+    );
     expect(onUpdate).toHaveBeenCalledWith({
       content: [{ type: "text", text: "Running notion-search..." }],
       details: { tool: "notion-search", phase: "running" },
@@ -437,14 +459,23 @@ describe("pi-notion-mcp.ts", () => {
       details: { tool: "notion-search", lineCount: 1, characterCount: 4 },
     });
 
-    const definition = createRegisteredToolDefinition(connectedClient, "https://mcp.notion.com/mcp", {
+    const fetchDefinition = createRegisteredToolDefinition(connectedClient, "https://mcp.notion.com/mcp", {
       name: "notion-fetch",
       description: "Fetch",
       inputSchema: {},
     });
-    expect(definition.renderCall?.({ id: "https://www.notion.so/page-1" }, testTheme, {})?.render(160).join("\n")).toContain(
+    expect(fetchDefinition.renderCall?.({ id: "https://www.notion.so/page-1" }, testTheme, {})?.render(160).join("\n")).toContain(
       "notion-fetch https://www.notion.so/page-1",
     );
+
+    const searchDefinition = createRegisteredToolDefinition(connectedClient, "https://mcp.notion.com/mcp", {
+      name: "notion-search",
+      description: "Search",
+      inputSchema: {},
+    });
+    expect(searchDefinition.promptGuidelines).toEqual([
+      "Use notion-search with content_search_mode set to workspace_search unless the user explicitly asks for ai_search or connected-source search.",
+    ]);
   });
 
   it("resolves auth file paths from defaults, env vars, and migrated legacy files", () => {
@@ -583,18 +614,17 @@ describe("pi-notion-mcp.ts", () => {
     expect(tools).toEqual(expect.arrayContaining(["notion_mcp_connect", "notion_mcp_disconnect", "notion_mcp_status"]));
     expect(mockPi.registerCommand).toHaveBeenCalledWith("notion", expect.any(Object));
 
-    const resourceDiscoverHandler = mockPi.on.mock.calls.find(([event]) => event === "resources_discover")?.[1] as
-      | ((...args: unknown[]) => Promise<{ skillPaths?: string[] }>)
-      | undefined;
-    await expect(resourceDiscoverHandler?.({}, {})).resolves.toEqual({
-      skillPaths: [SKILLS_DIRECTORY],
-    });
-
     const toolCallHandler = mockPi.on.mock.calls.find(([event]) => event === "tool_call")?.[1] as
       | ((...args: unknown[]) => Promise<void>)
       | undefined;
     const notify = vi.fn();
-    await toolCallHandler?.({ toolName: "mcp__notion-search", input: { query: "meeting notes" } }, { ui: { notify } });
+    await toolCallHandler?.(
+      {
+        toolName: "mcp__notion-search",
+        input: { query: "meeting notes", content_search_mode: "ai_search" },
+      },
+      { ui: { notify } },
+    );
     expect(notify).toHaveBeenCalledWith(
       expect.stringContaining("content_search_mode is not 'workspace_search'"),
       "warning",
@@ -603,6 +633,51 @@ describe("pi-notion-mcp.ts", () => {
     const statusTool = mockPi.registerTool.mock.calls.map(([tool]) => tool).find((tool) => tool.name === "notion_mcp_status");
     const result = await statusTool.execute("id", {}, new AbortController().signal, undefined, undefined);
     expect(result.content[0].text).toContain("Connected: No");
+  });
+
+  it("restores saved connections on session start and registers discovered tools", async () => {
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({ "content-type": "application/json", "mcp-session-id": "session-restored" }),
+        json: async () => ({ result: { ok: true } }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: async () => ({ result: { tools: [{ name: "notion-search", description: "Search", inputSchema: {} }] } }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({ "content-type": "application/json" }),
+        text: async () => "",
+      }) as typeof fetch;
+
+    vi.spyOn(storage, "load").mockResolvedValueOnce({
+      mcpUrl: "https://mcp.notion.com/mcp",
+      accessToken: "token-123",
+    });
+
+    const mockPi = {
+      registerFlag: vi.fn(),
+      getFlag: vi.fn(() => undefined),
+      registerTool: vi.fn(),
+      registerCommand: vi.fn(),
+      getAllTools: vi.fn(() => []),
+      on: vi.fn(),
+      events: { emit: vi.fn() },
+    };
+
+    notionMCPClientExtension(mockPi as never);
+
+    const sessionStartHandler = mockPi.on.mock.calls.find(([event]) => event === "session_start")?.[1] as
+      | ((...args: unknown[]) => Promise<void>)
+      | undefined;
+    await sessionStartHandler?.({}, {});
+
+    const tools = mockPi.registerTool.mock.calls.map(([tool]) => tool.name);
+    expect(tools).toContain("notion-search");
   });
 
   it("supports the deprecated auth-file flag alias with a warning", () => {

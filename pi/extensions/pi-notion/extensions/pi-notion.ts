@@ -211,9 +211,9 @@ type CheckFn = (input: Record<string, unknown>) => string[];
 function checkNotionSearch(input: Record<string, unknown>): string[] {
   const warnings: string[] = [];
 
-  if (input.content_search_mode !== "workspace_search") {
+  if ("content_search_mode" in input && input.content_search_mode !== "workspace_search") {
     warnings.push(
-      "⚠ notion-search: content_search_mode is not 'workspace_search'. Default 'ai_search' returns calendar events. Use 'workspace_search' for workspace content.",
+      "⚠ notion-search: content_search_mode is not 'workspace_search'. Use 'ai_search' only when the user explicitly asks for connected sources or calendar-style results.",
     );
   }
 

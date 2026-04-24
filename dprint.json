@@ -7,7 +7,11 @@
   "includes": ["**/*"],
   "excludes": [
     ".git",
-    ".jj"
+    ".jj",
+    "**/node_modules",
+    "**/coverage",
+    "**/reports",
+    "**/package-lock.json"
   ],
   "markdown": {
     "textWrap": "always"

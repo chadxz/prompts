@@ -19,7 +19,6 @@
             "output": 0,
             "cacheRead": 0,
             "cacheWrite": 0
-            
           }
         },
         {
@@ -31,54 +30,6 @@
           ],
           "contextWindow": 202752,
           "maxTokens": 40960,
-          "cost": {
-            "input": 0,
-            "output": 0,
-            "cacheRead": 0,
-            "cacheWrite": 0
-          }
-        },
-        {
-          "id": "qwen/qwen3-32b",
-          "name": "Qwen3 32B (LM Studio)",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 40960,
-          "maxTokens": 16384,
-          "cost": {
-            "input": 0,
-            "output": 0,
-            "cacheRead": 0,
-            "cacheWrite": 0
-          }
-        },
-        {
-          "id": "qwen/qwen3-coder-30b",
-          "name": "Qwen3 Coder 30B (LM Studio)",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 262144,
-          "maxTokens": 40960,
-          "cost": {
-            "input": 0,
-            "output": 0,
-            "cacheRead": 0,
-            "cacheWrite": 0
-          }
-        },
-        {
-          "id": "gpt-oss-120b",
-          "name": "GPT-OSS 120B (LM Studio)",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 131072,
-          "maxTokens": 16384,
           "cost": {
             "input": 0,
             "output": 0,
@@ -166,6 +117,31 @@
             "cacheRead": 0,
             "cacheWrite": 0
           }
+        }
+      ]
+    },
+    "omlx": {
+      "baseUrl": "http://127.0.0.1:8000/v1",
+      "api": "openai-completions",
+      "apiKey": "omlx",
+      "authHeader": true,
+      "models": [
+        {
+          "id": "Qwen3.6-27B-MLX-8bit",
+          "name": "Qwen3.6-27B-MLX-8bit",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          },
+          "contextWindow": 262144,
+          "maxTokens": 32768
         }
       ]
     }

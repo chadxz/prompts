@@ -25,6 +25,8 @@ import { Type } from "@sinclair/typebox";
 
 const DATADOG_MCP_PATH = "/api/unstable/mcp-server/mcp";
 const DEFAULT_SITE = "us3";
+const DEFAULT_TOOLSETS = ["all"] as const;
+const DEFAULT_TOOLSETS_LABEL = "all (default)";
 const DEFAULT_AUTH_FILE = "~/.pi/agent/datadog-mcp-auth.json";
 const DEFAULT_REDIRECT_URI = "http://127.0.0.1:8563/oauth/callback";
 const DEFAULT_TIMEOUT_MS = 300_000;
@@ -347,6 +349,26 @@ function parseToolsets(value: unknown): string[] {
   );
 }
 
+function resolveToolsets(toolsets: string[] | undefined): string[] {
+  if (Array.isArray(toolsets) && toolsets.length > 0) {
+    return toolsets;
+  }
+
+  return [...DEFAULT_TOOLSETS];
+}
+
+function formatToolsets(toolsets: string[] | undefined): string {
+  const resolved = resolveToolsets(toolsets);
+  if (
+    resolved.length === DEFAULT_TOOLSETS.length &&
+    resolved.every((toolset, index) => toolset === DEFAULT_TOOLSETS[index])
+  ) {
+    return DEFAULT_TOOLSETS_LABEL;
+  }
+
+  return resolved.join(",");
+}
+
 function normalizeDatadogSite(value: string | undefined): string {
   const raw = (value ?? "").trim().toLowerCase();
   if (!raw) return DEFAULT_SITE;
@@ -373,11 +395,7 @@ function buildDatadogMcpUrl(site: string, mcpUrl: string | undefined, toolsets: 
     ? new URL(mcpUrl.trim())
     : new URL(`https://${SITE_TO_HOST[normalizeDatadogSite(site)] ?? SITE_TO_HOST[DEFAULT_SITE]}${DATADOG_MCP_PATH}`);
 
-  if (toolsets.length > 0) {
-    resolved.searchParams.set("toolsets", toolsets.join(","));
-  } else {
-    resolved.searchParams.delete("toolsets");
-  }
+  resolved.searchParams.set("toolsets", resolveToolsets(toolsets).join(","));
 
   return resolved.toString();
 }
@@ -969,7 +987,7 @@ function resolveAuthMode(config: StoredConfig): AuthMode {
 function getEffectiveConfig(config: StoredConfig | null, overrides: RuntimeOverrides): EffectiveConfig {
   const merged = mergeRuntimeOverrides(config, overrides);
   const site = normalizeDatadogSite(merged.site);
-  const toolsets = Array.isArray(merged.toolsets) ? merged.toolsets : [];
+  const toolsets = resolveToolsets(merged.toolsets);
 
   return {
     authMode: resolveAuthMode(merged),
@@ -1023,7 +1041,7 @@ function hasUsableAuth(config: EffectiveConfig): boolean {
 }
 
 function buildDisconnectedMessage(config: EffectiveConfig): string {
-  const toolsets = config.toolsets.length > 0 ? config.toolsets.join(",") : "core (server default)";
+  const toolsets = formatToolsets(config.toolsets);
   return [
     "Datadog MCP Status:",
     "- Connected: No",
@@ -1094,7 +1112,7 @@ class DatadogMCPClient {
     protocolVersion: null,
     serverName: null,
     serverVersion: null,
-    toolsets: [],
+    toolsets: [...DEFAULT_TOOLSETS],
     authMode: null,
   };
 
@@ -1667,7 +1685,7 @@ function getConnectionSummaryText(client: DatadogMCPClient | null): string {
     return buildDisconnectedMessage(config);
   }
 
-  const toolsets = client.state.toolsets.length > 0 ? client.state.toolsets.join(",") : "core (server default)";
+  const toolsets = formatToolsets(client.state.toolsets);
   return [
     "Datadog MCP Status:",
     "- Connected: Yes",
@@ -2154,7 +2172,7 @@ export default function datadogMcpExtension(pi: ExtensionAPI) {
         ctx.ui.notify(
           toolsets.length > 0
             ? `Saved Datadog MCP toolsets: ${toolsets.join(",")}`
-            : "Cleared explicit Datadog MCP toolsets. The server default core toolset will be used.",
+            : "Cleared explicit Datadog MCP toolsets. The default toolsets=all setting will be used.",
           "info",
         );
         return;

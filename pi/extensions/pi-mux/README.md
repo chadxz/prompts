@@ -20,10 +20,14 @@ Authentication and connection state are managed through `/mux` commands.
 
 - `/mux`
 - `/mux status`
+- `/mux tools <provider>`
 - `/mux connect <provider>`
 - `/mux disconnect <provider>`
 
 `/mux` and `/mux status` show the current provider connection state.
+
+`/mux tools <provider>` lists the provider's discovered tools with their tool
+ids, native names, availability, and short descriptions.
 
 ## Tool behavior
 

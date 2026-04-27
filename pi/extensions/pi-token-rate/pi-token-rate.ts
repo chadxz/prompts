@@ -118,15 +118,6 @@ function formatTokens(count: number) {
 	return `${Math.round(count / 1000000)}M`;
 }
 
-function readUsageNumber(usage: unknown, key: string) {
-	if (typeof usage !== "object" || usage === null) {
-		return 0;
-	}
-
-	const value = Reflect.get(usage, key);
-	return typeof value === "number" && Number.isFinite(value) ? value : 0;
-}
-
 function readUsageCostTotal(usage: unknown) {
 	if (typeof usage !== "object" || usage === null) {
 		return 0;
@@ -167,10 +158,6 @@ function collectStatsParts(
 	theme: Theme,
 	measurement: TokenRateMeasurement | undefined,
 ) {
-	let totalInput = 0;
-	let totalOutput = 0;
-	let totalCacheRead = 0;
-	let totalCacheWrite = 0;
 	let totalCost = 0;
 
 	for (const entry of ctx.sessionManager.getEntries()) {
@@ -178,48 +165,31 @@ function collectStatsParts(
 			continue;
 		}
 
-		const usage = entry.message.usage;
-		totalInput += readUsageNumber(usage, "input");
-		totalOutput += readUsageNumber(usage, "output");
-		totalCacheRead += readUsageNumber(usage, "cacheRead");
-		totalCacheWrite += readUsageNumber(usage, "cacheWrite");
-		totalCost += readUsageCostTotal(usage);
+		totalCost += readUsageCostTotal(entry.message.usage);
 	}
 
 	const statsParts: StatsPart[] = [];
-	if (totalInput) {
-		statsParts.push({ plain: `↑${formatTokens(totalInput)}` });
-	}
-	if (totalOutput) {
-		statsParts.push({ plain: `↓${formatTokens(totalOutput)}` });
-	}
-	if (totalCacheRead) {
-		statsParts.push({ plain: `R${formatTokens(totalCacheRead)}` });
-	}
-	if (totalCacheWrite) {
-		statsParts.push({ plain: `W${formatTokens(totalCacheWrite)}` });
-	}
-
 	const usingSubscription = ctx.model ? ctx.modelRegistry.isUsingOAuth(ctx.model) : false;
 	if (totalCost || usingSubscription) {
 		statsParts.push({ plain: `$${totalCost.toFixed(3)}${usingSubscription ? " (sub)" : ""}` });
 	}
 
 	const contextUsage = ctx.getContextUsage();
+	const contextTokens = contextUsage?.tokens ?? null;
 	const contextWindow = contextUsage?.contextWindow ?? ctx.model?.contextWindow ?? 0;
 	const contextPercentValue = contextUsage?.percent ?? 0;
 	const contextPercent = contextUsage?.percent === null ? "?" : contextPercentValue.toFixed(1);
-	const contextPercentDisplay =
-		contextPercent === "?"
-			? `?/${formatTokens(contextWindow)} (auto)`
-			: `${contextPercent}%/${formatTokens(contextWindow)} (auto)`;
+	const contextDisplay =
+		contextTokens === null || contextPercent === "?"
+			? `?/${formatTokens(contextWindow)} (?)`
+			: `${formatTokens(contextTokens)}/${formatTokens(contextWindow)} (${contextPercent}%)`;
 
 	if (contextPercentValue > 90) {
-		statsParts.push({ plain: contextPercentDisplay, style: (text) => theme.fg("error", text) });
+		statsParts.push({ plain: contextDisplay, style: (text) => theme.fg("error", text) });
 	} else if (contextPercentValue > 70) {
-		statsParts.push({ plain: contextPercentDisplay, style: (text) => theme.fg("warning", text) });
+		statsParts.push({ plain: contextDisplay, style: (text) => theme.fg("warning", text) });
 	} else {
-		statsParts.push({ plain: contextPercentDisplay });
+		statsParts.push({ plain: contextDisplay });
 	}
 
 	if (measurement) {

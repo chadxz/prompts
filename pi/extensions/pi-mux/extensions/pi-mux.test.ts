@@ -3,6 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import piMuxExtension, {
+  buildMuxStatusCommandMessage,
+  buildMuxToolsCommandMessage,
   buildToolId,
   CALL_TOOL_TOOL_NAME,
   CatalogStorage,
@@ -545,6 +547,54 @@ describe("EmbeddedProviderAdapter", () => {
     ).resolves.toBe("connected");
     expect(await adapter.isAvailable()).toBe(true);
   });
+
+  it("returns the provider status text", async () => {
+    const host = new EmbeddedExtensionHost("fake-provider.ts", (pi) => {
+      pi.registerTool({
+        name: "demo_mcp_connect",
+        description: "connect",
+        parameters: { type: "object", properties: {} },
+        async execute() {
+          return {
+            content: [{ type: "text", text: "connected" }],
+            details: { connected: true },
+          };
+        },
+      });
+
+      pi.registerTool({
+        name: "demo_mcp_disconnect",
+        description: "disconnect",
+        parameters: { type: "object", properties: {} },
+        async execute() {
+          return {
+            content: [{ type: "text", text: "disconnected" }],
+            details: { connected: false },
+          };
+        },
+      });
+
+      pi.registerTool({
+        name: "demo_mcp_status",
+        description: "status",
+        parameters: { type: "object", properties: {} },
+        async execute() {
+          return {
+            content: [{
+              type: "text",
+              text: "Demo MCP Status:\n- Connected: Yes\n- Toolsets: all",
+            }],
+            details: { connected: true },
+          };
+        },
+      });
+    });
+
+    const adapter = new EmbeddedProviderAdapter("demo", host);
+    await expect(adapter.getStatusText()).resolves.toBe(
+      "Demo MCP Status:\n- Connected: Yes\n- Toolsets: all",
+    );
+  });
 });
 
 describe("dynamic provider discovery", () => {
@@ -568,6 +618,7 @@ describe("MuxService", () => {
       outputSchema?: Record<string, unknown>;
     }>;
     available: boolean;
+    statusText: string;
     callResult: unknown;
   }> = {}) {
     return {
@@ -579,6 +630,9 @@ describe("MuxService", () => {
       },
       async isAvailable() {
         return overrides.available ?? true;
+      },
+      async getStatusText() {
+        return overrides.statusText ?? "";
       },
       async connect() {
         return "connected";
@@ -605,6 +659,27 @@ describe("MuxService", () => {
 
     return new MuxService(providerOverrides as never, storage);
   }
+
+  it("includes toolsets in the status overview when a provider reports them", async () => {
+    const service = createService({
+      datadog: createProvider({
+        available: true,
+        tools: [
+          {
+            name: "search_datadog_logs",
+            description: "Search Datadog logs",
+            inputSchema: { type: "object", properties: {} },
+          },
+        ],
+        statusText: "Datadog MCP Status:\n- Connected: Yes\n- Toolsets: all (default)",
+      }),
+    });
+
+    await expect(service.getStatusOverview()).resolves.toBe([
+      "pi-mux provider status:",
+      "- datadog: available (1 tool, toolsets: all (default))",
+    ].join("\n"));
+  });
 
   it("does not fall back to stale cached tools when a provider is available but currently exposes none", async () => {
     const service = createService(
@@ -1006,6 +1081,40 @@ describe("MuxService", () => {
     ]);
   });
 
+  it("lists provider tools in stable tool-id order", async () => {
+    const service = createService({
+      datadog: createProvider({
+        tools: [
+          {
+            name: "search_datadog_spans",
+            description: "Search Datadog spans",
+            inputSchema: { type: "object", properties: {} },
+          },
+          {
+            name: "search_datadog_logs",
+            description: "Search Datadog logs",
+            inputSchema: { type: "object", properties: {} },
+          },
+        ],
+      }),
+    });
+
+    await expect(service.listProviderTools("datadog")).resolves.toEqual([
+      {
+        tool_id: "datadog/search_datadog_logs",
+        name: "search_datadog_logs",
+        description: "Search Datadog logs",
+        available: true,
+      },
+      {
+        tool_id: "datadog/search_datadog_spans",
+        name: "search_datadog_spans",
+        description: "Search Datadog spans",
+        available: true,
+      },
+    ]);
+  });
+
   it("returns a clear validation error for an invalid find_tools provider", async () => {
     const service = createService({
       datadog: createProvider(),
@@ -1161,6 +1270,44 @@ describe("MuxService", () => {
 });
 
 describe("command rendering", () => {
+  it("appends usage text after the root /mux status output", () => {
+    expect(
+      buildMuxStatusCommandMessage(
+        "pi-mux provider status:\n- datadog: available (1 tool, toolsets: all)",
+        "Usage: /mux | /mux status | /mux help | /mux tools <provider> | /mux connect <provider> | /mux disconnect <provider>",
+      ),
+    ).toBe(
+      "pi-mux provider status:\n- datadog: available (1 tool, toolsets: all)\n\nUsage: /mux | /mux status | /mux help | /mux tools <provider> | /mux connect <provider> | /mux disconnect <provider>",
+    );
+  });
+
+  it("formats provider tool listings for the /mux tools command", () => {
+    expect(buildMuxToolsCommandMessage("datadog", [
+      {
+        tool_id: "datadog/search_datadog_logs",
+        name: "search_datadog_logs",
+        description: "Search Datadog logs",
+        available: true,
+      },
+      {
+        tool_id: "datadog/search_datadog_spans",
+        name: "search_datadog_spans",
+        description: "Search Datadog spans",
+        available: false,
+      },
+    ])).toBe([
+      "pi-mux tools for datadog:",
+      "- datadog/search_datadog_logs",
+      "  name: search_datadog_logs",
+      "  available: yes",
+      "  description: Search Datadog logs",
+      "- datadog/search_datadog_spans",
+      "  name: search_datadog_spans",
+      "  available: no",
+      "  description: Search Datadog spans",
+    ].join("\n"));
+  });
+
   it("shows /mux help as an info message instead of a warning", async () => {
     const { commands } = registerMuxExtension();
     const command = commands.get("mux");
@@ -1196,7 +1343,7 @@ describe("command rendering", () => {
     expect(notifications).toEqual([
       {
         message:
-          "Usage: /mux | /mux status | /mux help | /mux connect <provider> | /mux disconnect <provider>",
+          "Usage: /mux | /mux status | /mux help | /mux tools <provider> | /mux connect <provider> | /mux disconnect <provider>",
         type: "info",
       },
     ]);

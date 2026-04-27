@@ -108,6 +108,13 @@ type CachedMuxState = {
   toolsByProvider?: Record<ProviderName, CachedCatalogTool[]>;
 };
 
+type ToolListItem = {
+  tool_id: string;
+  name: string;
+  description: string;
+  available: boolean;
+};
+
 type ResolvedProviderControlPlane = {
   controls: MuxProviderControls;
 };
@@ -612,6 +619,7 @@ interface MuxProviderAdapter {
   initialize(ctx?: ExtensionContext): Promise<void>;
   listTools(): Promise<CachedCatalogTool[]>;
   isAvailable(): Promise<boolean>;
+  getStatusText(): Promise<string>;
   connect(ctx: ExtensionCommandContext): Promise<string>;
   disconnect(ctx: ExtensionCommandContext): Promise<string>;
   callTool(
@@ -655,6 +663,12 @@ class EmbeddedProviderAdapter implements MuxProviderAdapter {
     const { controls } = await this.getControlPlane();
     const result = await this.host.executeTool(controls.status, {});
     return isRecord(result) && isRecord(result.details) && result.details.connected === true;
+  }
+
+  async getStatusText(): Promise<string> {
+    const { controls } = await this.getControlPlane();
+    const result = await this.host.executeTool(controls.status, {});
+    return getTextContent(isRecord(result) ? (result.content as TextContentBlock[]) : []);
   }
 
   async connect(ctx: ExtensionCommandContext): Promise<string> {
@@ -970,7 +984,7 @@ class MuxService {
     limit = DEFAULT_FIND_LIMIT,
     provider?: string,
     ctx?: ExtensionContext,
-  ) {
+  ): Promise<ToolListItem[]> {
     await this.initialize(ctx);
     const providerScope = provider ? this.validateProviderName(provider) : undefined;
     const entries = this.getIndexedCatalogEntries(providerScope);
@@ -982,6 +996,20 @@ class MuxService {
     }));
   }
 
+  async listProviderTools(provider: string, ctx?: ExtensionContext): Promise<ToolListItem[]> {
+    await this.initialize(ctx);
+    const providerScope = this.validateProviderName(provider);
+    return this.getIndexedCatalogEntries(providerScope)
+      .slice()
+      .sort((left, right) => left.toolId.localeCompare(right.toolId))
+      .map((entry) => ({
+        tool_id: entry.toolId,
+        name: entry.nativeToolName,
+        description: entry.discoveryDescription || entry.description,
+        available: entry.available,
+      }));
+  }
+
   async getStatusOverview(ctx?: ExtensionContext): Promise<string> {
     await this.initialize(ctx);
     const lines = ["pi-mux provider status:"];
@@ -989,9 +1017,19 @@ class MuxService {
     for (const provider of this.getProviderNames()) {
       const toolCount = this.cachedState.toolsByProvider?.[provider]?.length ?? 0;
       const available = this.providerAvailability.get(provider) ?? false;
-      lines.push(
-        `- ${provider}: ${available ? "available" : "unavailable"} (${toolCount} tool${toolCount === 1 ? "" : "s"})`,
-      );
+      let suffix = `${toolCount} tool${toolCount === 1 ? "" : "s"}`;
+
+      try {
+        const statusText = await this.adapters[provider].getStatusText();
+        const toolsets = extractStatusField(statusText, "Toolsets");
+        if (toolsets) {
+          suffix += `, toolsets: ${toolsets}`;
+        }
+      } catch {
+        // Ignore provider-specific status parsing failures and keep the base summary.
+      }
+
+      lines.push(`- ${provider}: ${available ? "available" : "unavailable"} (${suffix})`);
     }
 
     return lines.join("\n");
@@ -1423,6 +1461,44 @@ function parseProviderName(
   return providerNames.includes(value) ? value : null;
 }
 
+function extractStatusField(statusText: string, label: string): string | undefined {
+  const prefix = `- ${label}:`;
+  for (const line of statusText.split(/\r?\n/u)) {
+    if (!line.startsWith(prefix)) continue;
+
+    const value = line.slice(prefix.length).trim();
+    return value.length > 0 ? value : undefined;
+  }
+
+  return undefined;
+}
+
+function buildMuxStatusCommandMessage(statusOverview: string, usageText?: string): string {
+  if (!usageText) {
+    return statusOverview;
+  }
+
+  return `${statusOverview}\n\n${usageText}`;
+}
+
+function buildMuxToolsCommandMessage(provider: string, tools: readonly ToolListItem[]): string {
+  const lines = [`pi-mux tools for ${provider}:`];
+
+  if (tools.length === 0) {
+    lines.push("- No tools found.");
+    return lines.join("\n");
+  }
+
+  for (const tool of tools) {
+    lines.push(`- ${tool.tool_id}`);
+    lines.push(`  name: ${tool.name}`);
+    lines.push(`  available: ${tool.available ? "yes" : "no"}`);
+    lines.push(`  description: ${tool.description}`);
+  }
+
+  return lines.join("\n");
+}
+
 function reportInitializationFailure(provider: ProviderName, error: unknown, ctx?: ExtensionContext): void {
   const message = error instanceof Error ? error.message : String(error);
   const text = `pi-mux could not initialize ${provider}: ${message}`;
@@ -1435,6 +1511,8 @@ function reportInitializationFailure(provider: ProviderName, error: unknown, ctx
 
 export {
   buildCatalogEntry,
+  buildMuxStatusCommandMessage,
+  buildMuxToolsCommandMessage,
   buildToolId,
   CALL_TOOL_TOOL_NAME,
   CatalogStorage,
@@ -1456,7 +1534,7 @@ export {
 export default function piMuxExtension(pi: ExtensionAPI) {
   const servicePromise = loadMuxService(pi);
   const installedProvidersSnippet = formatInstalledProvidersSnippet();
-  const usageText = "Usage: /mux | /mux status | /mux help | /mux connect <provider> | /mux disconnect <provider>";
+  const usageText = "Usage: /mux | /mux status | /mux help | /mux tools <provider> | /mux connect <provider> | /mux disconnect <provider>";
 
   const showCommandMessage = (
     ctx: ExtensionCommandContext,
@@ -1487,7 +1565,16 @@ export default function piMuxExtension(pi: ExtensionAPI) {
 
       const service = await servicePromise;
       await service.initialize();
-      if (!trimmed || trimmed === "status") {
+      if (!trimmed) {
+        showCommandMessage(
+          ctx,
+          buildMuxStatusCommandMessage(await service.getStatusOverview(), usageText),
+          "info",
+        );
+        return;
+      }
+
+      if (trimmed === "status") {
         showCommandMessage(ctx, await service.getStatusOverview(), "info");
         return;
       }
@@ -1495,11 +1582,29 @@ export default function piMuxExtension(pi: ExtensionAPI) {
       const [command, providerValue] = trimmed.split(/\s+/, 2);
       const providerNames = service.getProviderNames();
       const provider = parseProviderName(providerValue ?? "", providerNames);
-      if ((command === "connect" || command === "disconnect") && !provider) {
+      if (command === "tools" && !providerValue) {
+        showCommandMessage(
+          ctx,
+          `Usage: /mux tools <provider>. Available providers: ${providerNames.join(", ")}.`,
+          "error",
+        );
+        return;
+      }
+
+      if ((command === "tools" || command === "connect" || command === "disconnect") && !provider) {
         showCommandMessage(
           ctx,
           `Unknown provider '${providerValue ?? ""}'. Use one of: ${providerNames.join(", ")}.`,
           "error",
+        );
+        return;
+      }
+
+      if (command === "tools" && provider) {
+        showCommandMessage(
+          ctx,
+          buildMuxToolsCommandMessage(provider, await service.listProviderTools(provider, ctx)),
+          "info",
         );
         return;
       }

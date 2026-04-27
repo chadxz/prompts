@@ -37,7 +37,7 @@ function createMockCtx() {
 		modelRegistry: {
 			isUsingOAuth: vi.fn(() => false),
 		},
-		getContextUsage: vi.fn(() => ({ contextWindow: 262_000, percent: 6.1 })),
+		getContextUsage: vi.fn(() => ({ tokens: 16_000, contextWindow: 262_000, percent: 6.1 })),
 	};
 }
 
@@ -159,7 +159,7 @@ describe("pi-token-rate runtime", () => {
 		expect(requestRender).toHaveBeenCalledOnce();
 	});
 
-	it("renders the token rate alongside the built-in token stats", async () => {
+	it("renders the token rate alongside the context status", async () => {
 		const mockPi = createMockPi();
 		const ctx = createMockCtx();
 		ctx.sessionManager.getEntries.mockReturnValue([
@@ -168,10 +168,6 @@ describe("pi-token-rate runtime", () => {
 				message: {
 					role: "assistant",
 					usage: {
-						input: 32_000,
-						output: 108,
-						cacheRead: 0,
-						cacheWrite: 0,
 						cost: { total: 0 },
 					},
 				},
@@ -200,7 +196,20 @@ describe("pi-token-rate runtime", () => {
 			ctx as never,
 		);
 
-		expect(footer.render(120)[1]).toContain("↑32k ↓108 6.1%/262k (auto) 50.0 tok/s");
+		expect(footer.render(120)[1]).toContain("16k/262k (6.1%) 50.0 tok/s");
+	});
+
+	it("shows unknown context tokens after compaction until pi has fresh usage", async () => {
+		const mockPi = createMockPi();
+		const ctx = createMockCtx();
+		ctx.getContextUsage.mockReturnValue({ tokens: null, contextWindow: 262_000, percent: null });
+		registerTokenRate(mockPi as never);
+
+		const sessionStart = getEventHandler(mockPi, "session_start");
+		await sessionStart?.({ type: "session_start" } as never, ctx as never);
+		const { footer } = mountFooter(ctx);
+
+		expect(footer.render(120)[1]).toContain("?/262k (?)");
 	});
 
 	it("falls back to total elapsed time when no streaming update was observed", async () => {

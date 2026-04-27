@@ -7,9 +7,9 @@
       "authHeader": true,
       "models": [
         {
-          "id": "Qwen3.6-35B-A3B-6bit",
-          "name": "Qwen3.6-35B-A3B-6bit",
-          "reasoning": false,
+          "id": "Qwen3.6-35B-A3B-MLX-8bit",
+          "name": "Qwen3.6-35B-A3B-MLX-8bit",
+          "reasoning": true,
           "input": [
             "text",
             "image"
@@ -20,8 +20,8 @@
             "cacheRead": 0,
             "cacheWrite": 0
           },
-          "contextWindow": 262144,
-          "maxTokens": 32768
+          "contextWindow": 32768,
+          "maxTokens": 8192
         }
       ]
     }

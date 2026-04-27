@@ -1,0 +1,58 @@
+{
+  "name": "pi-mux",
+  "version": "1.0.0",
+  "description": "Mux extension for pi with a stable three-tool interface over multiple providers",
+  "keywords": [
+    "pi",
+    "pi-package",
+    "pi-extension",
+    "pi-coding-agent",
+    "mux",
+    "mcp"
+  ],
+  "type": "module",
+  "files": [
+    "extensions/",
+    "providers/",
+    "index.ts",
+    "mux-provider.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "pi": {
+    "extensions": [
+      "./extensions/pi-mux.ts"
+    ]
+  },
+  "peerDependencies": {
+    "@mariozechner/pi-coding-agent": "*",
+    "@sinclair/typebox": "*"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "portfinder": "^1.0.38"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chadxz/prompts.git",
+    "directory": "src/personal/prompts/pi/extensions/pi-mux"
+  },
+  "author": {
+    "name": "Chad McElligott"
+  },
+  "license": "MIT",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "oxlint --type-aware . --ignore-pattern node_modules --ignore-pattern reports",
+    "check": "npm run lint && npm run test"
+  },
+  "devDependencies": {
+    "@mariozechner/pi-coding-agent": "^0.69.0",
+    "@sinclair/typebox": "^0.34.49",
+    "@types/node": "^25.6.0",
+    "oxlint": "^1.61.0",
+    "oxlint-tsgolint": "^0.21.1",
+    "vitest": "^4.1.5"
+  }
+}

@@ -4,9 +4,9 @@
   "defaultModel": "gpt-5.4",
   "defaultThinkingLevel": "high",
   "enabledModels": [
-    "omlx/Qwen3.6-27B-UD-MLX-6bit",
     "openai-codex/gpt-5.5",
-    "openai-codex/gpt-5.4"
+    "openai-codex/gpt-5.4",
+    "omlx/Qwen3.6-35B-A3B-MLX-8bit"
   ],
   "hideThinkingBlock": false,
   "terminal": {

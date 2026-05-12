@@ -28,7 +28,32 @@ Slack and Notion refreshes are driven by a private local config file:
 That file is ignored. Copy the checked-in
 `tracked_sources.template.json`
 to `tracked_sources.json` and fill in your private tracked sources
-before using the skill.
+before using the skill only if the bootstrap task cannot seed it.
+
+Important interpretation:
+
+- `tracked_sources.json` is a seed list for the refresh
+- it is not a guarantee that only those channels or pages matter this
+  week
+- the skill must run a bounded discovery pass every refresh
+- the skill should widen beyond that seed list when the current week
+  points to new relevant sources
+
+Bootstrap path:
+
+- run `mise run bootstrap-tracked-sources`
+- it first checks `data/slack_channels.json` and
+  `data/notion_pages.json`
+- it falls back to `dist/summary.json` if the live snapshots are
+  missing
+
+Cache rule:
+
+- on reruns, clear generated cache by default unless the user
+  explicitly asked to keep or use cache
+- cache means generated `data/*.json`,
+  `data/linear_team_dumps/*.json`, and `dist/*`
+- do not clear `tracked_sources.json` or `muted_slack_channels.json`
 
 `tracked_sources.json` must be a JSON object with:
 
@@ -52,6 +77,25 @@ Tracked Notion page objects require:
 Tracked Notion page objects may also include:
 
 - `focus`: short reminder about what to look for in the page
+
+Refresh rule:
+
+- start with the seeded Slack channels and Notion pages
+- always run the bounded discovery pass after the seeded refresh
+- then do a bounded discovery pass and include newly important sources
+  in the generated snapshots
+- if a new source looks structurally useful for future runs, append it
+  to `tracked_sources.json`
+
+Discovery pass rule:
+
+- derive search terms from the current week's top GitHub repos,
+  interesting Linear issue identifiers, and notable nouns from current
+  GitHub or Linear titles
+- reuse titles and linked doc names surfaced during the Slack pass when
+  searching Notion
+- stop after two consecutive query rounds fail to add a meaningful new
+  source
 
 Example:
 
@@ -142,7 +186,17 @@ Example:
 
 ## Verification rules
 
+- Run `mise run bootstrap-tracked-sources` before giving up on a missing
+  `tracked_sources.json`.
+- Run `mise run clear-cache` before a rerun unless the user explicitly
+  asked to keep or use cache.
 - Run `mise run report` after updating any snapshot file.
+- Ensure the local report server is serving the rebuilt report on
+  `http://127.0.0.1:8765/` after `mise run report`.
+- Reuse the existing server when it already serves this runtime. Restart
+  it only when the port is stale or pointed at the wrong runtime.
+- Open `http://127.0.0.1:8765/` in the in-app browser after the server
+  check and confirm the rebuilt report actually rendered.
 - Run `mise run check` if you changed code, tests, or docs.
 - `data/slack_channels.json` is required. If it is missing or invalid,
   the report must fail and tell the user to run

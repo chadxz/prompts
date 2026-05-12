@@ -10,6 +10,14 @@ run = "uv sync --dev"
 description = "Fetch the local GitHub and Linear snapshots used by the report"
 run = "uv run python populate_data.py"
 
+[tasks.bootstrap-tracked-sources]
+description = "Seed tracked_sources.json from local snapshots or dist output"
+run = "uv run python bootstrap_tracked_sources.py"
+
+[tasks.clear-cache]
+description = "Clear generated snapshots and report output"
+run = "uv run python clear_runtime_cache.py"
+
 [tasks.report]
 description = "Regenerate the HTML report and drill-down pages"
 run = "uv run python generate_report.py"

@@ -1,4 +1,4 @@
 interface:
-  display_name: "Refresh Activity Report"
-  short_description: "Refresh report with connectors"
-  default_prompt: "Use $reporting-work-activity to refresh the Convergint activity report, update snapshots, and regenerate the HTML report."
+  display_name: "Reporting Work Activity"
+  short_description: "Pull fresh activity data and rebuild the report"
+  default_prompt: "Use $reporting-work-activity to pull fresh GitHub, Linear, Slack, and Notion data and rebuild the weekly activity report."

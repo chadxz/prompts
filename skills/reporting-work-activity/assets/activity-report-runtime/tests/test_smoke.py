@@ -21,6 +21,7 @@ def load_module(module_name: str, file_name: str):
 
 generate_report = load_module("generate_report", "generate_report.py")
 populate_data = load_module("populate_data", "populate_data.py")
+clear_runtime_cache = load_module("clear_runtime_cache", "clear_runtime_cache.py")
 report_server = load_module("report_server", "report_server.py")
 
 
@@ -148,17 +149,101 @@ def test_report_sources_reads_private_config(tmp_path, monkeypatch) -> None:
 
     report_sources = load_module("report_sources_test", "report_sources.py")
 
-    assert report_sources.TRACKED_SLACK_CHANNELS == [
+    assert report_sources.load_tracked_sources()["slack_channels"] == [
         {
             "channel": "#example-channel",
             "url": "https://app.slack.com/client/T123/C456",
             "focus": "Watch delivery workflow traffic.",
         }
     ]
-    assert report_sources.TRACKED_NOTION_PAGES == [
+    assert report_sources.load_tracked_sources()["notion_pages"] == [
         {
             "title": "Example page",
             "url": "https://www.notion.so/example",
             "focus": "Watch rollout and status updates.",
         }
     ]
+
+
+def test_report_sources_bootstrap_from_summary(tmp_path, monkeypatch) -> None:
+    config_path = tmp_path / "tracked_sources.json"
+    summary_path = tmp_path / "summary.json"
+    summary_path.write_text(
+        json.dumps(
+            {
+                "slack_highlights": [
+                    {
+                        "channel": "#example-channel",
+                        "theme": "Watch delivery workflow traffic.",
+                    }
+                ],
+                "notion_highlights": [
+                    {
+                        "title": "Example page",
+                        "url": "https://www.notion.so/example",
+                        "summary": "Watch rollout and status updates.",
+                    }
+                ],
+            }
+        )
+    )
+    monkeypatch.setenv("REPORT_TRACKED_SOURCES_FILE", str(config_path))
+
+    report_sources = load_module("report_sources_bootstrap_test", "report_sources.py")
+    monkeypatch.setattr(report_sources, "SUMMARY_SNAPSHOT_FILE", summary_path)
+    monkeypatch.setattr(report_sources, "SLACK_SNAPSHOT_FILE", tmp_path / "missing-slack.json")
+    monkeypatch.setattr(report_sources, "NOTION_SNAPSHOT_FILE", tmp_path / "missing-notion.json")
+    report_sources.load_tracked_sources.cache_clear()
+
+    tracked = report_sources.load_tracked_sources()
+
+    assert config_path.exists()
+    assert tracked == {
+        "slack_channels": [
+            {
+                "channel": "#example-channel",
+                "focus": "Watch delivery workflow traffic.",
+            }
+        ],
+        "notion_pages": [
+            {
+                "title": "Example page",
+                "url": "https://www.notion.so/example",
+                "focus": "Watch rollout and status updates.",
+            }
+        ],
+    }
+
+
+def test_clear_runtime_cache_removes_generated_artifacts(tmp_path, monkeypatch) -> None:
+    data_dir = tmp_path / "data"
+    output_dir = tmp_path / "dist"
+    team_dump_dir = data_dir / "linear_team_dumps"
+    data_dir.mkdir()
+    output_dir.mkdir()
+    team_dump_dir.mkdir(parents=True)
+
+    tracked_sources = tmp_path / "tracked_sources.json"
+    muted = tmp_path / "muted_slack_channels.json"
+    tracked_sources.write_text("{}")
+    muted.write_text("[]")
+    (data_dir / "github_repos.json").write_text("[]")
+    (data_dir / "slack_channels.json").write_text("[]")
+    (team_dump_dir / "team.json").write_text("[]")
+    (output_dir / "index.html").write_text("<html></html>")
+
+    monkeypatch.setattr(clear_runtime_cache, "DATA_DIR", data_dir)
+    monkeypatch.setattr(clear_runtime_cache, "OUTPUT_DIR", output_dir)
+
+    removed = clear_runtime_cache.clear_runtime_cache()
+
+    assert "data/github_repos.json" in removed
+    assert "data/slack_channels.json" in removed
+    assert "data/linear_team_dumps/team.json" in removed
+    assert "dist/index.html" in removed
+    assert tracked_sources.exists()
+    assert muted.exists()
+    assert not (data_dir / "github_repos.json").exists()
+    assert not (data_dir / "slack_channels.json").exists()
+    assert not (team_dump_dir / "team.json").exists()
+    assert output_dir.exists()

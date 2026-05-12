@@ -29,6 +29,9 @@
 
 - When writing C# unit tests, do not add Arrange / Act / Assert comments.
 
+- When writing and executing Python scripts, use `uv` to ensure the necessary
+  runtime and packages are installed and available.
+
 - Use `linctl` to lookup details of linear tickets when asked. `linctl docs`
   will show you how to use it.
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Refresh Activity Report"
+  short_description: "Refresh report with connectors"
+  default_prompt: "Use $reporting-work-activity to refresh the Convergint activity report, update snapshots, and regenerate the HTML report."

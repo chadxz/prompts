@@ -1,0 +1,39 @@
+[tools]
+python = "3.14"
+uv = "latest"
+
+[tasks.setup]
+description = "Create the local virtualenv and install dev dependencies"
+run = "uv sync --dev"
+
+[tasks.fetch]
+description = "Fetch the local GitHub and Linear snapshots used by the report"
+run = "uv run python populate_data.py"
+
+[tasks.report]
+description = "Regenerate the HTML report and drill-down pages"
+run = "uv run python generate_report.py"
+
+[tasks.serve]
+description = "Run the local report controls server"
+run = "uv run python report_server.py"
+
+[tasks.format]
+description = "Format the Python code"
+run = "uv run ruff format ."
+
+[tasks.format-check]
+description = "Check formatting without changing files"
+run = "uv run ruff format --check ."
+
+[tasks.lint]
+description = "Run Ruff lint checks"
+run = "uv run ruff check ."
+
+[tasks.test]
+description = "Run the smoke tests"
+run = "uv run pytest"
+
+[tasks.check]
+description = "Run formatting checks, linting, and tests"
+depends = ["format-check", "lint", "test"]

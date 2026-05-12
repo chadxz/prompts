@@ -5,23 +5,98 @@
       "api": "openai-completions",
       "apiKey": "omlx",
       "authHeader": true,
+      "compat": {
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": false,
+        "maxTokensField": "max_tokens"
+      },
       "models": [
         {
-          "id": "Qwen3.6-35B-A3B-MLX-8bit",
-          "name": "Qwen3.6-35B-A3B-MLX-8bit",
+          "id": "Qwen3.6-27B-UD-MLX-6bit",
           "reasoning": true,
           "input": [
             "text",
             "image"
           ],
-          "cost": {
-            "input": 0,
-            "output": 0,
-            "cacheRead": 0,
-            "cacheWrite": 0
-          },
-          "contextWindow": 32768,
-          "maxTokens": 8192
+          "contextWindow": 131072,
+          "maxTokens": 12288,
+          "compat": {
+            "thinkingFormat": "qwen"
+          }
+        },
+        {
+          "id": "Qwen3.6-35B-A3B-6bit",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 12288,
+          "compat": {
+            "thinkingFormat": "qwen"
+          }
+        },
+        {
+          "id": "Qwen3.6-35B-A3B-MLX-8bit",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 12228,
+          "compat": {
+            "thinkingFormat": "qwen"
+          }
+        },
+        {
+          "id": "Qwen3.6-35B-A3B-UD-MLX-4bit",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 12288,
+          "compat": {
+            "thinkingFormat": "qwen"
+          }
+        },
+        {
+          "id": "gemma-4-26B-A4B-it-MLX-4bit",
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "gemma-4-26B-A4B-it-MLX-6bit",
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "gemma-4-26B-A4B-it-MLX-8bit",
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "gemma-4-31B-it-MLX-4bit",
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "gemma-4-31B-it-MLX-6bit",
+          "input": [
+            "text",
+            "image"
+          ]
         }
       ]
     }

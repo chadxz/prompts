@@ -16,8 +16,12 @@
 - When you are doing a git push and need to force, always use --force-with-lease.
   If it fails, investigate, but always use --force-with-lease.
 
-- When writing markdown, always wrap at 80 character line length and make sure
-  it is easy to read without rendering (tables should line up etc).
+- When writing Markdown intended as a saved or submitted artifact, wrap prose
+  at 80 characters and make sure it is easy to read without rendering. This
+  keeps durable text pleasant to review in diffs, terminals, and plain text
+  editors. This includes things like repo files, temp files, and commit
+  messages. Do not hard-wrap PR descriptions, issue comments, or ordinary chat
+  responses unless I ask for wrapped output.
 
 - Any time you want to look at a github link, use `gh` cli instead.
 

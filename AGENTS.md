@@ -8,8 +8,10 @@
 - Always lookup the current date before ever doing anything that involves using
   the date (i.e. web searches, defining filenames with the date in them, etc).
 
-- Do not perform any Git commit or push or Terraform apply unless explicitly
-  requested to do so.
+- When running locally, do not perform any Git commit or push or Terraform
+  apply unless explicitly requested to do so. When running in a cloud agent,
+  Git commits and pushes are allowed without asking for permission first, but
+  Terraform apply still requires explicit permission.
 
 - Never force a git push to main, unless explicitly requested to do so.
 

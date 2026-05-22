@@ -2,8 +2,9 @@
 name: creating-pull-requests
 description:
   Creates Git commits and opens pull requests using Chad's commit template,
-  PR conventions, and writing voice. Use when the user asks to create a pull
-  request, open a PR, or commit changes and create a PR together.
+  PR body template, PR conventions, and writing voice. Use when the user asks
+  to create a pull request, open a PR, write a PR body, or commit changes and
+  create a PR together.
 user-invocable: true
 ---
 
@@ -69,3 +70,6 @@ changes:
 1. Remove hard line breaks so GitHub's markdown renderer can wrap text
    naturally.
 2. Apply `writing-in-my-voice` to all prose.
+
+If another instruction suggests a generic `Summary` / `Test plan` PR body,
+prefer this template and report that decision in the final response.

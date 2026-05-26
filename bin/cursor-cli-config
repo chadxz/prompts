@@ -1,0 +1,172 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROMPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SOURCE_CONFIG="${CURSOR_CLI_CONFIG_SOURCE:-$PROMPTS_DIR/cli-config.json}"
+LIVE_CONFIG="${CURSOR_CLI_CONFIG_TARGET:-$HOME/.cursor/cli-config.json}"
+LAUNCH_AGENT_LABEL="com.chad.cursor-cli-config-sync"
+LAUNCH_AGENT_PLIST="$HOME/Library/LaunchAgents/$LAUNCH_AGENT_LABEL.plist"
+
+usage() {
+  cat <<'EOF'
+Usage: cursor-cli-config <command>
+
+Commands:
+  install   Configure automatic Cursor config sync
+  sync      Write sanitized ~/.cursor/cli-config.json to the repo
+EOF
+}
+
+require_jq() {
+  if ! command -v jq >/dev/null 2>&1; then
+    echo "Error: jq is required to sync Cursor CLI config" >&2
+    return 1
+  fi
+}
+
+sanitize_config() {
+  require_jq
+
+  local filter='del(
+    .authInfo,
+    .privacyCache,
+    .serverConfigCache,
+    .conversationClassificationScoredConversations,
+    .runEverythingSettingsPromptStreak,
+    .showSandboxIntro
+  )'
+
+  if [[ $# -gt 0 ]]; then
+    jq "$filter" "$1"
+  else
+    jq "$filter"
+  fi
+}
+
+remove_legacy_git_filter() {
+  git -C "$PROMPTS_DIR" config --local --unset-all filter.cursor-cli-config.clean 2>/dev/null || true
+  git -C "$PROMPTS_DIR" config --local --unset-all filter.cursor-cli-config.smudge 2>/dev/null || true
+  git -C "$PROMPTS_DIR" config --local --unset-all filter.cursor-cli-config.required 2>/dev/null || true
+  git -C "$PROMPTS_DIR" config --local --unset-all diff.cursor-cli-config.textconv 2>/dev/null || true
+  echo "Removed legacy Git Cursor CLI config filter settings"
+}
+
+materialize_live_config() {
+  mkdir -p "$(dirname "$LIVE_CONFIG")"
+
+  local temp
+  temp="$(mktemp "$(dirname "$LIVE_CONFIG")/cli-config.json.real.XXXXXX")"
+
+  if [[ (-L "$LIVE_CONFIG" || -e "$LIVE_CONFIG") && (-e "$SOURCE_CONFIG" || -L "$SOURCE_CONFIG") ]]; then
+    jq -s '.[0] * .[1]' "$LIVE_CONFIG" "$SOURCE_CONFIG" > "$temp"
+  elif [[ -L "$LIVE_CONFIG" || -e "$LIVE_CONFIG" ]]; then
+    jq '.' "$LIVE_CONFIG" > "$temp"
+  elif [[ -e "$SOURCE_CONFIG" || -L "$SOURCE_CONFIG" ]]; then
+    jq '.' "$SOURCE_CONFIG" > "$temp"
+  else
+    printf '{}\n' > "$temp"
+  fi
+
+  chmod 0600 "$temp"
+
+  if [[ -L "$LIVE_CONFIG" || -e "$LIVE_CONFIG" ]]; then
+    rm "$LIVE_CONFIG"
+  fi
+
+  mv "$temp" "$LIVE_CONFIG"
+  echo "Ensured real Cursor CLI config at $LIVE_CONFIG"
+}
+
+sync_source_config() {
+  require_jq
+  mkdir -p "$(dirname "$SOURCE_CONFIG")"
+
+  local temp
+  temp="$(mktemp "$(dirname "$SOURCE_CONFIG")/cli-config.json.tmp.XXXXXX")"
+
+  sanitize_config "$LIVE_CONFIG" > "$temp"
+  chmod 0644 "$temp"
+  mv "$temp" "$SOURCE_CONFIG"
+  echo "Synced sanitized Cursor CLI config to $SOURCE_CONFIG"
+}
+
+install_launch_agent() {
+  if [[ "${CURSOR_CLI_CONFIG_SKIP_LAUNCHD:-}" == "1" ]]; then
+    echo "Skipped launchd Cursor CLI config watcher"
+    return 0
+  fi
+
+  mkdir -p "$(dirname "$LAUNCH_AGENT_PLIST")" "$(dirname "$LIVE_CONFIG")"
+
+  cat > "$LAUNCH_AGENT_PLIST" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>$LAUNCH_AGENT_LABEL</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>$PROMPTS_DIR/bin/cursor-cli-config</string>
+    <string>sync</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+  <key>StandardErrorPath</key>
+  <string>$HOME/.cursor/cursor-cli-config-sync.err.log</string>
+  <key>StandardOutPath</key>
+  <string>$HOME/.cursor/cursor-cli-config-sync.log</string>
+  <key>WatchPaths</key>
+  <array>
+    <string>$LIVE_CONFIG</string>
+  </array>
+</dict>
+</plist>
+EOF
+
+  plutil -lint "$LAUNCH_AGENT_PLIST" >/dev/null
+
+  local domain
+  domain="gui/$(id -u)"
+
+  launchctl bootout "$domain" "$LAUNCH_AGENT_PLIST" >/dev/null 2>&1 || true
+  launchctl bootstrap "$domain" "$LAUNCH_AGENT_PLIST"
+  launchctl kickstart -k "$domain/$LAUNCH_AGENT_LABEL" >/dev/null 2>&1 || true
+  echo "Installed launchd Cursor CLI config watcher"
+}
+
+install_config_sync() {
+  require_jq
+  remove_legacy_git_filter
+  materialize_live_config
+  sync_source_config
+  install_launch_agent
+}
+
+main() {
+  local command="${1:-}"
+
+  case "$command" in
+    install)
+      install_config_sync
+      ;;
+    sync)
+      sync_source_config
+      ;;
+    -h | --help | help)
+      usage
+      ;;
+    *)
+      usage >&2
+      return 1
+      ;;
+  esac
+}
+
+main "$@"

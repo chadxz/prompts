@@ -2,10 +2,12 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TARGET_DIR="$HOME/.cursor/commands"
+CURSOR_DIR="$HOME/.cursor"
+COMMANDS_DIR="$CURSOR_DIR/commands"
 
 # shellcheck source=./setup-common.sh
 source "$SCRIPT_DIR/setup-common.sh"
 
-link_path_if_present "$SCRIPT_DIR/cursor-commands" "$TARGET_DIR"
+link_path_if_present "$SCRIPT_DIR/cursor-commands" "$COMMANDS_DIR"
+"$SCRIPT_DIR/bin/cursor-cli-config" install
 ensure_bin_on_path "$SCRIPT_DIR/bin"

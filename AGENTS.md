@@ -5,8 +5,9 @@
 - When building Docker images, use `docker buildx build` instead of
   `docker build`.
 
-- Always lookup the current date before ever doing anything that involves using
-  the date (i.e. web searches, defining filenames with the date in them, etc).
+- Don't assume the current date from model knowledge. Prefer the date provided
+  by the environment context, and look it up yourself if you don't already have
+  it. Use an explicit lookup when exact local time matters.
 
 - When running locally, do not perform any Git commit or push or Terraform
   apply unless explicitly requested to do so. When running in a cloud agent,

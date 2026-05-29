@@ -11,6 +11,8 @@ source "$PROMPTS_DIR/setup-common.sh"
 
 mkdir -p "$PI_DIR"
 
+setup_global_gitignore "$PROMPTS_DIR/.gitignore_global"
+
 for json_file in "$PROMPTS_DIR"/pi/*.json; do
     [[ -e "$json_file" ]] || continue
     link_path "$json_file" "$PI_DIR/$(basename "$json_file")"

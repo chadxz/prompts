@@ -1,0 +1,5 @@
+interface:
+  display_name: "Using Git Worktrees"
+  short_description: "Use task-specific git worktrees for repository edits."
+  default_prompt: >-
+    Use $using-git-worktrees before changing files in a Git repository.

@@ -12,6 +12,7 @@ source "$PROMPTS_DIR/setup-common.sh"
 mkdir -p "$CODEX_DIR"
 mkdir -p "$CODEX_DIR/skills"
 
+setup_global_gitignore "$PROMPTS_DIR/.gitignore_global"
 link_path "$PROMPTS_DIR" "$CODEX_DIR/prompts"
 link_path "$PROMPTS_DIR/AGENTS.md" "$CODEX_DIR/AGENTS.md"
 link_path "$PROMPTS_DIR/skills" "$CODEX_DIR/skills/personal"

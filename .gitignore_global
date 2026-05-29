@@ -1,0 +1,8 @@
+*~
+.DS_Store
+.idea
+.ijwb
+.vscode
+.aider*
+.jj
+/.worktrees/

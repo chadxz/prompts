@@ -14,6 +14,9 @@
   Git commits and pushes are allowed without asking for permission first, but
   Terraform apply still requires explicit permission.
 
+- When changing files in a git repository, work from a task-specific git
+  worktree and use the `using-git-worktrees` skill when available.
+
 - Never force a git push to main, unless explicitly requested to do so.
 
 - When you are doing a git push and need to force, always use --force-with-lease.

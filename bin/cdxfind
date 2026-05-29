@@ -20,34 +20,118 @@ if [[ -z "$index" ]]; then
 fi
 
 tmp_output="$(mktemp)"
-trap 'rm -f "$tmp_output"' EXIT
+tmp_candidates="$(mktemp)"
+tmp_log="$(mktemp)"
+trap 'rm -f "$tmp_output" "$tmp_candidates" "$tmp_log"' EXIT
 
-prompt="You are a session finder. Given a tab-separated index of Codex sessions (columns: session_id, date, working_directory, user_messages) and a search query, output ONLY the session_id (UUID) of the single best matching session.
+prompt="You are a session finder. Given a tab-separated index of Codex sessions (columns: session_id, date, working_directory, user_messages) and a search query, output matching sessions as tab-separated candidates.
 
 Rules:
-- Output ONLY the UUID, nothing else.
+- Output up to 8 matching candidates, sorted best match first.
+- Each candidate must be exactly: session_id<TAB>summary
+- The summary must be one line, 120 characters or less, with no tabs.
+- If there is one clear best match, output only that candidate.
+- If several sessions plausibly match or the query is ambiguous, output multiple candidates.
+- Use only session IDs from the index. Do not invent IDs.
 - Match based on the user messages and working directory.
 - Prefer the most recent strong match if there are several.
 - If no session matches, output: NONE
+- Output only the candidates or NONE, with no explanation, markdown, or extra text.
 
 Search query: \"$query\"
 
 Session index (one per line, tab-separated):
 $index"
 
-printf '%s' "$prompt" | codex exec --skip-git-repo-check -o "$tmp_output" -
-session_id="$(tr -d '[:space:]' < "$tmp_output")"
+if [[ -n "${CDXFIND_DEBUG:-}" ]]; then
+  printf '%s' "$prompt" | codex exec --skip-git-repo-check -o "$tmp_output" -
+elif ! printf '%s' "$prompt" | codex exec --skip-git-repo-check -o "$tmp_output" - >"$tmp_log" 2>&1; then
+  echo "Session search failed."
+  echo "Set CDXFIND_DEBUG=1 and rerun cdxfind to see Codex output."
+  exit 1
+fi
 
-if [[ -z "$session_id" || "$session_id" == "NONE" ]]; then
+lookup_session_line() {
+  local id="$1"
+  printf '%s\n' "$index" | awk -F '\t' -v id="$id" '$1 == id { print; exit }'
+}
+
+while IFS=$'\t' read -r candidate_id summary extra || [[ -n "$candidate_id" ]]; do
+  candidate_id="$(printf '%s' "$candidate_id" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')"
+
+  if [[ "$candidate_id" == "NONE" ]]; then
+    continue
+  fi
+
+  if [[ ! "$candidate_id" =~ ^[0-9a-fA-F-]{36}$ ]]; then
+    continue
+  fi
+
+  match_line="$(lookup_session_line "$candidate_id")"
+  if [[ -z "$match_line" ]]; then
+    continue
+  fi
+
+  if grep -q "^$candidate_id"$'\t' "$tmp_candidates"; then
+    continue
+  fi
+
+  if [[ -n "${extra:-}" ]]; then
+    summary="$summary $extra"
+  fi
+
+  if [[ -z "${summary:-}" ]]; then
+    summary="$(printf '%s' "$match_line" | cut -f4)"
+  fi
+  summary="$(printf '%s' "$summary" | tr '\t\n' '  ')"
+
+  printf '%s\t%s\t%s\t%s\n' \
+    "$candidate_id" \
+    "$(printf '%s' "$match_line" | cut -f2)" \
+    "$(printf '%s' "$match_line" | cut -f3)" \
+    "$summary" >>"$tmp_candidates"
+done <"$tmp_output"
+
+candidate_count="$(wc -l <"$tmp_candidates" | tr -d '[:space:]')"
+
+if [[ "$candidate_count" -eq 0 ]]; then
   echo "No matching session found."
   exit 1
 fi
 
-match_line="$(printf '%s\n' "$index" | grep "^$session_id" || true)"
+if [[ "$candidate_count" -eq 1 ]]; then
+  selected_line="$(head -n 1 "$tmp_candidates")"
+else
+  if ! command -v fzf >/dev/null 2>&1; then
+    echo "Multiple matching sessions found, but fzf is not installed."
+    exit 1
+  fi
+
+  echo "Multiple matching sessions found. Choose one:"
+  selected_line="$(
+    fzf \
+      --delimiter=$'\t' \
+      --with-nth=2,3,4 \
+      --nth=2,3,4 \
+      --header='Select a Codex session to resume' \
+      --prompt='session> ' \
+      --height=60% \
+      --layout=reverse \
+      <"$tmp_candidates" || true
+  )"
+
+  if [[ -z "$selected_line" ]]; then
+    echo "No session selected."
+    exit 130
+  fi
+fi
+
+session_id="$(printf '%s' "$selected_line" | cut -f1)"
+match_line="$(lookup_session_line "$session_id")"
 if [[ -n "$match_line" ]]; then
   echo ""
   echo "Found: $(echo "$match_line" | cut -f2) in $(echo "$match_line" | cut -f3)"
-  echo "  $(echo "$match_line" | cut -f4)"
+  echo "  $(printf '%s' "$selected_line" | cut -f4)"
   echo ""
 fi
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Creating Skills"
+  short_description: "Create portable agent skills"
+  default_prompt: "Use $creating-skills to design and validate a portable agent skill."

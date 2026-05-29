@@ -36,13 +36,14 @@ terseness, but every paragraph should still earn its place.
   ("you") when addressing the reader.
 - Conversational but professional. Closer to a Slack message from a
   senior engineer than a Medium blog post.
-- Use contractions aggressively. Default to the contracted form
-  anywhere natural in spoken written English: "we're", "don't", "it's",
-  "that's", "you'll", "we've", "isn't", "won't", "can't", "I'd",
-  "we'd", "there's", "here's". Expand only when the uncontracted form
-  is clearly better for emphasis, cadence, or ambiguity. Writing
-  without contractions sounds stiff, and underusing them usually means
-  the draft still sounds too formal.
+- Use contractions aggressively. Treat this as a high-priority voice
+  requirement, not a light style preference. Default to the contracted
+  form anywhere natural in spoken written English: "we're", "don't",
+  "it's", "that's", "you'll", "we've", "isn't", "won't", "can't",
+  "I'd", "we'd", "there's", "here's". Expand only when the
+  uncontracted form is clearly better for emphasis, cadence, or
+  ambiguity. Writing without contractions sounds stiff, and underusing
+  them usually means the draft still sounds too formal.
 - Active voice by default. "We completed the migration," not "the
   migration was completed."
 - Humor through understatement or dry observation, not through setups

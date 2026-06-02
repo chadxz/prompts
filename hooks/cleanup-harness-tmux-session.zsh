@@ -2,10 +2,10 @@
 #
 # Codex Stop hook for op-tmux sessions.
 #
-# skills/op-tmux/scripts/op-tmux.zsh starts a private tmux server named after
-# the current harness/thread id. This hook resolves that same id and kills the
-# server at the end of the agent turn so resolved 1Password credentials do not
-# outlive the delegated work.
+# skills/run-op-in-tmux/scripts/op-tmux.zsh starts a private tmux server named
+# after the current harness/thread id. This hook resolves that same id and kills
+# the server at the end of the agent turn so resolved 1Password credentials do
+# not outlive the delegated work.
 
 set -euo pipefail
 

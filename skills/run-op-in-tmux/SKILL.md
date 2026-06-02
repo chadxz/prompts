@@ -1,20 +1,22 @@
 ---
-name: op-tmux
+name: run-op-in-tmux
 description:
-  Run 1Password CLI `op run` work inside a tmux session named after the
-  current agent harness session or thread id. Use when commands need
-  1Password-resolved environment variables across multiple tool calls, when
-  Touch ID should be approved once for a turn, or when Datadog/API credentials
-  are stored as `op://` references.
+  Runs shell commands under 1Password CLI `op run` inside a harness-scoped
+  tmux session. Use when commands need to resolve `op://` references in the
+  environment or .env files.
 allowed-tools: ["Bash", "Read", "Grep"]
 ---
 
-# Op Tmux
+# Run op in tmux
 
-Use this skill when a task needs repeated shell commands that depend on
-1Password CLI secret references. The tmux session name must match the current
-harness session id. Prefer the bundled script instead of hand-rolling tmux
-commands.
+Use this skill when a task needs shell commands that depend on 1Password CLI
+secret references, especially repeated commands that should share one
+credentialed environment. Prefer the bundled script instead of hand-rolling
+tmux or `op run` commands.
+
+Do not use this skill for one-off non-secret commands, commands that can safely
+receive explicit non-secret environment values, or ordinary interactive tmux
+work unrelated to harness-scoped credentials.
 
 The helper has one normal interaction pattern: pass a single quoted command
 string after `--`. On first use, it starts a dedicated tmux server for the
@@ -32,6 +34,19 @@ scripts/op-tmux.zsh
 ```
 
 Do not assume a particular installed Codex skills path.
+
+## Default workflow
+
+1. Resolve this skill package on disk and run commands from the skill
+   directory, or invoke the script by its resolved absolute path.
+2. Include `--env-file` on the first helper call when credentialed work depends
+   on a file of `op://` references.
+3. Start with a non-secret presence check when credentials matter, such as
+   `printf '%s\n' "${DD_API_KEY:+set}"`.
+4. Run each task command as one quoted string after `--`.
+5. Use `--timeout SECONDS` for long commands instead of wrapping the helper in a
+   separate timeout tool.
+6. Report command results normally, but never print secret values.
 
 ## Session id
 
@@ -61,6 +76,14 @@ The user may need to approve Touch ID or another 1Password prompt. The prompt
 may not be visible in command output, so wait for the user to approve if the
 session appears stalled.
 
+If the helper says it cannot resolve a harness session id, stop using the helper
+for that task and explain the missing session context. Do not make up a session
+name.
+
+If the helper rejects an env file because the session was already started with
+different credentials, follow its cleanup instruction or wait for the current
+turn cleanup hook before retrying with the intended env file.
+
 The script streams combined command stdout and stderr through `tmux run-shell`
 and exits with the command status. Multiple invocations can run in parallel
 against the same session without sharing shell state.
@@ -75,3 +98,17 @@ state across invocations.
 ## Cleanup
 
 The Codex Stop hook kills the tmux session at the end of the turn.
+
+## Maintenance validation
+
+After editing this skill or the helper script, run:
+
+```bash
+validator="${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-creator"
+uv run "$validator/scripts/quick_validate.py" skills/run-op-in-tmux
+zsh -n skills/run-op-in-tmux/scripts/op-tmux.zsh
+skills/run-op-in-tmux/scripts/op-tmux.zsh --help
+```
+
+Do not run a real credentialed command as validation unless the user asked for
+credentialed work or the task already requires those credentials.

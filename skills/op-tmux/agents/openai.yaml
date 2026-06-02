@@ -1,4 +1,0 @@
-interface:
-  display_name: "Op Tmux"
-  short_description: "Run op credentials in a harness tmux session"
-  default_prompt: "Use $op-tmux to run Datadog commands with one 1Password approval."

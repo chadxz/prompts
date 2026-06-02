@@ -2,7 +2,7 @@
 #
 # Run one command inside a harness-scoped tmux server started under `op run`.
 #
-# This is the implementation for the op-tmux skill. It pairs with
+# This is the implementation for the run-op-in-tmux skill. It pairs with
 # ../../../hooks/cleanup-harness-tmux-session.zsh, which tears down the same
 # tmux server at the end of the agent turn. See ../SKILL.md for the workflow
 # agents should follow.

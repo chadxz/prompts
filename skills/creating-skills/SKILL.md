@@ -20,24 +20,31 @@ invocation, permissions, or user experience.
    comments, source artifacts, or user corrections.
 2. Scope one coherent job. Split unrelated capabilities; skip the skill if
    ordinary instructions or one helper script is enough.
-3. Choose resources before writing: `scripts/` for deterministic or fragile
+3. Choose the skill name and folder layout before writing. Treat them as part
+   of the skill contract, not cleanup work after the instructions are done.
+4. Choose resources before writing: `scripts/` for deterministic or fragile
    work, `references/` for details loaded on demand, and `assets/` for templates
    or files used in outputs.
-4. Scaffold or edit the skill folder. Use tools such as Codex `$skill-creator`
+5. Scaffold or edit the skill folder. Use tools such as Codex `$skill-creator`
    or Zed `create-skill` when helpful, then verify their output.
-5. Write metadata, instructions, and optional resources. Add platform-specific
+6. Write metadata, instructions, and optional resources. Add platform-specific
    files only when they add value.
-6. Validate and forward-test when the skill controls a workflow, external
+7. Validate and forward-test when the skill controls a workflow, external
    system, generated artifact, or cross-runtime behavior.
 
 ## Portable Baseline
 
 - Use a directory containing `SKILL.md` as the canonical package format.
+- Choose the skill name deliberately. Prefer a short, verb-led, task-shaped
+  name over shorthand, implementation details, or broad noun labels.
 - Keep the folder name and frontmatter `name` identical. Use lowercase letters,
   digits, and hyphens only; avoid leading, trailing, or repeated hyphens and
   reserved words for target runtimes, such as `anthropic` or `claude`.
 - Prefer each skill as a direct child of the skills root. Nested discovery and
   name-collision behavior vary across runtimes.
+- Keep the package structure simple and predictable: `SKILL.md` at the package
+  root, with only direct child `agents/`, `scripts/`, `references/`, and
+  `assets/` directories when they are useful.
 - Include `name` and `description` in YAML frontmatter. Keep `description` under
   1024 characters, third person, specific, and front-loaded with trigger words;
   some runtimes shorten long descriptions in large catalogs.
@@ -89,10 +96,13 @@ for another capable agent to use the skill if this metadata is ignored.
 ## Validation
 
 - Run any validator available in the current environment.
+- Verify the folder name, frontmatter `name`, `agents/openai.yaml`
+  `$skill-name`, and validation paths all match before calling the skill done.
 - For skills created with the Codex system `skill-creator`, run:
 
   ```bash
-  uv run /Users/chad/.codex/skills/.system/skill-creator/scripts/quick_validate.py path/to/skill
+  validator="${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-creator"
+  uv run "$validator/scripts/quick_validate.py" path/to/skill
   ```
 
 - Inspect `agents/openai.yaml` after generation or edits. Ensure the default

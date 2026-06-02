@@ -16,8 +16,8 @@
   "model": {
     "modelId": "gpt-5.5",
     "displayModelId": "gpt-5.5",
-    "displayName": "GPT-5.5 272K Extra High",
-    "displayNameShort": "GPT-5.5 272K Extra High",
+    "displayName": "GPT-5.5 272K Medium",
+    "displayNameShort": "GPT-5.5 272K Medium",
     "aliases": [],
     "maxMode": false
   },
@@ -43,7 +43,7 @@
       },
       {
         "id": "reasoning",
-        "value": "extra-high"
+        "value": "medium"
       },
       {
         "id": "fast",
@@ -60,7 +60,7 @@
       },
       {
         "id": "reasoning",
-        "value": "extra-high"
+        "value": "medium"
       },
       {
         "id": "fast",

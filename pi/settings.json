@@ -1,8 +1,8 @@
 {
-  "lastChangelogVersion": "0.74.0",
-  "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-5.5",
-  "defaultThinkingLevel": "xhigh",
+  "lastChangelogVersion": "0.78.0",
+  "defaultProvider": "omlx",
+  "defaultModel": "Qwen3.6-35B-A3B-6bit",
+  "defaultThinkingLevel": "high",
   "enabledModels": [
     "openai-codex/gpt-5.5",
     "openai-codex/gpt-5.4",

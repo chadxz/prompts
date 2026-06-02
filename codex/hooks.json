@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CODEX_HOME:-$HOME/.codex}/prompts/hooks/cleanup-harness-tmux-session.zsh\"",
+            "timeout": 5,
+            "statusMessage": "Cleaning up harness tmux session"
+          }
+        ]
+      }
+    ]
+  }
+}

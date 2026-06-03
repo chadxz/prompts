@@ -172,6 +172,12 @@ These are always wrong in my writing:
 - No false agency or disembodied actors ("the decision emerged", "the
   data tells us", "the conversation moved"). Name who decided, read,
   changed, or pushed.
+- No metaphorical "shape of ..." phrasing. Avoid "the shape of the
+  problem", "the shape of the work", "the shape of the solution",
+  "the shape of the conversation", and similar constructions. Say the
+  concrete thing instead: scope, constraints, tradeoffs, design,
+  ownership, risks, sequence, or open questions. Literal geometric or
+  UI uses are fine when the subject is actually visual.
 - No "Here's the kicker", "Here's the thing", "Here's where it gets
   interesting", "Here's what most people miss".
 - No "Let's break this down", "Let's unpack this", "Let's explore",

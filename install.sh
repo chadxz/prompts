@@ -9,6 +9,6 @@ COMMANDS_DIR="$CURSOR_DIR/commands"
 source "$SCRIPT_DIR/setup-common.sh"
 
 setup_global_gitignore "$SCRIPT_DIR/.gitignore_global"
+setup_git_clone_override "$SCRIPT_DIR/bin"
 link_path_if_present "$SCRIPT_DIR/cursor-commands" "$COMMANDS_DIR"
 "$SCRIPT_DIR/bin/cursor-cli-config" install
-ensure_bin_on_path "$SCRIPT_DIR/bin"

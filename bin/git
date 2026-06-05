@@ -1,0 +1,224 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+
+find_real_git() {
+  if [[ -n "${GIT_REAL_BIN:-}" ]]; then
+    if [[ -x "$GIT_REAL_BIN" ]]; then
+      printf '%s\n' "$GIT_REAL_BIN"
+      return 0
+    fi
+
+    echo "GIT_REAL_BIN is set but is not executable: $GIT_REAL_BIN" >&2
+    return 1
+  fi
+
+  local path_entry candidate candidate_dir
+  IFS=':' read -r -a path_entries <<< "$PATH"
+  for path_entry in "${path_entries[@]}"; do
+    [[ -n "$path_entry" ]] || path_entry="."
+    candidate="$path_entry/git"
+    [[ -x "$candidate" ]] || continue
+
+    candidate_dir="$(cd "$(dirname "$candidate")" && pwd -P)"
+    [[ "$candidate_dir" != "$script_dir" ]] || continue
+
+    printf '%s\n' "$candidate"
+    return 0
+  done
+
+  for candidate in /opt/homebrew/bin/git /usr/bin/git; do
+    if [[ -x "$candidate" ]]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+
+  echo "Could not find a real git executable outside $script_dir" >&2
+  return 1
+}
+
+real_git="$(find_real_git)"
+original_args=("$@")
+
+exec_real_git() {
+  exec "$real_git" "${original_args[@]}"
+}
+
+strip_trailing_slashes() {
+  local value="$1"
+
+  while [[ "$value" != "/" && "$value" == */ ]]; do
+    value="${value%/}"
+  done
+
+  printf '%s\n' "$value"
+}
+
+derive_repo_dir() {
+  local repo="$1"
+  local value base parent
+
+  value="$(strip_trailing_slashes "$repo")"
+  if [[ "$value" == *:* && "$value" != *://* ]]; then
+    value="${value##*:}"
+  fi
+
+  base="${value##*/}"
+  if [[ "$base" == ".git" ]]; then
+    parent="${value%/.git}"
+    base="${parent##*/}"
+  fi
+
+  base="${base%.git}"
+  if [[ -z "$base" || "$base" == "." || "$base" == ".." ]]; then
+    return 1
+  fi
+
+  printf '%s\n' "$base"
+}
+
+clone_option_takes_value() {
+  case "$1" in
+    --branch | \
+      --bundle-uri | \
+      --config | \
+      --depth | \
+      --filter | \
+      --jobs | \
+      --origin | \
+      --reference | \
+      --reference-if-able | \
+      --ref-format | \
+      --revision | \
+      --server-option | \
+      --shallow-exclude | \
+      --shallow-since | \
+      --template | \
+      --upload-pack | \
+      -b | \
+      -c | \
+      -j | \
+      -o | \
+      -u)
+      return 0
+      ;;
+  esac
+
+  return 1
+}
+
+global_args=()
+subcommand=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    clone)
+      subcommand="clone"
+      shift
+      break
+      ;;
+    -C | -c | --exec-path | --git-dir | --namespace | --super-prefix | \
+      --work-tree)
+      [[ $# -ge 2 ]] || exec_real_git
+      global_args+=("$1" "$2")
+      shift 2
+      ;;
+    --exec-path=* | --git-dir=* | --namespace=* | --super-prefix=* | \
+      --work-tree=*)
+      global_args+=("$1")
+      shift
+      ;;
+    --)
+      exec_real_git
+      ;;
+    -*)
+      global_args+=("$1")
+      shift
+      ;;
+    *)
+      subcommand="$1"
+      shift
+      break
+      ;;
+  esac
+done
+
+if [[ "$subcommand" != "clone" ]]; then
+  exec_real_git
+fi
+
+if [[ -n "${GIT_BARE_CLONE_BYPASS:-}" && "${GIT_BARE_CLONE_BYPASS:-}" != "0" ]]; then
+  exec "$real_git" "${global_args[@]}" clone "$@"
+fi
+
+prefix_args=()
+positionals=()
+expecting_value=false
+after_double_dash=false
+
+for arg in "$@"; do
+  if [[ "$expecting_value" == true ]]; then
+    prefix_args+=("$arg")
+    expecting_value=false
+    continue
+  fi
+
+  if [[ "$after_double_dash" == true ]]; then
+    positionals+=("$arg")
+    continue
+  fi
+
+  case "$arg" in
+    --)
+      prefix_args+=("$arg")
+      after_double_dash=true
+      ;;
+    -h | --help | --bare | --mirror | --no-bare | --separate-git-dir | \
+      --separate-git-dir=*)
+      exec "$real_git" "${global_args[@]}" clone "$@"
+      ;;
+    --*=*)
+      prefix_args+=("$arg")
+      ;;
+    -*)
+      prefix_args+=("$arg")
+      if clone_option_takes_value "$arg"; then
+        expecting_value=true
+      fi
+      ;;
+    *)
+      positionals+=("$arg")
+      ;;
+  esac
+done
+
+if [[ "$expecting_value" == true || ${#positionals[@]} -eq 0 ]]; then
+  exec "$real_git" "${global_args[@]}" clone "$@"
+fi
+
+if [[ ${#positionals[@]} -gt 2 ]]; then
+  exec "$real_git" "${global_args[@]}" clone "$@"
+fi
+
+repo="${positionals[0]}"
+requested_dir="${positionals[1]:-}"
+
+if [[ -n "$requested_dir" ]]; then
+  target_dir="$(strip_trailing_slashes "$requested_dir")"
+else
+  if ! target_dir="$(derive_repo_dir "$repo")"; then
+    exec "$real_git" "${global_args[@]}" clone "$@"
+  fi
+fi
+
+if [[ "${target_dir##*/}" == ".git" ]]; then
+  bare_target="$target_dir"
+else
+  bare_target="$target_dir/.git"
+fi
+
+echo "git clone override: cloning bare repository into $bare_target" >&2
+exec "$real_git" "${global_args[@]}" clone --bare \
+  "${prefix_args[@]}" "$repo" "$bare_target"

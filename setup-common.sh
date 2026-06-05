@@ -63,3 +63,24 @@ setup_global_gitignore() {
     echo "git core.excludesfile already points to $target"
   fi
 }
+
+setup_git_clone_override() {
+  local bin_dir="$1"
+  local wrapper="$bin_dir/git"
+  local resolved_git
+
+  if [[ ! -x "$wrapper" ]]; then
+    echo "Error: git clone override is not executable: $wrapper" >&2
+    return 1
+  fi
+
+  ensure_bin_on_path "$bin_dir"
+
+  resolved_git="$(PATH="$bin_dir:$PATH" command -v git || true)"
+  if [[ "$resolved_git" == "$wrapper" ]]; then
+    echo "Configured git clone override -> $wrapper"
+  else
+    echo "Warning: git clone override is not first on PATH: $wrapper" >&2
+    echo "Resolved git: ${resolved_git:-not found}" >&2
+  fi
+}

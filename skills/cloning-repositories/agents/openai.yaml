@@ -1,0 +1,6 @@
+interface:
+  display_name: "Cloning Repositories"
+  short_description: "Clone repositories into Chad's local repo layout."
+  default_prompt: >-
+    Use $cloning-repositories when cloning or setting up local Git
+    repositories.

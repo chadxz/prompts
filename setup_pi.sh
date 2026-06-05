@@ -12,6 +12,7 @@ source "$PROMPTS_DIR/setup-common.sh"
 mkdir -p "$PI_DIR"
 
 setup_global_gitignore "$PROMPTS_DIR/.gitignore_global"
+setup_git_clone_override "$PROMPTS_DIR/bin"
 
 for json_file in "$PROMPTS_DIR"/pi/*.json; do
     [[ -e "$json_file" ]] || continue
@@ -21,8 +22,6 @@ done
 link_path "$PROMPTS_DIR/AGENTS.md" "$PI_DIR/AGENTS.md"
 link_path "$PROMPTS_DIR/pi/extensions" "$PI_DIR/extensions"
 link_path "$PROMPTS_DIR/skills" "$PI_DIR/skills"
-
-ensure_bin_on_path "$PROMPTS_DIR/bin"
 
 echo "Symlinked pi JSON config, AGENTS.md, extensions, and skills."
 

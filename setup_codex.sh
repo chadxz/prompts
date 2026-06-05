@@ -17,6 +17,7 @@ mkdir -p "$CODEX_DIR"
 mkdir -p "$CODEX_DIR/skills"
 
 setup_global_gitignore "$PROMPTS_DIR/.gitignore_global"
+setup_git_clone_override "$PROMPTS_DIR/bin"
 link_path "$PROMPTS_DIR" "$CODEX_DIR/prompts"
 link_path "$PROMPTS_DIR/AGENTS.md" "$CODEX_DIR/AGENTS.md"
 link_path "$PROMPTS_DIR/codex/hooks.json" "$CODEX_DIR/hooks.json"
@@ -29,7 +30,5 @@ if [[ -L "$LEGACY_COMMANDS_DIR" ]]; then
 elif [[ -e "$LEGACY_COMMANDS_DIR" ]]; then
   echo "Leaving existing $LEGACY_COMMANDS_DIR in place"
 fi
-
-ensure_bin_on_path "$PROMPTS_DIR/bin"
 
 echo "Symlinked Codex prompts, global AGENTS.md, hooks, and personal skills."

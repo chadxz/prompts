@@ -8,9 +8,14 @@ description:
 
 # Using Git Worktrees
 
-Use this before changing files in a Git repo. The goal is to keep the user's
-main checkout clean while each task gets its own working tree, branch,
-dependencies, and verification state.
+Use this before changing files in a Git repo. The goal is to keep each task in
+its own working tree, branch, dependencies, and verification state.
+
+Chad's default repository layout is a bare repository stored at `<repo>/.git`
+with worktrees directly under `<repo>/`. The default branch worktree lives at
+`<repo>/main`, even when the default branch is named `master` or `trunk`. Do not
+use a normal checkout at the repository root and do not put task worktrees under
+`.worktrees/`.
 
 ## When to use this
 
@@ -20,11 +25,17 @@ files.
 
 ## Start with the current state
 
-Run these from the repo the user asked about:
+If you are already inside a worktree, run:
 
 ```bash
 git status --short --branch
 git worktree list
+```
+
+If you are at the repository container, run:
+
+```bash
+git -C <repo> worktree list
 ```
 
 Treat unrelated dirty work as user-owned. Do not move, stage, revert, clean, or
@@ -32,14 +43,14 @@ overwrite another checkout's changes unless the user explicitly asks.
 
 ## Choose the worktree
 
-If the current checkout is already for this task, use it. If it is the user's
-main checkout or belongs to a different task, create a manual worktree.
+If the current checkout is already for this task, use it. If the current
+checkout belongs to a different task, create a manual worktree.
 
 - Conductor.build workspaces already satisfy this workflow. Use the current
   workspace unless the user asks for a separate one.
 - Cursor `/worktree`, `/best-of-n`, and background-agent worktrees satisfy this
-  workflow for isolated tasks. For feature work that should survive cleanup,
-  use a manual worktree or a persistent Cursor window opened on that worktree.
+  workflow for isolated tasks. For feature work that should survive cleanup, use
+  a manual worktree or a persistent Cursor window opened on that worktree.
 - Codex.app managed worktrees satisfy this workflow for per-thread background
   work. For long-lived work, use a permanent Codex worktree or a manual
   worktree.
@@ -48,20 +59,14 @@ main checkout or belongs to a different task, create a manual worktree.
 
 ## Manual worktree convention
 
-Store manual worktrees under the repo:
+Store manual worktrees directly under the repo container:
 
 ```text
-<repo>/.worktrees/<task-slug>
+<repo>/<task-slug>
 ```
 
-Keep `/.worktrees/` in the global Git ignore file. Before creating a nested
-worktree, verify that Git ignores it:
-
-```bash
-git check-ignore -q .worktrees/ || git check-ignore -q .worktrees/example
-```
-
-If that check fails, fix the ignore configuration before creating the worktree.
+The repo container is a bare repository, so these task worktrees are adjacent to
+`.git` and `main` rather than nested inside another working tree.
 
 Use short slugs. Include issue identifiers when present:
 
@@ -84,7 +89,7 @@ For example:
 ```bash
 git -C ~/src/convergint/ee-monorepo worktree add \
   -b agent/fix-sftp-tenant-validation \
-  ~/src/convergint/ee-monorepo/.worktrees/fix-sftp-tenant-validation
+  ~/src/convergint/ee-monorepo/fix-sftp-tenant-validation
 ```
 
 ## Work from the worktree
@@ -95,13 +100,11 @@ After choosing the worktree:
 2. Re-read repository instructions from inside that checkout.
 3. Run setup commands if the project needs dependencies, generated files, or
    per-worktree environment files.
-4. Make edits, run verification, and inspect `git status --short --branch`
-   from the worktree before reporting back.
+4. Make edits, run verification, and inspect `git status --short --branch` from
+   the worktree before reporting back.
 
-Do not run broad destructive cleanup from the main checkout while nested
-worktrees exist. In particular, inspect before running commands such as
-`git clean -fdx`, because ignored `.worktrees/` directories can still be
-removed by force-clean commands.
+Do not run broad destructive cleanup until you understand which worktree you are
+inside and what other worktrees exist for the repository.
 
 ## Finish safely
 

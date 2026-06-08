@@ -33,13 +33,20 @@ Unless the user already specified otherwise:
 - Assume there is no co-authors section.
 - Assume there is no associated Linear ticket.
 - Do not create a Linear ticket by default.
+- When the repository remote is a personal repository under `github.com/chadxz/`
+  or hosted on Tangled, do not create a ticket for the commit.
 
 ## Ticket Handling
 
 If the user provides a ticket number, include the template's `Related to` line
 using that ticket.
 
-If the user explicitly asks to create a Linear ticket:
+If the repository is a personal repository under `github.com/chadxz/` or hosted
+on Tangled, do not create a ticket for the commit. If there is no user-provided
+ticket, remove the template's `Related to` line.
+
+If the user explicitly asks to create a Linear ticket and the repository is not
+a personal repository under `github.com/chadxz/` or hosted on Tangled:
 
 1. Draft the commit title and `Why?` section first.
 2. Create the ticket under the `EE` team:

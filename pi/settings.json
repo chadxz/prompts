@@ -1,5 +1,5 @@
 {
-  "lastChangelogVersion": "0.78.0",
+  "lastChangelogVersion": "0.79.3",
   "defaultProvider": "omlx",
   "defaultModel": "Qwen3.6-35B-A3B-6bit",
   "defaultThinkingLevel": "high",

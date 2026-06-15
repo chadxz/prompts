@@ -14,6 +14,8 @@
   Git commits and pushes are allowed without asking for permission first, but
   Terraform apply still requires explicit permission.
 
+- Source for applications can be found in `~/src`.
+
 - When changing files in a git repository, work from a task-specific git
   worktree and use the `using-git-worktrees` skill when available.
 

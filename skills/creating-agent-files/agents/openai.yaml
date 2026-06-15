@@ -1,0 +1,6 @@
+interface:
+  display_name: "Creating Agent Files"
+  short_description: "Create shared agent instruction files."
+  default_prompt: >-
+    Use $creating-agent-files to add CONTRIBUTING.md, AGENTS.md, and CLAUDE.md
+    instruction files.

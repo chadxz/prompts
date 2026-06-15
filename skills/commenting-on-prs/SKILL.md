@@ -18,6 +18,24 @@ instead of embedding escaped newlines in a quoted argument. Shells do not turn
 `\n` inside ordinary quotes into newline characters, so GitHub will receive the
 literal backslash-n text.
 
+## Review Feedback Workflow
+
+When responding to inline PR feedback, reply to the existing review comment
+thread and then resolve that review thread. Use thread-aware data from GitHub
+GraphQL or the GitHub comment helper scripts to map both IDs involved:
+
+- the review comment REST ID for the reply endpoint
+- the review thread GraphQL ID for `resolveReviewThread`
+
+Treat a user request to respond to PR feedback as permission to reply in-thread
+and resolve the thread once the feedback has been addressed. Leave a thread
+unresolved only when the response asks for clarification, explains that the
+feedback won't be addressed, or the user explicitly asks not to resolve it.
+
+Do not leave a top-level PR comment for inline feedback when a review thread is
+available. Top-level PR comments are only appropriate for top-level feedback,
+overall status updates, or comments that aren't attached to a review thread.
+
 Common patterns:
 
 ```bash
@@ -26,6 +44,17 @@ gh api repos/{owner}/{repo}/pulls/{pr}/comments/{id}/replies \
   -F body=@- <<'EOF'
 <comment>
 EOF
+
+# Resolve the review thread after replying
+gh api graphql \
+  -f query='
+mutation($threadId: ID!) {
+  resolveReviewThread(input: { threadId: $threadId }) {
+    thread { id isResolved }
+  }
+}
+' \
+  -f threadId='{thread_id}'
 
 # Leave a top-level PR comment
 gh pr comment {pr} --repo {owner}/{repo} --body-file - <<'EOF'

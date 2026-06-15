@@ -41,6 +41,13 @@
 
 - When writing C# unit tests, do not add Arrange / Act / Assert comments.
 
+- When writing TypeScript or JavaScript, give every function and class a
+  corresponding JSDoc header. The header should describe the purpose of the
+  function or class and any context that helps a reader understand why it
+  exists or why it is written a certain way. Avoid argument type annotations in
+  TypeScript files, but include argument and return value explanations when
+  they clarify behavior.
+
 - When writing and executing Python scripts, use `uv` to ensure the necessary
   runtime and packages are installed and available.
 

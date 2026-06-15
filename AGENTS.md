@@ -51,3 +51,7 @@
   syntax. The absolute path form is //apps/my-app:test. The relative form is :test.
 
 - Do not put directory structures in README files.
+
+- Avoid grab-bag files like `utils`, `helpers`, or `constants`. Prefer placing
+  constants and helper functions alongside the code that uses them, or in
+  narrowly named domain modules when sharing is truly needed.

@@ -57,6 +57,9 @@
 - When in a monorepo and referring to mise tasks, always use the monorepo
   syntax. The absolute path form is //apps/my-app:test. The relative form is :test.
 
+- When using `mise` in a new directory, run `mise trust` if needed instead of
+  working around trust failures.
+
 - Do not put directory structures in README files.
 
 - Avoid grab-bag files like `utils`, `helpers`, or `constants`. Prefer placing

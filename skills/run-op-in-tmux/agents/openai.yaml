@@ -1,6 +1,0 @@
-interface:
-  display_name: "Run op in tmux"
-  short_description: "Run 1Password credentials in a harness tmux session"
-  default_prompt: >-
-    Use $run-op-in-tmux to run credentialed shell commands with one 1Password
-    approval.

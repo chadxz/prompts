@@ -2,8 +2,8 @@
 #
 # Setup symlinks for Codex configuration.
 #
-# This installs the shared prompts checkout, AGENTS.md, personal skills, and
-# codex/hooks.json into CODEX_HOME so Codex can discover both skills and hooks.
+# This installs the shared prompts checkout, AGENTS.md, and personal skills
+# into CODEX_HOME so Codex can discover them.
 
 set -euo pipefail
 
@@ -20,7 +20,6 @@ setup_global_gitignore "$PROMPTS_DIR/.gitignore_global"
 setup_git_clone_override "$PROMPTS_DIR/bin"
 link_path "$PROMPTS_DIR" "$CODEX_DIR/prompts"
 link_path "$PROMPTS_DIR/AGENTS.md" "$CODEX_DIR/AGENTS.md"
-link_path "$PROMPTS_DIR/codex/hooks.json" "$CODEX_DIR/hooks.json"
 link_path "$PROMPTS_DIR/skills" "$CODEX_DIR/skills/personal"
 
 LEGACY_COMMANDS_DIR="$CODEX_DIR/skills/personal-commands"
@@ -31,4 +30,4 @@ elif [[ -e "$LEGACY_COMMANDS_DIR" ]]; then
   echo "Leaving existing $LEGACY_COMMANDS_DIR in place"
 fi
 
-echo "Symlinked Codex prompts, global AGENTS.md, hooks, and personal skills."
+echo "Symlinked Codex prompts, global AGENTS.md, and personal skills."

@@ -137,6 +137,14 @@ Slack and Notion are connector-backed local snapshots:
 - `data/slack_channels.json`
 - `data/notion_pages.json`
 
+Datadog activity is a local evidence snapshot:
+
+- `data/datadog_activity.json`
+
+Keep Datadog scoped to the report mode. For a personal report, use it
+as evidence for Chad's workstreams. For an org report, it can cover
+broader dashboards, incidents, monitors, or operational activity.
+
 ## Snapshot schemas
 
 `data/slack_channels.json` is a JSON list of objects with:
@@ -184,6 +192,11 @@ Example:
 ]
 ```
 
+`data/datadog_activity.json` is a JSON object. The current personal
+report expects a curated object, not a raw array of org events. Keep it
+small and evidence-oriented unless the org report explicitly needs a
+broader Datadog digest.
+
 ## Verification rules
 
 - Run `mise run bootstrap-tracked-sources` before giving up on a missing
@@ -204,5 +217,9 @@ Example:
 - `data/notion_pages.json` is required. If it is missing or invalid,
   the report must fail and tell the user to run
   `$reporting-work-activity`.
+- `data/datadog_activity.json` is required when `report_config.py`
+  lists it in `REQUIRED_DATA_FILES`. If it is missing or invalid,
+  refresh or rebuild the scoped Datadog evidence before reporting the
+  output as complete.
 - Leave `muted_slack_channels.json` untouched unless the user explicitly
   asks to change muted channels.

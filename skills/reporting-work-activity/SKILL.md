@@ -6,9 +6,9 @@ description:
   Linear fetch, refreshing seed Slack and Notion sources through
   Codex connectors, running a bounded discovery pass every run, and
   regenerating the HTML report in `dist/`. Use when the user asks to
-  refresh, rebuild, update, or regenerate the weekly activity report,
-  especially when they want current Slack or Notion coverage in that
-  report.
+  refresh, rebuild, update, or regenerate a weekly activity report,
+  especially when they need the report scoped as personal activity or
+  full organization activity.
 ---
 
 # Activity Report Refresh
@@ -18,6 +18,24 @@ Use the local tools there for GitHub and Linear, then fill the Slack
 and Notion gaps with Codex connectors and write the resulting snapshots
 under `data/`.
 
+## Scope first
+
+Decide the report scope before refreshing or rewriting conclusions.
+
+- Personal report: use this when the user says "me", "my activity",
+  "just me", "about me", "make me look good", or corrects an org-wide
+  report as too broad. Read
+  `references/personal-vs-org-reports.md`
+  before changing content.
+- Full org report: use this only when the user asks for Convergint,
+  organization, team, workspace, department, or broad weekly activity.
+- If the wording is ambiguous, ask a short scope question before doing
+  connector work. Do not default from a prior run.
+
+For personal reports, GitHub and Linear should be filtered to Chad's own
+activity first. Slack, Notion, and Datadog should support the story
+instead of becoming broad digest sections.
+
 ## Quick start
 
 Copy this checklist and track progress:
@@ -25,6 +43,7 @@ Copy this checklist and track progress:
 ```text
 Activity report refresh progress:
 - [ ] Confirm the bundled runtime path and current local state
+- [ ] Decide and record scope: personal report or full org report
 - [ ] Seed `tracked_sources.json` if it is missing
 - [ ] Clear generated cache unless the user explicitly wants to keep it
 - [ ] Run `mise run fetch`
@@ -32,6 +51,7 @@ Activity report refresh progress:
 - [ ] Run the bounded discovery pass for Slack and Notion
 - [ ] Write `data/slack_channels.json`
 - [ ] Write `data/notion_pages.json`
+- [ ] Confirm any required Datadog snapshot matches the selected scope
 - [ ] Run `mise run report`
 - [ ] Ensure the local report server is serving the rebuilt report
 - [ ] Open the served report in the in-app browser and verify it loads
@@ -47,56 +67,61 @@ Activity report refresh progress:
    home directory for the runtime unless the user explicitly points you
    at another clone.
 2. Read `README.md`, `report_config.py`, and `report_sources.py`.
+   Read `references/personal-vs-org-reports.md` when the request asks
+   for a personal report, when the user contrasts personal and org
+   coverage, or when you need to export a single-page PDF.
    Read
    `references/runtime-contract.md`
    only when you need the exact snapshot schema, tracked source
    contract, or verification rules.
-3. If `tracked_sources.json` is missing, run
+3. Decide whether this run is personal or org-wide before refreshing
+   data or rewriting conclusions.
+4. If `tracked_sources.json` is missing, run
    `mise run bootstrap-tracked-sources` before doing anything else.
    That task can seed the config from local snapshots or
    `dist/summary.json`.
-4. Only if the bootstrap task says there were no usable local
+5. Only if the bootstrap task says there were no usable local
    artifacts should you stop and tell the user to copy
    `tracked_sources.template.json` to `tracked_sources.json`, then fill
    in their private Slack channels and Notion pages.
-5. Unless the user explicitly asked to use cache or not clear it, run
+6. Unless the user explicitly asked to use cache or not clear it, run
    `mise run clear-cache` before the refresh.
-6. Treat cache as the generated report state:
+7. Treat cache as the generated report state:
    - clear `data/*.json`
    - clear `data/linear_team_dumps/*.json`
    - clear `dist/*`
    - preserve `tracked_sources.json` and `muted_slack_channels.json`
-7. Run `mise run fetch`. Fix that step before touching Slack or Notion
+8. Run `mise run fetch`. Fix that step before touching Slack or Notion
    if GitHub or Linear refresh fails.
-8. Treat `tracked_sources.json` as a seed list, not a hard cap. Start
+9. Treat `tracked_sources.json` as a seed list, not a hard cap. Start
    with those Slack channels and Notion pages so the refresh has a
    reliable backbone.
-9. Refresh Slack from the seeded channels first.
-10. Refresh Notion from the seeded pages first.
-11. Run the bounded discovery pass for both Slack and Notion on every
+10. Refresh Slack from the seeded channels first.
+11. Refresh Notion from the seeded pages first.
+12. Run the bounded discovery pass for both Slack and Notion on every
    refresh, even if the seeded sources looked healthy.
-12. Use the prior `dist/summary.json` only as a schema/bootstrap aid.
+13. Use the prior `dist/summary.json` only as a schema/bootstrap aid.
    Do not let it anchor the actual weekly conclusions if the fresh
    connector reads say something different.
-13. If the discovery pass surfaces a new channel or page that seems
+14. If the discovery pass surfaces a new channel or page that seems
    likely to matter again, append it to the local `tracked_sources.json`
    before you finish.
-14. Run `mise run report`.
-15. Ensure the local report server is serving the rebuilt report:
+15. Run `mise run report`.
+16. Ensure the local report server is serving the rebuilt report:
     - prefer reusing the existing server if port `8765` is already
       serving this runtime
     - otherwise run `mise run serve`
     - if another process is holding the port for a stale runtime, stop
       it and restart `mise run serve`
-16. Tell the user the report is available at
+17. Tell the user the report is available at
     `http://127.0.0.1:8765/`.
-17. Open `http://127.0.0.1:8765/` in the in-app browser and verify the
+18. Open `http://127.0.0.1:8765/` in the in-app browser and verify the
     rebuilt report actually loaded:
     - confirm the page title and summary load
-    - confirm the Slack and Notion sections render
+    - confirm the selected personal or org layout renders
     - confirm there is no missing-snapshot or stale-fallback messaging
-18. Run `mise run check` if you changed code, tests, or docs.
-19. Verify the generated page built from current Slack and Notion
+19. Run `mise run check` if you changed code, tests, or docs.
+20. Verify the generated page built from current Slack and Notion
    snapshots. Slack and Notion snapshot files are required for the
    report to build.
 
@@ -159,6 +184,14 @@ Default execution:
 
 ## Gotchas
 
+- "My weekly report" means personal by default. Do not answer that with
+  workspace-wide counts or org-level digest sections.
+- Personal reports should tell the story of Chad's major bodies of work.
+  Use raw counts as evidence, not as the main structure.
+- Personal reports may cite PRs not authored by Chad only when they
+  explain Chad's workstream, support, or decision-making.
+- If a project is demo-worthy or should be discussed this week, make it
+  visually visible in the report and link the direct evidence.
 - `mise run fetch` only owns GitHub and Linear. It does not refresh
   Slack or Notion.
 - `mise run bootstrap-tracked-sources` is the first recovery path when
@@ -183,6 +216,13 @@ Default execution:
   local snapshots for a real report build. Do not run `mise run report`
   until both files were refreshed in the current run or explicitly
   confirmed current by the user.
+- If the runtime requires `data/datadog_activity.json`, keep that
+  snapshot scoped to the selected report mode. For a personal report,
+  Datadog should be evidence for Chad's work, not a feed of all org
+  events.
+- Single-page PDF export needs export-specific browser CSS. Read
+  `references/personal-vs-org-reports.md` before generating or fixing a
+  one-page PDF.
 - Do not describe Slack coverage as workspace-wide unless you actually
   performed broad workspace searches beyond the seeded channels.
 - Do not reuse the old summary as content. It is only there to help

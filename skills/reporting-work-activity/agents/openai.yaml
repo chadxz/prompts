@@ -1,4 +1,8 @@
 interface:
   display_name: "Reporting Work Activity"
-  short_description: "Pull fresh activity data and rebuild the report"
-  default_prompt: "Use $reporting-work-activity to pull fresh GitHub, Linear, Slack, and Notion data and rebuild the weekly activity report."
+  short_description: >
+    Pull fresh activity data and rebuild personal or org reports
+  default_prompt: >
+    Use $reporting-work-activity to choose personal or org scope, pull
+    fresh GitHub, Linear, Slack, Notion, and Datadog evidence, and
+    rebuild the weekly activity report.

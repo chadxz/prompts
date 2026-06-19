@@ -79,6 +79,17 @@ def test_dedupe_linear_issues_keeps_latest_unique_issue() -> None:
     assert deduped == [newer, other]
 
 
+def test_personal_filters_match_chad_only() -> None:
+    assert generate_report.is_personal_github_pr(
+        {"author": {"login": generate_report.PERSON_GITHUB_LOGIN}}
+    )
+    assert not generate_report.is_personal_github_pr({"author": {"login": "someone-else"}})
+    assert generate_report.is_personal_linear_issue(
+        {"assignee": {"name": generate_report.PERSON_LINEAR_ASSIGNEE}}
+    )
+    assert not generate_report.is_personal_linear_issue({"assignee": None})
+
+
 def test_load_slack_highlights_requires_snapshot(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(generate_report, "SLACK_SNAPSHOT_FILE", tmp_path / "slack.json")
 
@@ -121,6 +132,22 @@ def test_load_notion_highlights_prefers_snapshot(tmp_path, monkeypatch) -> None:
             "summary": "Fresh connector-backed summary.",
         }
     ]
+
+
+def test_load_datadog_activity_requires_object_snapshot(tmp_path, monkeypatch) -> None:
+    snapshot_path = tmp_path / "datadog.json"
+    snapshot_path.write_text("[]")
+    monkeypatch.setattr(generate_report, "DATADOG_SNAPSHOT_FILE", snapshot_path)
+
+    try:
+        generate_report.load_datadog_activity()
+    except SystemExit as exc:
+        message = str(exc)
+    else:
+        raise AssertionError("load_datadog_activity should exit when the snapshot is invalid")
+
+    assert "datadog.json" in message
+    assert "Expected a JSON object" in message
 
 
 def test_report_sources_reads_private_config(tmp_path, monkeypatch) -> None:

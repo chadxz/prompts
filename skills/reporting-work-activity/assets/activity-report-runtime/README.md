@@ -76,8 +76,8 @@ That writes these report inputs:
 The fetch step also refreshes `data/linear_team_dumps/` so we've got the
 per-team Linear samples that feed the deduped issue export.
 
-Slack and Notion are refreshed separately through the Codex skill at
-[reporting-work-activity](../../SKILL.md).
+Slack, Notion, and scoped Datadog evidence are refreshed separately through
+the Codex skill at [reporting-work-activity](../../SKILL.md).
 If `tracked_sources.json` is missing, first run:
 
 ```bash
@@ -89,9 +89,11 @@ That task tries to seed the config from `data/slack_channels.json`,
 fails should you copy `tracked_sources.template.json` to
 `tracked_sources.json` and fill in your private Slack channels and
 Notion pages manually. The skill loads that private config through
-`report_sources.py`, writes
-`data/slack_channels.json` and `data/notion_pages.json`, and then reruns the
-report.
+`report_sources.py`, writes `data/slack_channels.json` and
+`data/notion_pages.json`, and then reruns the report. When the runtime
+requires `data/datadog_activity.json`, keep that snapshot scoped to the
+selected report mode. Personal reports should use Datadog as evidence for
+Chad's workstreams, not as a broad org feed.
 
 Treat `tracked_sources.json` as the starting point for a refresh, not as
 the complete ceiling of what the report is allowed to include. The skill
@@ -110,7 +112,7 @@ That clears generated JSON snapshots under `data/`, clears
 `data/linear_team_dumps/`, and clears `dist/`. It preserves
 `tracked_sources.json` and `muted_slack_channels.json`.
 
-Those two snapshot files are required for a real report build. If they are
+Those snapshot files are required for a real report build. If they are
 missing or stale, use `$reporting-work-activity` before running
 `mise run report`.
 
@@ -188,5 +190,6 @@ uv run pytest
 - `pyproject.toml` keeps the Python tooling config in one place.
 - `mise.toml` pins the Python version and gives us stable task names for the
   common flows.
-- `data/slack_channels.json` and `data/notion_pages.json` are required local
-  snapshots written by the Codex skill, not by `mise run fetch`.
+- `data/slack_channels.json`, `data/notion_pages.json`, and any required
+  `data/datadog_activity.json` file are local snapshots written or curated by
+  the Codex skill, not by `mise run fetch`.

@@ -30,6 +30,27 @@ container and the root `.git` directory is bare.
 
 ## Clone Commands
 
+Before relying on a plain `git clone`, verify that Chad's wrapper is the first
+Git executable on `PATH`:
+
+```bash
+type -a git
+```
+
+The first result must be the prompts wrapper, usually:
+
+```text
+git is /Users/chad/src/personal/prompts/main/bin/git
+```
+
+If another Git executable comes first, such as `/opt/homebrew/bin/git` or
+`/usr/bin/git`, the wrapper will not run. Use the explicit bare clone form
+instead:
+
+```bash
+git clone --bare <url> <repo>/.git
+```
+
 Use the normal command:
 
 ```bash
@@ -57,6 +78,18 @@ If the wrapper is unavailable, run the bare clone form directly:
 ```bash
 git clone --bare <url> <repo>/.git
 ```
+
+After cloning, confirm the root `.git` directory is a bare repository before
+adding worktrees:
+
+```bash
+git --git-dir=<repo>/.git config --get core.bare
+```
+
+The command should print `true`. If it prints `false`, or if `git -C <repo>
+worktree add main` reports that `main` is already used by the root checkout,
+the repository was cloned with raw Git. Remove the bad clone and repeat the
+clone with the explicit bare form.
 
 ## First Worktree
 

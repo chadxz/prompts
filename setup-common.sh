@@ -48,6 +48,25 @@ ensure_bin_on_path() {
   fi
 }
 
+ensure_mise_shims_on_zprofile() {
+  local zprofile="$HOME/.zprofile"
+
+  if grep -qF '.local/share/mise/shims' "$zprofile" 2>/dev/null; then
+    echo "mise shims already configured in ~/.zprofile"
+    return 0
+  fi
+
+  {
+    echo ""
+    echo "# mise shims for Codex login shells"
+    echo 'case ":$PATH:" in'
+    echo '  *":$HOME/.local/share/mise/shims:"*) ;;'
+    echo '  *) export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH" ;;'
+    echo 'esac'
+  } >> "$zprofile"
+  echo "Added mise shims to ~/.zprofile"
+}
+
 setup_global_gitignore() {
   local source="$1"
   local target="$HOME/.gitignore_global"

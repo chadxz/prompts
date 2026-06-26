@@ -170,6 +170,16 @@ These are always wrong in my writing:
 - No negative parallelism ("It's not X, it's Y"). Includes the causal
   variant "not because X, but because Y" and the cross-sentence
   reframe "The question isn't X. The question is Y."
+  Bad:  "It's not about replacing the workflow. It's about making it
+        visible."
+  Good: "We need to make the workflow visible before we change it."
+  Bad:  "The question isn't whether CI can run it. The question is who
+        owns it."
+  Good: "We need to decide who owns this before we wire it into CI."
+  Bad:  "This failed not because the test was flaky, but because setup
+        hid the dependency."
+  Good: "This failed because setup hid the dependency behind a test
+        that looked flaky."
 - No concession-pivot formula where the sentence gives a mild
   concession before turning to the real point: "That worked, but...",
   "This is useful, but...", "It's not wrong, but...", "I agree, but...",

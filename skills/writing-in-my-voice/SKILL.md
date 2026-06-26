@@ -61,13 +61,14 @@ announcement):
 > For most of that time, onboarding meant messaging us on Slack and
 > waiting for someone on the EE team to write Terraform. SSH key
 > rotations, new tenants, access changes, all of it went through us.
-> That worked, but it put us in the middle of every operational
-> change, and "self-service capabilities" has been sitting on the
-> known-missing list since day one.
+> The process kept tenants moving while demand was small. It also put
+> us in the middle of every operational change, and "self-service
+> capabilities" has been sitting on the known-missing list since day
+> one.
 
 Notice: contractions, specific names and numbers, honest about
-limitations ("That worked, but..."), context before the reveal, no
-fanfare.
+limitations without a concession-pivot formula, context before the
+reveal, no fanfare.
 
 ## Prose
 
@@ -88,8 +89,8 @@ fanfare.
 - Don't hedge. Hedging is softening a claim you believe ("it could
   potentially be argued that..."). If something is true, state it.
   This is different from honesty about real limitations, which you
-  should state directly ("That worked, but it put us in the middle of
-  every operational change").
+  should state directly ("The process put us in the middle of every
+  operational change").
 - Link to the specific PR, ADR, doc, or Slack channel when
   referencing work. Don't describe something vaguely when you can
   point to it.
@@ -106,7 +107,7 @@ fanfare.
   into Slack.
 - Follow a natural reading order: context/history, then what's new,
   then how to use it, then what's next.
-- Use headers to organize, but let the prose carry the argument within
+- Use headers to organize, and let the prose carry the argument within
   each section. Headers should be short descriptive phrases in
   sentence case.
 - Tables only when the data has two or more dimensions that need
@@ -138,18 +139,18 @@ When writing a comment directed at a bot (Dependabot PR, GitHub
 Actions bot, automated review), don't speak to it as a human. No
 "thanks for flagging this" or "great catch". Write as if other
 engineers will read the comment later for context. The bot is the
-recipient, but humans are the audience.
+recipient. Humans are the audience.
 
 ### Incident and Bad-News Communications
 
-Keep the same voice, but drop the humor. Be direct about what
+Keep the same voice and drop the humor. Be direct about what
 happened, what the impact was, and what's being done. Don't
 editorialize or assign blame.
 
 ### Emoji
 
 Don't overuse emoji. They're fine in Slack and in occasional Notion
-callouts, but don't scatter them through prose.
+callouts. Don't scatter them through prose.
 
 ## Tropes to Avoid
 
@@ -169,6 +170,12 @@ These are always wrong in my writing:
 - No negative parallelism ("It's not X, it's Y"). Includes the causal
   variant "not because X, but because Y" and the cross-sentence
   reframe "The question isn't X. The question is Y."
+- No concession-pivot formula where the sentence gives a mild
+  concession before turning to the real point: "That worked, but...",
+  "This is useful, but...", "It's not wrong, but...", "I agree, but...",
+  or "X, but Y" as a rhetorical hinge. State the limitation directly,
+  split the ideas into separate sentences, or use a specific
+  cause-and-effect relationship.
 - No false agency or disembodied actors ("the decision emerged", "the
   data tells us", "the conversation moved"). Name who decided, read,
   changed, or pushed.

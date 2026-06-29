@@ -1,0 +1,4 @@
+interface:
+  display_name: "Managing Temporal Cloud Resources"
+  short_description: "Operate Convergint Temporal Cloud from the CLI"
+  default_prompt: "$managing-temporal-cloud-resources: inspect Temporal Cloud."

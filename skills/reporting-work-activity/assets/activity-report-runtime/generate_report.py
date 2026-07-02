@@ -22,6 +22,7 @@ from report_config import (
     ORG,
     OUTPUT_DIR,
     REPORT_SERVER_ORIGIN,
+    REPORT_TIMEZONE,
     REPORT_TITLE,
     REQUIRED_DATA_FILES,
     SLACK_SNAPSHOT_FILE,
@@ -3646,6 +3647,985 @@ def build_streamlined_personal_html(summary: dict) -> str:
 """
 
 
+def build_demo_brief_html(summary: dict) -> str:
+    github_data = summary["github"]
+    linear_data = summary["linear"]
+    datadog_data = summary["datadog"]
+    slack_highlights = summary["slack_highlights"]
+    notion_highlights = summary["notion_highlights"]
+    window_label = report_window_label()
+
+    primary_repo = (
+        github_data["personal_top_pr_repos"][0][0]
+        if github_data["personal_top_pr_repos"]
+        else "n/a"
+    )
+    primary_repo_count = (
+        github_data["personal_top_pr_repos"][0][1] if github_data["personal_top_pr_repos"] else 0
+    )
+
+    demo_items = [
+        {
+            "label": "Demo 01",
+            "title": "CTC financials is the clearest show-and-tell.",
+            "body": (
+                "The app moved from a Dallas-server dashboard into a platform path with GitHub, "
+                "CI, SSO planning, and a real data fix. The SQL root cause is concrete enough "
+                "to explain, and the product value is easy to see."
+            ),
+            "evidence": [
+                ("Planning notes", "https://app.notion.com/p/3815f445bd31806f8634d7d6abdc70b4"),
+                (
+                    "convergint/ctc-financials PR #11",
+                    "https://github.com/convergint/ctc-financials/pull/11",
+                ),
+                (
+                    "CTC thread",
+                    "https://convergint.enterprise.slack.com/archives/C0AQHKE74MT/p1782516215054649?thread_ts=1781818845.350249&cid=C0AQHKE74MT",
+                ),
+            ],
+        },
+        {
+            "label": "Demo 02",
+            "title": "Temporal is ready to discuss beyond Engineering Enablement.",
+            "body": (
+                "Dual auth landed, the Temporal CLI path is documented, and the alert-fatigue "
+                "worker gives a practical example of durable execution for scheduled operations."
+            ),
+            "evidence": [
+                ("Temporal guide", "https://app.notion.com/p/3105f445bd3180759f1bd60b89bb79ef"),
+                (
+                    "convergint/ee-monorepo PR #1637",
+                    "https://github.com/convergint/ee-monorepo/pull/1637",
+                ),
+                (
+                    "convergint/ee-monorepo PR #1617",
+                    "https://github.com/convergint/ee-monorepo/pull/1617",
+                ),
+            ],
+        },
+        {
+            "label": "Demo 03",
+            "title": "Datadog work has visible before-and-after evidence.",
+            "body": (
+                "The certification cohort dashboard was corrected, the observability canary "
+                "alerts got quieter, and the onboarding CLI made a small operational path much faster."
+            ),
+            "evidence": [
+                ("Cert dashboard", "https://us3.datadoghq.com/dashboard/vtg-s2b-mv2"),
+                (
+                    "convergint/ee-monorepo PR #1643",
+                    "https://github.com/convergint/ee-monorepo/pull/1643",
+                ),
+                (
+                    "Monitor thread",
+                    "https://convergint.enterprise.slack.com/archives/C08N2ALU6PL/p1782775561265779?thread_ts=1782738515.678839&cid=C08N2ALU6PL",
+                ),
+            ],
+        },
+        {
+            "label": "Demo 04",
+            "title": "Mulesoft CloudHub support is a clean platform-assist story.",
+            "body": (
+                "A Slack support ask became DNS, Terraform, Cloudflare origin certificates, "
+                "and Anypoint TLS context modeling. It is small enough to explain quickly."
+            ),
+            "evidence": [
+                (
+                    "convergint/mulesoft-integrations PR #2270",
+                    "https://github.com/convergint/mulesoft-integrations/pull/2270",
+                ),
+                (
+                    "convergint/mulesoft-integrations PR #2271",
+                    "https://github.com/convergint/mulesoft-integrations/pull/2271",
+                ),
+                (
+                    "Support thread",
+                    "https://convergint.enterprise.slack.com/archives/C07EN6LGE5C/p1782918629548409",
+                ),
+            ],
+        },
+    ]
+
+    work_lanes = [
+        {
+            "marker": "01",
+            "title": "CTC financials moved from app rescue into platform ownership.",
+            "body": (
+                "Chad carried the repo, SQL correction, review loop, and hosting path together. "
+                "The key technical fix was replacing view behavior that depended on dbo.FF_Company() "
+                "with a clearer SQL path for the new read-only user."
+            ),
+            "proof": "EE-985 reached Done, convergint/ctc-financials PR #11 is the current implementation trail, and Hari confirmed the fix made sense while asking for a live number comparison.",
+            "evidence": [
+                (
+                    "EE-985",
+                    "https://linear.app/convergint/issue/EE-985/consolidate-ctc-financial-dashboards",
+                ),
+                (
+                    "convergint/ctc-financials PR #11",
+                    "https://github.com/convergint/ctc-financials/pull/11",
+                ),
+                ("Planning", "https://app.notion.com/p/3815f445bd31806f8634d7d6abdc70b4"),
+            ],
+        },
+        {
+            "marker": "02",
+            "title": "Delivery rails got more reusable.",
+            "body": (
+                "The CD pipeline can run bespoke mise tasks as deploy targets, stable mise settings "
+                "were swept across repos, and Temporal Cloud now supports API-key CLI access while "
+                "workers keep platform-managed mTLS."
+            ),
+            "proof": "convergint/ee-monorepo PRs #1637, #1638, #1639, #1651, and #1652 form the visible trail behind the runtime and delivery-system work.",
+            "evidence": [
+                (
+                    "convergint/ee-monorepo PR #1637",
+                    "https://github.com/convergint/ee-monorepo/pull/1637",
+                ),
+                (
+                    "convergint/ee-monorepo PR #1638",
+                    "https://github.com/convergint/ee-monorepo/pull/1638",
+                ),
+                (
+                    "convergint/ee-monorepo PR #1651",
+                    "https://github.com/convergint/ee-monorepo/pull/1651",
+                ),
+                (
+                    "convergint/ee-monorepo PR #1652",
+                    "https://github.com/convergint/ee-monorepo/pull/1652",
+                ),
+            ],
+        },
+        {
+            "marker": "03",
+            "title": "Datadog stayed close to decisions people could act on.",
+            "body": (
+                "Chad fixed the certification dashboard data path, pushed the alert-fatigue worker "
+                "toward a durable weekly process, and kept monitor tuning tied to actual alert volume."
+            ),
+            "proof": "The certification dashboard resolves in Datadog, the canary monitors are OK, and the staging alert volume dropped from roughly 52 per day to about 2 per day in the follow-up thread.",
+            "evidence": [
+                ("Dashboard", "https://us3.datadoghq.com/dashboard/vtg-s2b-mv2"),
+                (
+                    "convergint/ee-monorepo PR #1643",
+                    "https://github.com/convergint/ee-monorepo/pull/1643",
+                ),
+                (
+                    "EE-992",
+                    "https://linear.app/convergint/issue/EE-992/run-alert-triage-as-a-temporal-worker",
+                ),
+            ],
+        },
+        {
+            "marker": "04",
+            "title": "Support work turned into auditable platform changes.",
+            "body": (
+                "Mulesoft QA DNS and TLS work, Salesforce repository governance, Oracle access, "
+                "and the repo archive-candidate pass all moved through links people can review later."
+            ),
+            "proof": "The Salesforce repo is now managed by Terraform in ee-monorepo, Mulesoft DNS/TLS work is in review, and the stale-repo archive pass went to #engineering for owner input.",
+            "evidence": [
+                (
+                    "convergint/mulesoft-integrations PR #2270",
+                    "https://github.com/convergint/mulesoft-integrations/pull/2270",
+                ),
+                (
+                    "convergint/mulesoft-integrations PR #2271",
+                    "https://github.com/convergint/mulesoft-integrations/pull/2271",
+                ),
+                (
+                    "convergint/ee-monorepo PR #1630",
+                    "https://github.com/convergint/ee-monorepo/pull/1630",
+                ),
+                (
+                    "Repo cleanup",
+                    "https://convergint.enterprise.slack.com/archives/C07EUS59F7C/p1782941607475929?thread_ts=1782941607.475929&cid=C07EUS59F7C",
+                ),
+            ],
+        },
+        {
+            "marker": "05",
+            "title": "AI and agent operations got more measurable.",
+            "body": (
+                "Chad worked through Claude analytics API-key ownership for Datadog AI-agent telemetry, "
+                "kept cloud-agent behavior in the open, and treated agent tooling as operational infrastructure."
+            ),
+            "proof": "The week includes Datadog AI Agents Console setup, Claude access support, public discussion in #vibe-coding, and alert triage as a managed-agent workflow.",
+            "evidence": [
+                ("AI Agents Console", "https://us3.datadoghq.com/llm/ai-agents-console/dashboard"),
+                (
+                    "Agent discussion",
+                    "https://convergint.enterprise.slack.com/archives/C08PAQARM8E/p1782939414689819",
+                ),
+                (
+                    "convergint/ee-monorepo PR #1617",
+                    "https://github.com/convergint/ee-monorepo/pull/1617",
+                ),
+            ],
+        },
+    ]
+
+    watch_items = [
+        {
+            "title": "CTC financials still needs a live comparison pass.",
+            "body": (
+                "Hari accepted the direction and still wants to compare numbers against the Dallas "
+                "server in real time. That is the right next check before this becomes boring platform work."
+            ),
+            "url": "https://convergint.enterprise.slack.com/archives/C0AQHKE74MT/p1782772916255239?thread_ts=1782772916.255239&cid=C0AQHKE74MT",
+        },
+        {
+            "title": "DBM setup is still too manual.",
+            "body": (
+                "The current docs ask developers to understand too much about extensions and explain-plan "
+                "helpers. Chad called out the need to hide more of that behind the platform."
+            ),
+            "url": "https://convergint.enterprise.slack.com/archives/C08MGCF1FHN/p1782857180822179?thread_ts=1782856555.937059&cid=C08MGCF1FHN",
+        },
+        {
+            "title": "Mulesoft TLS contexts are still in review.",
+            "body": (
+                "The DNS zone landed enough for validation, and the TLS context work is the follow-up "
+                "that turns the support thread into repeatable Terraform."
+            ),
+            "url": "https://github.com/convergint/mulesoft-integrations/pull/2271",
+        },
+    ]
+
+    def render_demo_items() -> str:
+        cards = []
+        for item in demo_items:
+            cards.append(
+                '<article class="agenda-item">'
+                f'<div class="agenda-label">{esc(item["label"])}</div>'
+                f"<h3>{esc(item['title'])}</h3>"
+                f"<p>{esc(item['body'])}</p>"
+                f"{render_evidence_links(item['evidence'])}"
+                "</article>"
+            )
+        return '<div class="agenda-grid">' + "".join(cards) + "</div>"
+
+    def render_work_lanes() -> str:
+        lanes = []
+        for lane in work_lanes:
+            lanes.append(
+                '<article class="lane">'
+                f'<div class="lane-marker">{esc(lane["marker"])}</div>'
+                '<div class="lane-body">'
+                f"<h3>{esc(lane['title'])}</h3>"
+                f"<p>{esc(lane['body'])}</p>"
+                f'<p class="proof-note">{esc(lane["proof"])}</p>'
+                f"{render_evidence_links(lane['evidence'])}"
+                "</div>"
+                "</article>"
+            )
+        return '<div class="lane-stack">' + "".join(lanes) + "</div>"
+
+    def render_watch_items() -> str:
+        items = []
+        for item in watch_items:
+            items.append(
+                '<article class="watch-item">'
+                f"<h3>{link_text(item['title'], item['url'])}</h3>"
+                f"<p>{esc(item['body'])}</p>"
+                "</article>"
+            )
+        return '<div class="watch-grid">' + "".join(items) + "</div>"
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{esc(REPORT_TITLE)}</title>
+  <style>
+    :root {{
+      --paper: #fbf8f0;
+      --paper-2: #f3efe5;
+      --ink: #161918;
+      --muted: #606763;
+      --line: #d9d0c0;
+      --rail: #151b22;
+      --teal: #0f766e;
+      --blue: #315a8c;
+      --red: #b54d3b;
+      --gold: #9a6b18;
+      --green: #496f37;
+      --panel: #fffdf8;
+      --shadow: 0 18px 44px rgba(22, 25, 24, 0.08);
+    }}
+
+    * {{
+      box-sizing: border-box;
+    }}
+
+    html {{
+      scroll-behavior: smooth;
+    }}
+
+    body {{
+      margin: 0;
+      color: var(--ink);
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      background:
+        linear-gradient(180deg, rgba(251, 248, 240, 0.96), rgba(243, 239, 229, 1)),
+        var(--paper);
+    }}
+
+    a {{
+      color: var(--teal);
+      text-decoration: underline;
+      text-decoration-color: rgba(15, 118, 110, 0.35);
+      text-underline-offset: 0.14em;
+      overflow-wrap: anywhere;
+    }}
+
+    h1, h2, h3, h4 {{
+      margin: 0;
+      letter-spacing: 0;
+      font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    }}
+
+    p {{
+      line-height: 1.62;
+    }}
+
+    .brief-shell {{
+      display: grid;
+      grid-template-columns: 292px minmax(0, 1fr);
+      gap: 28px;
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 24px;
+    }}
+
+    .side-rail {{
+      position: sticky;
+      top: 24px;
+      align-self: start;
+      min-height: calc(100vh - 48px);
+      padding: 22px;
+      border-radius: 8px;
+      background: var(--rail);
+      color: #f8f4ec;
+      box-shadow: var(--shadow);
+    }}
+
+    .rail-label,
+    .chapter-label,
+    .agenda-label,
+    .metric-label,
+    .tag {{
+      text-transform: uppercase;
+      letter-spacing: 0;
+      font-size: 0.76rem;
+      font-weight: 900;
+    }}
+
+    .rail-label {{
+      color: #e0a35f;
+    }}
+
+    .rail-title {{
+      margin-top: 12px;
+      font-size: 2rem;
+      line-height: 1;
+    }}
+
+    .rail-meta {{
+      margin: 14px 0 22px;
+      color: rgba(248, 244, 236, 0.72);
+      line-height: 1.5;
+    }}
+
+    .rail-nav {{
+      display: grid;
+      gap: 8px;
+      margin: 22px 0;
+    }}
+
+    .rail-nav a {{
+      display: block;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #f8f4ec;
+      text-decoration: none;
+    }}
+
+    .rail-nav a:hover {{
+      background: rgba(255, 255, 255, 0.14);
+    }}
+
+    .rail-fact {{
+      display: grid;
+      gap: 10px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(255, 255, 255, 0.16);
+    }}
+
+    .rail-fact div {{
+      display: grid;
+      grid-template-columns: 56px minmax(0, 1fr);
+      gap: 12px;
+      align-items: baseline;
+    }}
+
+    .rail-fact strong {{
+      color: #f8f4ec;
+      font-size: 1.35rem;
+    }}
+
+    .rail-fact span {{
+      color: rgba(248, 244, 236, 0.72);
+      line-height: 1.35;
+    }}
+
+    .main {{
+      min-width: 0;
+    }}
+
+    .masthead {{
+      min-height: 440px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 280px;
+      gap: 26px;
+      align-items: stretch;
+      padding: 28px 0 34px;
+      border-bottom: 2px solid var(--ink);
+    }}
+
+    .masthead-copy {{
+      display: flex;
+      flex-direction: column;
+      justify-content: end;
+    }}
+
+    .chapter-label {{
+      color: var(--red);
+    }}
+
+    h1 {{
+      margin-top: 14px;
+      max-width: 13ch;
+      font-size: 5rem;
+      line-height: 0.92;
+    }}
+
+    .lede {{
+      max-width: 78ch;
+      margin: 22px 0 0;
+      color: var(--muted);
+      font-size: 1.04rem;
+    }}
+
+    .visual-strip {{
+      min-height: 360px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background-image:
+        linear-gradient(180deg, rgba(22, 25, 24, 0.08), rgba(22, 25, 24, 0.48)),
+        url("assets/platform-work-hero.png");
+      background-size: cover;
+      background-position: center;
+    }}
+
+    .metric-row {{
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0 0;
+    }}
+
+    .metric-tile {{
+      min-height: 110px;
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 10px 24px rgba(22, 25, 24, 0.05);
+    }}
+
+    .metric-label {{
+      color: var(--muted);
+    }}
+
+    .metric-value {{
+      margin-top: 8px;
+      font-size: 2rem;
+      font-weight: 900;
+      line-height: 1;
+    }}
+
+    .metric-note {{
+      margin-top: 8px;
+      color: var(--muted);
+      line-height: 1.35;
+      font-size: 0.92rem;
+    }}
+
+    .chapter {{
+      padding: 32px 0;
+      border-bottom: 1px solid var(--line);
+      scroll-margin-top: 20px;
+    }}
+
+    .chapter-head {{
+      display: grid;
+      grid-template-columns: minmax(0, 0.75fr) minmax(280px, 0.25fr);
+      gap: 24px;
+      align-items: end;
+      margin-bottom: 18px;
+    }}
+
+    .chapter-head h2 {{
+      margin-top: 8px;
+      font-size: 2.2rem;
+      line-height: 1.04;
+    }}
+
+    .chapter-head p,
+    .chapter-note {{
+      color: var(--muted);
+    }}
+
+    .tag {{
+      justify-self: end;
+      color: var(--blue);
+    }}
+
+    .agenda-grid {{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }}
+
+    .agenda-item,
+    .watch-item,
+    .highlight-card,
+    .table-wrap,
+    details {{
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 10px 24px rgba(22, 25, 24, 0.05);
+    }}
+
+    .agenda-item {{
+      padding: 18px;
+    }}
+
+    .agenda-label {{
+      color: var(--gold);
+    }}
+
+    .agenda-item h3,
+    .watch-item h3,
+    .lane-body h3 {{
+      margin-top: 8px;
+      font-size: 1.32rem;
+      line-height: 1.16;
+    }}
+
+    .agenda-item p,
+    .watch-item p,
+    .lane-body p,
+    .highlight-card p,
+    .highlight-card ul {{
+      color: var(--muted);
+    }}
+
+    .lane-stack {{
+      display: grid;
+      gap: 16px;
+    }}
+
+    .lane {{
+      display: grid;
+      grid-template-columns: 92px minmax(0, 1fr);
+      gap: 18px;
+      padding: 20px 0;
+      border-top: 1px solid var(--line);
+    }}
+
+    .lane:first-child {{
+      border-top: 0;
+      padding-top: 0;
+    }}
+
+    .lane-marker {{
+      width: 64px;
+      height: 64px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: var(--ink);
+      color: #fffaf1;
+      font-weight: 900;
+    }}
+
+    .proof-note {{
+      padding: 12px 14px;
+      border-left: 4px solid var(--teal);
+      background: rgba(15, 118, 110, 0.07);
+      color: var(--ink) !important;
+      font-weight: 700;
+    }}
+
+    .evidence-links {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 14px;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      font-size: 0.93rem;
+    }}
+
+    .watch-grid {{
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }}
+
+    .watch-item {{
+      padding: 18px;
+      border-top: 4px solid var(--red);
+    }}
+
+    .signal-columns {{
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }}
+
+    .signal-block h3 {{
+      margin-bottom: 12px;
+      color: var(--ink);
+      font-size: 1.2rem;
+    }}
+
+    .highlight-grid {{
+      display: grid;
+      gap: 12px;
+    }}
+
+    .highlight-card {{
+      padding: 16px;
+    }}
+
+    .highlight-meta {{
+      color: var(--red);
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0;
+      font-weight: 900;
+      margin-bottom: 9px;
+    }}
+
+    .highlight-head {{
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }}
+
+    .highlight-card h4 {{
+      font-size: 1.05rem;
+      line-height: 1.18;
+    }}
+
+    .highlight-card ul {{
+      padding-left: 18px;
+    }}
+
+    details {{
+      overflow: hidden;
+    }}
+
+    summary {{
+      cursor: pointer;
+      padding: 16px 18px;
+      font-weight: 900;
+    }}
+
+    summary::-webkit-details-marker {{
+      display: none;
+    }}
+
+    .evidence-panel {{
+      padding: 0 18px 18px;
+    }}
+
+    .split {{
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 16px;
+    }}
+
+    .table-wrap {{
+      padding: 18px;
+      overflow: auto;
+    }}
+
+    .table-wrap h4 {{
+      margin-bottom: 12px;
+      font-size: 1.08rem;
+    }}
+
+    .metric-table {{
+      width: 100%;
+      min-width: 660px;
+      border-collapse: collapse;
+    }}
+
+    .metric-table th,
+    .metric-table td {{
+      padding: 11px 10px;
+      text-align: left;
+      vertical-align: top;
+      border-top: 1px solid var(--line);
+      font-size: 0.94rem;
+    }}
+
+    .metric-table thead th {{
+      border-top: 0;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0;
+      font-size: 0.78rem;
+    }}
+
+    .method-list {{
+      margin: 0;
+      padding-left: 20px;
+      color: var(--muted);
+      line-height: 1.68;
+    }}
+
+    @media (max-width: 1120px) {{
+      .brief-shell {{
+        grid-template-columns: 1fr;
+      }}
+
+      .side-rail {{
+        position: static;
+        min-height: 0;
+      }}
+
+      .rail-nav {{
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }}
+
+      .masthead,
+      .chapter-head {{
+        grid-template-columns: 1fr;
+      }}
+
+      .visual-strip {{
+        min-height: 220px;
+      }}
+
+      .tag {{
+        justify-self: start;
+      }}
+    }}
+
+    @media (max-width: 780px) {{
+      .brief-shell {{
+        padding: 16px;
+      }}
+
+      h1 {{
+        max-width: none;
+        font-size: 3.2rem;
+      }}
+
+      .rail-nav,
+      .metric-row,
+      .agenda-grid,
+      .watch-grid,
+      .signal-columns,
+      .split {{
+        grid-template-columns: 1fr;
+      }}
+
+      .lane {{
+        grid-template-columns: 1fr;
+      }}
+    }}
+  </style>
+</head>
+<body>
+  <div class="brief-shell">
+    <aside class="side-rail">
+      <div class="rail-label">Demo meeting brief</div>
+      <h2 class="rail-title">Chad's week in platform work</h2>
+      <p class="rail-meta">{esc(window_label)}<br>{esc(generated_label())}</p>
+      <nav class="rail-nav">
+        <a href="#agenda">Agenda</a>
+        <a href="#lanes">Work lanes</a>
+        <a href="#watch">Watch items</a>
+        <a href="#signals">Signals</a>
+        <a href="#evidence">Evidence</a>
+        <a href="#method">Method</a>
+        <a href="demo-meeting-activity-brief.pdf">PDF handout</a>
+      </nav>
+      <div class="rail-fact">
+        <div><strong>{github_data["personal_prs_created"]}</strong><span>PRs opened by Chad</span></div>
+        <div><strong>{github_data["personal_prs_merged"]}</strong><span>Chad-authored PRs merged</span></div>
+        <div><strong>{linear_data["personal_issues_done_like"]}</strong><span>assigned Linear issues moved to Done</span></div>
+        <div><strong>{len(slack_highlights)}</strong><span>Slack evidence threads sampled</span></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="masthead">
+        <div class="masthead-copy">
+          <div class="chapter-label">Personal activity report</div>
+          <h1>Demo Meeting Activity Brief</h1>
+          <p class="lede">
+            This version uses a meeting-brief format for the demo meeting.
+            The report starts with what is worth showing tomorrow, then walks through the
+            work lanes and the evidence behind them.
+          </p>
+          <p class="lede">
+            The week centered on CTC financials, Temporal, Datadog, delivery rails, and a
+            handful of support threads that became auditable platform changes. Chad opened
+            <strong>{github_data["personal_prs_created"]}</strong> PRs, moved
+            <strong>{linear_data["personal_issues_updated"]}</strong> assigned Linear issues,
+            and spent most of the GitHub surface in
+            <strong>{link_text(primary_repo, gh_pr_search_url(repo=primary_repo))}</strong>
+            with <strong>{primary_repo_count}</strong> PRs.
+          </p>
+        </div>
+        <div class="visual-strip" aria-label="Generated platform work visual"></div>
+      </header>
+
+      <section class="metric-row" aria-label="Weekly metrics">
+        <div class="metric-tile">
+          <div class="metric-label">Primary repo</div>
+          <div class="metric-value">{esc(primary_repo)}</div>
+          <div class="metric-note">{primary_repo_count} Chad-authored PRs opened there this week.</div>
+        </div>
+        <div class="metric-tile">
+          <div class="metric-label">Linear movement</div>
+          <div class="metric-value">{linear_data["personal_issues_done_like"]} done</div>
+          <div class="metric-note">{linear_data["personal_issues_in_review"]} more assigned issues are in review.</div>
+        </div>
+        <div class="metric-tile">
+          <div class="metric-label">Datadog</div>
+          <div class="metric-value">{datadog_data["dashboard_count"]} dashboard</div>
+          <div class="metric-note">{datadog_data["incident_count"]} incidents found in the scoped Datadog incident read.</div>
+        </div>
+        <div class="metric-tile">
+          <div class="metric-label">Sources</div>
+          <div class="metric-value">{len(notion_highlights)} docs</div>
+          <div class="metric-note">Slack, Notion, GitHub, Linear, and Datadog all refreshed for this run.</div>
+        </div>
+      </section>
+
+      <section id="agenda" class="chapter">
+        <div class="chapter-head">
+          <div>
+            <div class="chapter-label">Start here</div>
+            <h2>Demo candidates</h2>
+            <p>These are the four topics that will be easiest to talk through in the meeting.</p>
+          </div>
+          <div class="tag">Show first</div>
+        </div>
+        {render_demo_items()}
+      </section>
+
+      <section id="lanes" class="chapter">
+        <div class="chapter-head">
+          <div>
+            <div class="chapter-label">Main story</div>
+            <h2>Five work lanes</h2>
+            <p>Each lane groups code, planning, Slack decisions, and operational evidence together.</p>
+          </div>
+          <div class="tag">Personal scope</div>
+        </div>
+        {render_work_lanes()}
+      </section>
+
+      <section id="watch" class="chapter">
+        <div class="chapter-head">
+          <div>
+            <div class="chapter-label">Keep visible</div>
+            <h2>Watch items</h2>
+            <p>These are the items worth naming without letting them take over the meeting.</p>
+          </div>
+          <div class="tag">Follow-up</div>
+        </div>
+        {render_watch_items()}
+      </section>
+
+      <section id="signals" class="chapter">
+        <div class="chapter-head">
+          <div>
+            <div class="chapter-label">Source signals</div>
+            <h2>Evidence pulled into the story</h2>
+            <p>Connector-backed snapshots are sampled below. They support the work lanes rather than acting as separate digest sections.</p>
+          </div>
+          <div class="tag">Snapshot backed</div>
+        </div>
+        <div class="signal-columns">
+          <div class="signal-block">
+            <h3>Slack</h3>
+            {render_highlight_cards(slack_highlights, "url")}
+          </div>
+          <div class="signal-block">
+            <h3>Notion</h3>
+            {render_highlight_cards(notion_highlights, "url")}
+          </div>
+          <div class="signal-block">
+            <h3>Datadog</h3>
+            {render_highlight_cards(datadog_data["highlights"], "url")}
+          </div>
+        </div>
+      </section>
+
+      <section id="evidence" class="chapter">
+        <div class="chapter-head">
+          <div>
+            <div class="chapter-label">Raw trail</div>
+            <h2>GitHub and Linear index</h2>
+            <p>The brief keeps tables collapsed so the meeting starts with the story and still has the audit trail one click away.</p>
+          </div>
+          <div class="tag">Expandable</div>
+        </div>
+        <details>
+          <summary>Open Chad-authored PRs and Chad-assigned Linear issues</summary>
+          <div class="evidence-panel">
+            {render_evidence_index(summary)}
+          </div>
+        </details>
+      </section>
+
+      <section id="method" class="chapter">
+        <div class="chapter-head">
+          <div>
+            <div class="chapter-label">Methodology</div>
+            <h2>How this was built</h2>
+          </div>
+          <div class="tag">Current run</div>
+        </div>
+        <ul class="method-list">
+          <li>GitHub is filtered to PRs authored by {esc(PERSON_GITHUB_LOGIN)} from {esc(window_label)}.</li>
+          <li>Linear is filtered to issues assigned to {esc(PERSON_LINEAR_ASSIGNEE)} and updated in the same window.</li>
+          <li>Slack and Notion were refreshed from tracked seeds, then widened through a bounded discovery pass for CTC financials, Temporal, Datadog, Mulesoft, Salesforce, and repo governance.</li>
+          <li>Datadog evidence came from scoped dashboard, monitor, and incident MCP reads plus Chad-linked Slack, GitHub, Linear, and Notion evidence.</li>
+          <li>The report window is {esc(WINDOW_START)} through {esc(WINDOW_END)} in {esc(str(REPORT_TIMEZONE))}.</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
+"""
+
+
 def build_detail_html(title: str, intro: str, body_html: str, back_href: str) -> str:
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -4025,7 +5005,7 @@ def main() -> None:
     }
 
     output_path("summary.json").write_text(json.dumps(summary, indent=2))
-    output_path("index.html").write_text(build_streamlined_personal_html(summary))
+    output_path("index.html").write_text(build_demo_brief_html(summary))
     write_personal_detail_pages(summary)
 
 

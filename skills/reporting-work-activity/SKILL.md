@@ -53,6 +53,7 @@ Activity report refresh progress:
 - [ ] Write `data/notion_pages.json`
 - [ ] Confirm any required Datadog snapshot matches the selected scope
 - [ ] Run `mise run report`
+- [ ] Generate any requested PDF handout from the rebuilt report data
 - [ ] Ensure the local report server is serving the rebuilt report
 - [ ] Open the served report in the in-app browser and verify it loads
 - [ ] Run `mise run check` if code or docs changed
@@ -104,26 +105,56 @@ Activity report refresh progress:
    Do not let it anchor the actual weekly conclusions if the fresh
    connector reads say something different.
 14. If the discovery pass surfaces a new channel or page that seems
-   likely to matter again, append it to the local `tracked_sources.json`
-   before you finish.
+    likely to matter again, append it to the local `tracked_sources.json`
+    before you finish.
 15. Run `mise run report`.
-16. Ensure the local report server is serving the rebuilt report:
+16. If the user asks for a new HTML format, demo meeting view,
+    show-and-tell report, or similar presentation artifact, build the
+    layout around the meeting job instead of lightly restyling the old
+    page. Front-load demo candidates, watch items, and source-backed
+    work lanes. Keep drill-down tables available, but let the first
+    screen tell the meeting story.
+17. If the user asks for a single-page PDF, make a purpose-built
+    one-page handout from the same rebuilt data instead of forcing the
+    full interactive HTML into print. Write the final PDF under
+    `output/pdf/`, and copy it into `dist/` only when the served report
+    links to it. Confirm the PDF has one page and render it to PNG with
+    Poppler for visual inspection before delivery.
+18. Ensure the local report server is serving the rebuilt report:
     - prefer reusing the existing server if port `8765` is already
       serving this runtime
     - otherwise run `mise run serve`
     - if another process is holding the port for a stale runtime, stop
       it and restart `mise run serve`
-17. Tell the user the report is available at
+19. Tell the user the report is available at
     `http://127.0.0.1:8765/`.
-18. Open `http://127.0.0.1:8765/` in the in-app browser and verify the
+20. Open `http://127.0.0.1:8765/` in the in-app browser and verify the
     rebuilt report actually loaded:
     - confirm the page title and summary load
     - confirm the selected personal or org layout renders
     - confirm there is no missing-snapshot or stale-fallback messaging
-19. Run `mise run check` if you changed code, tests, or docs.
-20. Verify the generated page built from current Slack and Notion
+21. Run `mise run check` if you changed code, tests, or docs.
+22. Verify the generated page built from current Slack and Notion
    snapshots. Slack and Notion snapshot files are required for the
    report to build.
+
+## Citing Work
+
+Every code-work citation should name the repository where the work
+happened. PR numbers are not globally meaningful in conversation, and
+they are especially ambiguous in demo or leadership-facing reports.
+
+- Write `convergint/ee-monorepo PR #1637`, not just `PR #1637`.
+- Write `convergint/mulesoft-integrations PR #2270`, not just
+  `Mulesoft #2270`.
+- Include the repository in agenda cards, proof notes, PDF handouts,
+  Slack/Notion/Datadog summaries, and detail tables.
+- If a Linear issue, Slack thread, Notion page, or Datadog item
+  describes code work, add the repository beside the linked PR or code
+  artifact when the repository is known.
+- For grouped citations, name the repository before the list when all
+  items are in the same repo, for example
+  `convergint/ee-monorepo PRs #1637, #1638, and #1651`.
 
 ## Discovery Pass
 
@@ -192,6 +223,9 @@ Default execution:
   explain Chad's workstream, support, or decision-making.
 - If a project is demo-worthy or should be discussed this week, make it
   visually visible in the report and link the direct evidence.
+- For demo-meeting reports, start with the topics that are easiest to
+  show and explain. A meeting brief can be more useful than the usual
+  weekly dashboard when the user asks to change the format.
 - `mise run fetch` only owns GitHub and Linear. It does not refresh
   Slack or Notion.
 - `mise run bootstrap-tracked-sources` is the first recovery path when
@@ -220,7 +254,10 @@ Default execution:
   snapshot scoped to the selected report mode. For a personal report,
   Datadog should be evidence for Chad's work, not a feed of all org
   events.
-- Single-page PDF export needs export-specific browser CSS. Read
+- Single-page PDF export needs an export-specific layout. A dense
+  ReportLab handout or print-specific browser page is fine as long as
+  it uses the same refreshed data, stays readable on one page, and is
+  rendered to PNG for visual QA. Read
   `references/personal-vs-org-reports.md` before generating or fixing a
   one-page PDF.
 - Do not describe Slack coverage as workspace-wide unless you actually
@@ -240,6 +277,12 @@ Default execution:
 - If the seeded source list refreshed cleanly but the discovery pass was
   blocked, say that explicitly instead of implying the seeded list was
   exhaustive.
+- If the in-app browser is unavailable after following the Browser
+  skill's setup and listing available browser backends, say that
+  plainly. Use HTTP checks and generated-file checks as a fallback:
+  confirm `/` returns 200, confirm any linked PDF returns 200 with
+  `application/pdf`, and search the served HTML for the expected title,
+  source-backed sections, and no stale-fallback messaging.
 - Say explicitly when you preserved cache because the user asked for it.
 - Keep summaries grounded in the retrieved Slack messages and Notion
   pages. Do not invent missing coverage.

@@ -50,21 +50,46 @@ ensure_bin_on_path() {
 
 ensure_mise_shims_on_zprofile() {
   local zprofile="$HOME/.zprofile"
+  local tmp_zprofile
 
-  if grep -qF '.local/share/mise/shims' "$zprofile" 2>/dev/null; then
-    echo "mise shims already configured in ~/.zprofile"
-    return 0
+  mkdir -p "$(dirname "$zprofile")"
+  touch "$zprofile"
+
+  if grep -qF "# mise shims for Codex login shells" "$zprofile"; then
+    tmp_zprofile="$(mktemp "${zprofile}.XXXXXX")"
+    awk '
+      $0 == "# mise shims for Codex login shells" {
+        skip = 1
+        next
+      }
+      skip && ($0 == "esac" || $0 == "unset -f _remove_path_entry") {
+        skip = 0
+        next
+      }
+      !skip {
+        print
+      }
+    ' "$zprofile" > "$tmp_zprofile"
+    mv "$tmp_zprofile" "$zprofile"
   fi
 
   {
     echo ""
     echo "# mise shims for Codex login shells"
-    echo 'case ":$PATH:" in'
-    echo '  *":$HOME/.local/share/mise/shims:"*) ;;'
-    echo '  *) export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH" ;;'
-    echo 'esac'
+    echo '_remove_path_entry() {'
+    echo '  local entry="$1"'
+    echo '  PATH=":$PATH:"'
+    echo '  PATH="${PATH//:$entry:/:}"'
+    echo '  PATH="${PATH#:}"'
+    echo '  PATH="${PATH%:}"'
+    echo '}'
+    echo ""
+    echo '_remove_path_entry "$HOME/.local/bin"'
+    echo '_remove_path_entry "$HOME/.local/share/mise/shims"'
+    echo 'export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"'
+    echo 'unset -f _remove_path_entry'
   } >> "$zprofile"
-  echo "Added mise shims to ~/.zprofile"
+  echo "Configured mise shims in ~/.zprofile"
 }
 
 setup_global_gitignore() {

@@ -30,8 +30,8 @@ extra local instructions.
 
 1. Read any existing `CONTRIBUTING.md`, `AGENTS.md`, and `CLAUDE.md` in the
    target directory before changing them.
-2. Put all durable instructions in `CONTRIBUTING.md`. If existing `AGENTS.md`
-   or `CLAUDE.md` files contain unique guidance, move that guidance into
+2. Put all durable instructions in `CONTRIBUTING.md`. If existing `AGENTS.md` or
+   `CLAUDE.md` files contain unique guidance, move that guidance into
    `CONTRIBUTING.md` before replacing them with the shared pattern.
 3. Make `AGENTS.md` a relative symlink:
 

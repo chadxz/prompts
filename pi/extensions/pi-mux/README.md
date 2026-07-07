@@ -11,8 +11,8 @@ It exposes exactly three tools to the model:
 
 At runtime, `pi-mux` discovers its internal provider modules dynamically.
 
-The human control plane stays outside the model-facing tool API.
-Authentication and connection state are managed through `/mux` commands.
+The human control plane stays outside the model-facing tool API. Authentication
+and connection state are managed through `/mux` commands.
 
 ## Commands
 
@@ -105,20 +105,19 @@ Each provider module is meant to feel like a normal pi extension first:
 
 - `providers/<name>/index.ts` exports the extension as its default export
 - `pi-mux` infers the provider id from the directory name by default
-- `pi-mux` infers the provider command when the extension registers exactly
-  one command
-- `pi-mux` expects the standard control tool names
-  `<provider>_mcp_connect`, `<provider>_mcp_disconnect`, and
-  `<provider>_mcp_status`
-- if a provider needs non-standard command or control tool names, it can
-  export an optional `muxProvider` object from `index.ts`
+- `pi-mux` infers the provider command when the extension registers exactly one
+  command
+- `pi-mux` expects the standard control tool names `<provider>_mcp_connect`,
+  `<provider>_mcp_disconnect`, and `<provider>_mcp_status`
+- if a provider needs non-standard command or control tool names, it can export
+  an optional `muxProvider` object from `index.ts`
 
-That keeps the mux/provider boundary small and familiar. Providers stay close
-to ordinary pi extensions, and only the provider-specific control-plane
-details need to be declared when they differ from the defaults.
+That keeps the mux/provider boundary small and familiar. Providers stay close to
+ordinary pi extensions, and only the provider-specific control-plane details
+need to be declared when they differ from the defaults.
 
-When a provider's connect tool needs interactive setup before it can succeed,
-it should signal that through the normal tool result details with
+When a provider's connect tool needs interactive setup before it can succeed, it
+should signal that through the normal tool result details with
 `requiresInteractiveSetup: true`. That keeps bootstrap behavior inside the
 provider's normal tool contract instead of adding another mux-specific knob.
 
@@ -173,8 +172,8 @@ Run lint:
 npm run lint
 ```
 
-The repo setup script also installs the dependencies needed by `pi-mux` and
-its internal provider code:
+The repo setup script also installs the dependencies needed by `pi-mux` and its
+internal provider code:
 
 ```bash
 ./setup_pi.sh

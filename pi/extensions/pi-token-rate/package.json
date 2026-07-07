@@ -1,35 +1,35 @@
 {
-	"name": "pi-token-rate",
-	"version": "1.0.0",
-	"type": "module",
-	"pi": {
-		"extensions": ["./pi-token-rate.ts"]
-	},
-	"description": "Show the last measured assistant output throughput in pi's footer stats line",
-	"author": {
-		"name": "Chad McElligott"
-	},
-	"license": "MIT",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/chadxz/prompts.git",
-		"directory": "src/personal/prompts/pi/extensions/pi-token-rate"
-	},
-	"devDependencies": {
-		"@mariozechner/pi-coding-agent": "^0.69.0",
-		"@vitest/coverage-v8": "^4.1.5",
-		"oxlint": "^1.61.0",
-		"oxlint-tsgolint": "^0.21.1",
-		"vitest": "^4.1.5"
-	},
-	"scripts": {
-		"test": "vitest run",
-		"test:watch": "vitest",
-		"test:coverage": "vitest run --coverage",
-		"lint": "oxlint --type-aware . --ignore-pattern node_modules --ignore-pattern reports",
-		"check": "npm run lint && npm run test:coverage"
-	},
-	"peerDependencies": {
-		"@mariozechner/pi-coding-agent": "*"
-	}
+  "name": "pi-token-rate",
+  "version": "1.0.0",
+  "type": "module",
+  "pi": {
+    "extensions": ["./pi-token-rate.ts"]
+  },
+  "description": "Show the last measured assistant output throughput in pi's footer stats line",
+  "author": {
+    "name": "Chad McElligott"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chadxz/prompts.git",
+    "directory": "src/personal/prompts/pi/extensions/pi-token-rate"
+  },
+  "devDependencies": {
+    "@mariozechner/pi-coding-agent": "^0.69.0",
+    "@vitest/coverage-v8": "^4.1.5",
+    "oxlint": "^1.61.0",
+    "oxlint-tsgolint": "^0.21.1",
+    "vitest": "^4.1.5"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "oxlint --type-aware . --ignore-pattern node_modules --ignore-pattern reports",
+    "check": "npm run lint && npm run test:coverage"
+  },
+  "peerDependencies": {
+    "@mariozechner/pi-coding-agent": "*"
+  }
 }

@@ -14,59 +14,58 @@ allowed-tools: ["Bash", "Read", "Write", "Glob", "Grep"]
 
 ## Credentials
 
-The following Datadog credentials were loaded from 1Password at
-invocation time. Use them as inline env var exports when calling the
-script — do NOT wrap commands with `op run`.
+The following Datadog credentials were loaded from 1Password at invocation time.
+Use them as inline env var exports when calling the script — do NOT wrap
+commands with `op run`.
 
 !`op run -- bash -c 'echo "DD_API_KEY=${DD_API_KEY:-$DATADOG_API_KEY}"; echo "DD_APP_KEY=${DD_APP_KEY:-$DATADOG_APP_KEY}"; echo "DD_SITE=${DD_SITE:-${DATADOG_SITE:-us3.datadoghq.com}}"' 2>&1`
 
-If the output above shows errors, empty values, or `op` is not found,
-read [credentials setup](reference/credentials.md) and help the user
-configure their environment.
+If the output above shows errors, empty values, or `op` is not found, read
+[credentials setup](reference/credentials.md) and help the user configure their
+environment.
 
 ## Script
 
-For push, pull, and list operations on dashboards, SLOs, monitors, and
-synthetic tests, delegate to the bundled script:
+For push, pull, and list operations on dashboards, SLOs, monitors, and synthetic
+tests, delegate to the bundled script:
 
 ```bash
 DD_API_KEY={api_key} DD_APP_KEY={app_key} DD_SITE={site} \
   bash ${CLAUDE_SKILL_DIR}/scripts/datadog.sh <resource> <command> [args...]
 ```
 
-Substitute `{api_key}`, `{app_key}`, and `{site}` with the resolved
-credential values above.
+Substitute `{api_key}`, `{app_key}`, and `{site}` with the resolved credential
+values above.
 
 ### Supported operations
 
-| Resource    | Command | Arguments                  |
-|-------------|---------|----------------------------|
-| `dashboard` | `push`  | `<file.json>`              |
-| `dashboard` | `pull`  | `<id> [output_file.json]`  |
-| `dashboard` | `list`  | `[query]`                  |
-| `slo`       | `push`  | `<file.json>`              |
-| `slo`       | `pull`  | `<id> [output_file.json]`  |
-| `slo`       | `list`  | `[query]`                  |
-| `monitor`   | `push`  | `<file.json>`              |
-| `monitor`   | `pull`  | `<id> [output_file.json]`  |
-| `monitor`   | `list`  | `[query]`                  |
-| `synthetic` | `push`  | `<file.json>`              |
+| Resource    | Command | Arguments                        |
+| ----------- | ------- | -------------------------------- |
+| `dashboard` | `push`  | `<file.json>`                    |
+| `dashboard` | `pull`  | `<id> [output_file.json]`        |
+| `dashboard` | `list`  | `[query]`                        |
+| `slo`       | `push`  | `<file.json>`                    |
+| `slo`       | `pull`  | `<id> [output_file.json]`        |
+| `slo`       | `list`  | `[query]`                        |
+| `monitor`   | `push`  | `<file.json>`                    |
+| `monitor`   | `pull`  | `<id> [output_file.json]`        |
+| `monitor`   | `list`  | `[query]`                        |
+| `synthetic` | `push`  | `<file.json>`                    |
 | `synthetic` | `pull`  | `<public_id> [output_file.json]` |
-| `synthetic` | `list`  | `[query]`                  |
+| `synthetic` | `list`  | `[query]`                        |
 
 The script handles create-vs-update logic (presence of `id` field, or
-`public_id` for synthetics), post-create pull-back to persist assigned
-IDs, response unwrapping, and credential validation automatically.
+`public_id` for synthetics), post-create pull-back to persist assigned IDs,
+response unwrapping, and credential validation automatically.
 
-`synthetic` commands require the `pup` CLI, which the script uses for
-synthetics API calls. pup uses the same DD_API_KEY/DD_APP_KEY values
-when set and falls back to its own OAuth session (`pup auth login`)
-otherwise.
+`synthetic` commands require the `pup` CLI, which the script uses for synthetics
+API calls. pup uses the same DD_API_KEY/DD_APP_KEY values when set and falls
+back to its own OAuth session (`pup auth login`) otherwise.
 
 ## File organization
 
-Store resource JSON files in subdirectories under `datadog/` relative
-to the working directory:
+Store resource JSON files in subdirectories under `datadog/` relative to the
+working directory:
 
 ```
 datadog/dashboards/
@@ -75,17 +74,16 @@ datadog/monitors/
 datadog/synthetics/
 ```
 
-Create directories as needed. When pulling without an explicit output
-file, save to the appropriate subdirectory using the resource ID as
-the filename. Adjust paths if the user specifies a preference.
+Create directories as needed. When pulling without an explicit output file, save
+to the appropriate subdirectory using the resource ID as the filename. Adjust
+paths if the user specifies a preference.
 
 ## Beyond push/pull/list
 
-For capabilities the script does not cover — querying metrics,
-managing incidents, viewing traces, APM, synthetic test results,
-error tracking, security signals, etc. — delegate to the **Datadog
-MCP server** tools (prefixed `datadog-mcp:`).
+For capabilities the script does not cover — querying metrics, managing
+incidents, viewing traces, APM, synthetic test results, error tracking, security
+signals, etc. — delegate to the **Datadog MCP server** tools (prefixed
+`datadog-mcp:`).
 
 If the Datadog MCP server is not configured, read
-[MCP setup](reference/mcp-setup.md) and guide the user through
-adding it.
+[MCP setup](reference/mcp-setup.md) and guide the user through adding it.

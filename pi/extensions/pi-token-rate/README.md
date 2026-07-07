@@ -9,8 +9,7 @@ Load the extension in pi and reload resources. It replaces the default footer
 stats line with a compact status view that shows:
 
 - total reported cost for the current session state
-- current context size and context window, for example
-  `100k/272k (52.2%)`
+- current context size and context window, for example `100k/272k (52.2%)`
 - the last measured assistant output token rate, for example `42.3 tok/s`
 
 The context display comes from pi's automatic context usage estimate. Pi uses

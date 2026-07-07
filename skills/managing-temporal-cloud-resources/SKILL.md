@@ -14,10 +14,10 @@ description:
 ## Overview
 
 Use the `temporal` CLI for namespace-scoped operations such as workflows,
-schedules, task queues, workers, and batches. Use the Temporal Cloud CLI
-surface (`temporal cloud ...` when available, or `tcld ...` on Chad's current
-machine) for account-level resources such as namespaces, API keys, service
-accounts, and users.
+schedules, task queues, workers, and batches. Use the Temporal Cloud CLI surface
+(`temporal cloud ...` when available, or `tcld ...` on Chad's current machine)
+for account-level resources such as namespaces, API keys, service accounts, and
+users.
 
 For SDK code, worker implementation, workflow determinism, and application
 development, use the `developing-temporal-applications` skill instead. This

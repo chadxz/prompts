@@ -67,5 +67,5 @@ leaving a placeholder.
 
 - Title: maximum 50 characters.
 - Body: line length must not exceed 72 characters.
-- Preserve the template's section structure unless the ticket handling rules
-  say to remove the `Related to` line.
+- Preserve the template's section structure unless the ticket handling rules say
+  to remove the `Related to` line.

@@ -1,8 +1,7 @@
 # Activity report runtime contract
 
-Use this file only when you need the exact local file contract for the
-runtime workspace bundled with this skill under
-`assets/activity-report-runtime`.
+Use this file only when you need the exact local file contract for the runtime
+workspace bundled with this skill under `assets/activity-report-runtime`.
 
 ## Contents
 
@@ -15,8 +14,8 @@ runtime workspace bundled with this skill under
 
 - `README.md`: local operator workflow
 - `report_config.py`: reporting window, data paths, and output paths
-- `report_sources.py`: loader and validator for the private tracked
-  source config
+- `report_sources.py`: loader and validator for the private tracked source
+  config
 - `generate_report.py`: snapshot loading and report rendering behavior
 
 ## Tracked source config
@@ -25,34 +24,30 @@ Slack and Notion refreshes are driven by a private local config file:
 
 - `tracked_sources.json`
 
-That file is ignored. Copy the checked-in
-`tracked_sources.template.json`
-to `tracked_sources.json` and fill in your private tracked sources
-before using the skill only if the bootstrap task cannot seed it.
+That file is ignored. Copy the checked-in `tracked_sources.template.json` to
+`tracked_sources.json` and fill in your private tracked sources before using the
+skill only if the bootstrap task cannot seed it.
 
 Important interpretation:
 
 - `tracked_sources.json` is a seed list for the refresh
-- it is not a guarantee that only those channels or pages matter this
-  week
+- it is not a guarantee that only those channels or pages matter this week
 - the skill must run a bounded discovery pass every refresh
-- the skill should widen beyond that seed list when the current week
-  points to new relevant sources
+- the skill should widen beyond that seed list when the current week points to
+  new relevant sources
 
 Bootstrap path:
 
 - run `mise run bootstrap-tracked-sources`
-- it first checks `data/slack_channels.json` and
-  `data/notion_pages.json`
-- it falls back to `dist/summary.json` if the live snapshots are
-  missing
+- it first checks `data/slack_channels.json` and `data/notion_pages.json`
+- it falls back to `dist/summary.json` if the live snapshots are missing
 
 Cache rule:
 
-- on reruns, clear generated cache by default unless the user
-  explicitly asked to keep or use cache
-- cache means generated `data/*.json`,
-  `data/linear_team_dumps/*.json`, and `dist/*`
+- on reruns, clear generated cache by default unless the user explicitly asked
+  to keep or use cache
+- cache means generated `data/*.json`, `data/linear_team_dumps/*.json`, and
+  `dist/*`
 - do not clear `tracked_sources.json` or `muted_slack_channels.json`
 
 `tracked_sources.json` must be a JSON object with:
@@ -82,20 +77,19 @@ Refresh rule:
 
 - start with the seeded Slack channels and Notion pages
 - always run the bounded discovery pass after the seeded refresh
-- then do a bounded discovery pass and include newly important sources
-  in the generated snapshots
-- if a new source looks structurally useful for future runs, append it
-  to `tracked_sources.json`
+- then do a bounded discovery pass and include newly important sources in the
+  generated snapshots
+- if a new source looks structurally useful for future runs, append it to
+  `tracked_sources.json`
 
 Discovery pass rule:
 
-- derive search terms from the current week's top GitHub repos,
-  interesting Linear issue identifiers, and notable nouns from current
-  GitHub or Linear titles
+- derive search terms from the current week's top GitHub repos, interesting
+  Linear issue identifiers, and notable nouns from current GitHub or Linear
+  titles
 - reuse titles and linked doc names surfaced during the Slack pass when
   searching Notion
-- stop after two consecutive query rounds fail to add a meaningful new
-  source
+- stop after two consecutive query rounds fail to add a meaningful new source
 
 Example:
 
@@ -141,9 +135,9 @@ Datadog activity is a local evidence snapshot:
 
 - `data/datadog_activity.json`
 
-Keep Datadog scoped to the report mode. For a personal report, use it
-as evidence for Chad's workstreams. For an org report, it can cover
-broader dashboards, incidents, monitors, or operational activity.
+Keep Datadog scoped to the report mode. For a personal report, use it as
+evidence for Chad's workstreams. For an org report, it can cover broader
+dashboards, incidents, monitors, or operational activity.
 
 ## Snapshot schemas
 
@@ -192,34 +186,31 @@ Example:
 ]
 ```
 
-`data/datadog_activity.json` is a JSON object. The current personal
-report expects a curated object, not a raw array of org events. Keep it
-small and evidence-oriented unless the org report explicitly needs a
-broader Datadog digest.
+`data/datadog_activity.json` is a JSON object. The current personal report
+expects a curated object, not a raw array of org events. Keep it small and
+evidence-oriented unless the org report explicitly needs a broader Datadog
+digest.
 
 ## Verification rules
 
 - Run `mise run bootstrap-tracked-sources` before giving up on a missing
   `tracked_sources.json`.
-- Run `mise run clear-cache` before a rerun unless the user explicitly
-  asked to keep or use cache.
+- Run `mise run clear-cache` before a rerun unless the user explicitly asked to
+  keep or use cache.
 - Run `mise run report` after updating any snapshot file.
 - Ensure the local report server is serving the rebuilt report on
   `http://127.0.0.1:8765/` after `mise run report`.
-- Reuse the existing server when it already serves this runtime. Restart
-  it only when the port is stale or pointed at the wrong runtime.
-- Open `http://127.0.0.1:8765/` in the in-app browser after the server
-  check and confirm the rebuilt report actually rendered.
+- Reuse the existing server when it already serves this runtime. Restart it only
+  when the port is stale or pointed at the wrong runtime.
+- Open `http://127.0.0.1:8765/` in the in-app browser after the server check and
+  confirm the rebuilt report actually rendered.
 - Run `mise run check` if you changed code, tests, or docs.
-- `data/slack_channels.json` is required. If it is missing or invalid,
-  the report must fail and tell the user to run
-  `$reporting-work-activity`.
-- `data/notion_pages.json` is required. If it is missing or invalid,
-  the report must fail and tell the user to run
-  `$reporting-work-activity`.
-- `data/datadog_activity.json` is required when `report_config.py`
-  lists it in `REQUIRED_DATA_FILES`. If it is missing or invalid,
-  refresh or rebuild the scoped Datadog evidence before reporting the
-  output as complete.
-- Leave `muted_slack_channels.json` untouched unless the user explicitly
-  asks to change muted channels.
+- `data/slack_channels.json` is required. If it is missing or invalid, the
+  report must fail and tell the user to run `$reporting-work-activity`.
+- `data/notion_pages.json` is required. If it is missing or invalid, the report
+  must fail and tell the user to run `$reporting-work-activity`.
+- `data/datadog_activity.json` is required when `report_config.py` lists it in
+  `REQUIRED_DATA_FILES`. If it is missing or invalid, refresh or rebuild the
+  scoped Datadog evidence before reporting the output as complete.
+- Leave `muted_slack_channels.json` untouched unless the user explicitly asks to
+  change muted channels.

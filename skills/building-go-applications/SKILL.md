@@ -108,8 +108,8 @@ types over string manipulation.
 
 ## Configuration And Secrets
 
-Put configuration in a dedicated package. Define env var names as constants,
-set defaults in one place, and validate before the app starts doing work.
+Put configuration in a dedicated package. Define env var names as constants, set
+defaults in one place, and validate before the app starts doing work.
 
 Configuration conventions:
 
@@ -117,8 +117,8 @@ Configuration conventions:
 - Trim and normalize URLs, sites, environment names, and comma-separated lists.
 - Parse durations with `time.ParseDuration`.
 - Reject zero and negative operational limits when they break runtime behavior.
-- Load `APP_NAME`, `APP_ENV`, `APP_VERSION`, `COMMIT_SHA`, and
-  `REPOSITORY_URL` for service metadata when relevant.
+- Load `APP_NAME`, `APP_ENV`, `APP_VERSION`, `COMMIT_SHA`, and `REPOSITORY_URL`
+  for service metadata when relevant.
 - Redact secrets in any effective-config output.
 - Reject unresolved `op://` references when secrets should resolve before
   startup.
@@ -158,8 +158,8 @@ When using OpenTelemetry:
 - If `OTEL_EXPORTER_OTLP_ENDPOINT` is unset, return no-op/global providers.
 - Wrap outbound HTTP clients with `otelhttp.NewTransport`.
 - Shut down tracer, meter, and log providers with a bounded timeout.
-- Add Datadog `dd.trace_id` and `dd.span_id` fields to logs using the low
-  64 bits of the OpenTelemetry trace ID and the span ID in decimal form.
+- Add Datadog `dd.trace_id` and `dd.span_id` fields to logs using the low 64
+  bits of the OpenTelemetry trace ID and the span ID in decimal form.
 - Keep operational telemetry service names distinct from forwarded data service
   names.
 
@@ -237,8 +237,8 @@ Cover the app's operational edges:
 - Package boundaries with in-memory stores and small fake clients.
 - Metrics with Prometheus and OpenTelemetry SDK test readers.
 - Temporal workflows and activities with SDK test suites.
-- Error classification, context cancellation, rate limits, pagination,
-  malformed input, and graceful fallback behavior.
+- Error classification, context cancellation, rate limits, pagination, malformed
+  input, and graceful fallback behavior.
 
 When exported metric metadata changes, update metric tests and checked-in
 example metric output.
@@ -247,8 +247,8 @@ example metric output.
 
 Expose app-owned Terraform, manifests, shell scripts, and generated schemas
 through mise validation tasks such as `infra:lint`, `infra:validate`,
-`validate-manifests`, and `generate-schema`. Do not include `terraform apply`
-in normal validation and CI tasks.
+`validate-manifests`, and `generate-schema`. Do not include `terraform apply` in
+normal validation and CI tasks.
 
 Keep repository plumbing separate from Go conventions.
 
@@ -257,5 +257,5 @@ target metadata because the repo uses Nx affected-project CI and the
 `libraries/nx-go` plugin. That plugin discovers dependencies for existing Nx
 projects with `go.mod`; it does not create projects.
 
-In repositories that do not use that EE Nx model, do not add `project.json`.
-Do not add deployment matrix metadata for ordinary Go apps.
+In repositories that do not use that EE Nx model, do not add `project.json`. Do
+not add deployment matrix metadata for ordinary Go apps.

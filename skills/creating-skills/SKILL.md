@@ -20,8 +20,8 @@ invocation, permissions, or user experience.
    comments, source artifacts, or user corrections.
 2. Scope one coherent job. Split unrelated capabilities; skip the skill if
    ordinary instructions or one helper script is enough.
-3. Choose the skill name and folder layout before writing. Treat them as part
-   of the skill contract, not cleanup work after the instructions are done.
+3. Choose the skill name and folder layout before writing. Treat them as part of
+   the skill contract, not cleanup work after the instructions are done.
 4. Choose resources before writing: `scripts/` for deterministic or fragile
    work, `references/` for details loaded on demand, and `assets/` for templates
    or files used in outputs.
@@ -35,8 +35,8 @@ invocation, permissions, or user experience.
 ## Portable Baseline
 
 - Use a directory containing `SKILL.md` as the canonical package format.
-- Choose the skill name deliberately. Prefer a short, verb-led, task-shaped
-  name over shorthand, implementation details, or broad noun labels.
+- Choose the skill name deliberately. Prefer a short, verb-led, task-shaped name
+  over shorthand, implementation details, or broad noun labels.
 - Keep the folder name and frontmatter `name` identical. Use lowercase letters,
   digits, and hyphens only; avoid leading, trailing, or repeated hyphens and
   reserved words for target runtimes, such as `anthropic` or `claude`.

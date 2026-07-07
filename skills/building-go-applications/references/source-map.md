@@ -12,9 +12,9 @@ files before applying a convention.
 
 ## Shared Guidance
 
-- `ee-monorepo/CONTRIBUTING.md`: mise-first workflow, project-owned `ci`
-  tasks, and coverage expectations for test tasks. Its Nx affected-CI guidance
-  is EE-specific.
+- `ee-monorepo/CONTRIBUTING.md`: mise-first workflow, project-owned `ci` tasks,
+  and coverage expectations for test tasks. Its Nx affected-CI guidance is
+  EE-specific.
 - `it-monorepo/apps/saviynt-audit-log-collector/CONTRIBUTING.md`: mise task
   syntax, local discovery artifact handling, and Terraform apply guardrails.
 - `ee-monorepo/apps/anypoint-exporter/CONTRIBUTING.md`: Effective Go, Go Code
@@ -34,14 +34,14 @@ caveat in `SKILL.md`. They are not portable Go conventions by themselves:
 - `libraries/nx-go/src/index.ts` detects Go project dependencies by scanning
   existing Nx projects with `go.mod` and parsing Go imports. It does not create
   Nx projects.
-- `tools/ci-matrix/internal/project/project.go` includes `project.json`
-  parsing, safe path validation, deploy target schema, and mise `ci` detection.
+- `tools/ci-matrix/internal/project/project.go` includes `project.json` parsing,
+  safe path validation, deploy target schema, and mise `ci` detection.
 - `tools/ci-matrix/internal/matrix/matrix.go` discovers deployment manifests
   named `web-*`, `worker-*`, and `job-*`, validates target environments, and
   builds phased deploy matrices.
 - `apps/anypoint-exporter/project.json` and
-  `apps/observability-canary/project.json` show deploy targets that point at
-  app manifests.
+  `apps/observability-canary/project.json` show deploy targets that point at app
+  manifests.
 
 ## Go App Examples
 
@@ -91,9 +91,9 @@ Path: `ee-monorepo/apps/observability-canary`
 
 Path: `ee-monorepo/apps/mulesoft-otel-collector/smoke-test`
 
-- `main.go`: standard library `flag` CLI, environment-to-endpoint mapping,
-  Basic Auth header construction, OTLP trace, metric, and log exporters, and
-  password input from stdin.
+- `main.go`: standard library `flag` CLI, environment-to-endpoint mapping, Basic
+  Auth header construction, OTLP trace, metric, and log exporters, and password
+  input from stdin.
 - `main_test.go`: table-driven validation of environment mapping and constants.
 
 ### CI Matrix Tool
@@ -114,8 +114,8 @@ Path: `ee-monorepo/tools/ci-matrix`
 Path: `ee-monorepo/libraries/terraform-provider-charon`
 
 - `main.go`: Terraform provider server entrypoint and debug flag.
-- `internal/provider/provider.go`: provider config schema, environment
-  fallback, sensitive API key handling, timeout validation, and diagnostics.
+- `internal/provider/provider.go`: provider config schema, environment fallback,
+  sensitive API key handling, timeout validation, and diagnostics.
 - `internal/provider/client.go`: small HTTP API adapter, bearer auth, typed API
   errors, 404 handling, and delete idempotency.
 - `internal/provider/resource_server.go`: framework resource lifecycle,
@@ -129,9 +129,9 @@ Path: `ee-monorepo/libraries/terraform-provider-charon`
 Path: `it-monorepo/apps/saviynt-audit-log-collector`
 
 - `cmd/saviynt_audit_log_collector/main.go`: subcommands, structured logger,
-  worker startup, schedule reconciliation, telemetry and sink shutdown,
-  Temporal client wiring, Saviynt client factory, cursor-store selection, and
-  production guardrails for Azure Table cursor storage.
+  worker startup, schedule reconciliation, telemetry and sink shutdown, Temporal
+  client wiring, Saviynt client factory, cursor-store selection, and production
+  guardrails for Azure Table cursor storage.
 - `internal/config/config.go`: environment config constants, defaults,
   validation, timezone loading, duration and integer parsing, unresolved
   1Password reference rejection, and tenant lookup.
@@ -142,14 +142,14 @@ Path: `it-monorepo/apps/saviynt-audit-log-collector`
   interceptor, worker registration, schedule create/update, and operator-state
   preservation.
 - `internal/pipeline/audit_workflow.go`: deterministic workflow input tuning,
-  activity retry policy, non-retryable error types, pagination,
-  continue-as-new, cursor persistence, and schedule options.
+  activity retry policy, non-retryable error types, pagination, continue-as-new,
+  cursor persistence, and schedule options.
 - `internal/pipeline/read_cursor.go`, `fetch_page.go`, `submit_page.go`, and
   `persist_cursor.go`: activity boundaries, Saviynt page fetches, OTLP
   submission, optimistic concurrency, and non-retryable conflict handling.
-- `internal/audit/transform.go`: row normalization, stable identities,
-  synthetic fingerprints, parse-error events, cursor edge deduplication, and
-  high-water advancement rules.
+- `internal/audit/transform.go`: row normalization, stable identities, synthetic
+  fingerprints, parse-error events, cursor edge deduplication, and high-water
+  advancement rules.
 - `internal/cursor/store.go` and `azure_table.go`: in-memory store for tests and
   local development, Azure Table store, ETag versioning, and conflict mapping.
 - `internal/otlp/sink.go`: OTLP log sink, no-op mode, forwarded audit resource
@@ -157,7 +157,7 @@ Path: `it-monorepo/apps/saviynt-audit-log-collector`
 - `internal/saviynt/client.go`: Saviynt login, refresh-token flow, runtime
   analytics requests, status classification, limited response reads, and
   envelope parsing.
-- `.github/workflows/saviynt-audit-log-collector.yml`: app-specific CI/CD,
-  mise setup, `mise run :ci`, Datadog coverage upload, and deployment action.
+- `.github/workflows/saviynt-audit-log-collector.yml`: app-specific CI/CD, mise
+  setup, `mise run :ci`, Datadog coverage upload, and deployment action.
 - `Dockerfile` and `deployment/worker-production.yaml`: worker image and
   platform worker manifest with `useTemporal: true`.

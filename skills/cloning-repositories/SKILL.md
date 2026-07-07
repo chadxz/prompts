@@ -86,10 +86,11 @@ adding worktrees:
 git --git-dir=<repo>/.git config --get core.bare
 ```
 
-The command should print `true`. If it prints `false`, or if `git -C <repo>
-worktree add main` reports that `main` is already used by the root checkout,
-the repository was cloned with raw Git. Remove the bad clone and repeat the
-clone with the explicit bare form.
+The command should print `true`. If it prints `false`, or if
+`git -C <repo>
+worktree add main` reports that `main` is already used by the
+root checkout, the repository was cloned with raw Git. Remove the bad clone and
+repeat the clone with the explicit bare form.
 
 ## First Worktree
 

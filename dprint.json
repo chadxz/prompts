@@ -11,7 +11,8 @@
     "**/node_modules",
     "**/coverage",
     "**/reports",
-    "**/package-lock.json"
+    "**/package-lock.json",
+    "skills/developing-temporal-applications"
   ],
   "markdown": {
     "textWrap": "always"

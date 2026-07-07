@@ -688,8 +688,13 @@ push_synthetic() {
     echo "📊 Synthetic test ID: ${PUBLIC_ID}"
     echo "🔗 View synthetic test: https://${SITE}/synthetics/details/${PUBLIC_ID}"
     echo "📥 Pulling synthetic test back to save server-assigned fields..."
-    pull_synthetic "$PUBLIC_ID" "$SYNTHETIC_JSON" >/dev/null
-    echo "✅ Synthetic test saved to ${SYNTHETIC_JSON}"
+    # pull_synthetic exits on failure, so run it in a subshell to keep a
+    # failed pull-back from failing a push Datadog already applied.
+    if ( pull_synthetic "$PUBLIC_ID" "$SYNTHETIC_JSON" >/dev/null 2>&1 ); then
+      echo "✅ Synthetic test saved to ${SYNTHETIC_JSON}"
+    else
+      echo "⚠️  Warning: Failed to pull synthetic test back; the push itself succeeded." >&2
+    fi
   fi
 }
 
@@ -706,7 +711,10 @@ list_synthetics() {
       echo "❌ Failed to list synthetic tests" >&2
       exit 1
     fi
-    RESULTS="${RESULTS}$(echo "$BODY" | jq -r '.tests[]? | "\(.public_id)|\(.name)"')"$'\n'
+    PAGE_LINES=$(echo "$BODY" | jq -r '.tests[]? | "\(.public_id)|\(.name)"')
+    if [ -n "$PAGE_LINES" ]; then
+      RESULTS="${RESULTS}${PAGE_LINES}"$'\n'
+    fi
     COUNT=$(echo "$BODY" | jq '.tests | length')
     if [ "$COUNT" -lt 100 ]; then
       break
@@ -715,9 +723,9 @@ list_synthetics() {
   done
 
   if [ -n "$SEARCH_QUERY" ]; then
-    echo "$RESULTS" | sed '/^$/d' | { grep -i -- "$SEARCH_QUERY" || true; } | sort
+    printf '%s' "$RESULTS" | { grep -i -- "$SEARCH_QUERY" || true; } | sort
   else
-    echo "$RESULTS" | sed '/^$/d' | sort
+    printf '%s' "$RESULTS" | sort
   fi
 }
 

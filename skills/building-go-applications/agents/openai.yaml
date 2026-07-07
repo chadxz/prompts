@@ -1,0 +1,4 @@
+interface:
+  display_name: "Building Go Applications"
+  short_description: "Build Go apps with Convergint conventions."
+  default_prompt: "Use $building-go-applications to work on this Go application."

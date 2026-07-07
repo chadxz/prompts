@@ -12,53 +12,30 @@ user-invocable: true
 
 Create a commit, push the branch, and open a pull request.
 
+The `creating-commits` skill owns the commit mechanics: reading the commit
+template, message constraints, staging, voice, and the `linctl` ticket commands.
+Read it before committing and apply the PR overrides below.
+
 ## Workflow
 
-1. Inspect the working tree with `git status --short`.
-2. Review the relevant diff before writing the commit message.
-3. Read the commit template:
-   ```bash
-   git config --get commit.template
-   ```
-   Then read the file at that path.
-4. Apply the `writing-in-my-voice` skill to commit and PR prose.
-5. Stage only the files that belong in this PR.
-6. Create the commit.
-7. Push the branch.
-8. Open the PR with `gh pr create --title` and `--body`.
+1. If currently on `main`, create a new branch before committing. Choose a
+   sensible branch name based on the work.
+2. Create the commit using the `creating-commits` workflow with the PR overrides
+   below.
+3. Push the branch.
+4. Open the PR with `gh pr create --title` and `--body`.
 
-## Defaults
+## PR Overrides
 
-Unless the user already specified otherwise:
+These override the `creating-commits` defaults when the commit is part of a pull
+request:
 
-- If currently on `main`, create a new branch before committing. Choose a
-  sensible branch name based on the work.
-- Assume there is no co-authors section.
-- If no associated ticket number was provided, create one.
-- Use `main` as the PR base branch.
-
-## Ticket Handling
-
-If no ticket number was provided:
-
-1. Draft the commit title and `Why?` section first.
-2. Create a Linear ticket using that title and `Why?` as the body under the
-   `EE` team:
-   ```bash
-   linctl issue create --title "<commit title>" \
-     --description "<Why? content>" --team EE --assign-me --json
-   ```
-3. Move it to `In Review`:
-   ```bash
-   linctl issue update <TICKET_ID> --state "In Review"
-   ```
-4. Use the returned ticket identifier in the commit message and PR body.
-
-## Commit Message
-
-- Follow the commit template exactly.
-- Title: maximum 50 characters.
-- Body: line length must not exceed 72 characters.
+- Do not commit directly to `main`. Branch first.
+- If no ticket number was provided, create a Linear ticket by default using the
+  ticket creation steps in `creating-commits`, unless the repository is a
+  personal repository under `github.com/chadxz/` or hosted on Tangled.
+- Use the ticket identifier in both the commit message and the PR body.
+- Use `main` as the PR base branch unless the user says otherwise.
 
 ## Pull Request Body
 

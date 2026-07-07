@@ -11,11 +11,11 @@ description:
 Use this before changing files in a Git repo. The goal is to keep each task in
 its own working tree, branch, dependencies, and verification state.
 
-Chad's default repository layout is a bare repository stored at `<repo>/.git`
-with worktrees directly under `<repo>/`. The default branch worktree lives at
-`<repo>/main`, even when the default branch is named `master` or `trunk`. Do not
-use a normal checkout at the repository root and do not put task worktrees under
-`.worktrees/`.
+Chad's repositories use the bare container layout owned by the
+`cloning-repositories` skill: a bare repository at `<repo>/.git` with worktrees
+directly under `<repo>/`, and the default branch worktree at `<repo>/main`. Read
+that skill for clone commands and layout details. Do not use a normal checkout
+at the repository root and do not put task worktrees under `.worktrees/`.
 
 ## When to use this
 

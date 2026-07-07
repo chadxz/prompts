@@ -130,5 +130,6 @@
   "autoMemoryEnabled": false,
   "autoDreamEnabled": false,
   "skipDangerousModePermissionPrompt": true,
-  "verbose": true
+  "verbose": true,
+  "autoUpdatesChannel": "latest"
 }

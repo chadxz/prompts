@@ -1,11 +1,11 @@
 ---
 name: managing-datadog
 description:
-  Manages Datadog dashboards, SLOs, and monitors as code — push
-  (create/update), pull (download), and list resources via the Datadog
-  API. Complements the Datadog MCP server. Use when the user mentions
-  Datadog dashboards, SLOs, monitors, or wants to push/pull/list
-  Datadog resources.
+  Manages Datadog dashboards, SLOs, monitors, and synthetic tests as
+  code — push (create/update), pull (download), and list resources via
+  the Datadog API. Complements the Datadog MCP server. Use when the
+  user mentions Datadog dashboards, SLOs, monitors, synthetics, or
+  wants to push/pull/list Datadog resources.
 user-invocable: false
 allowed-tools: ["Bash", "Read", "Write", "Glob", "Grep"]
 ---
@@ -26,8 +26,8 @@ configure their environment.
 
 ## Script
 
-For push, pull, and list operations on dashboards, SLOs, and monitors,
-delegate to the bundled script:
+For push, pull, and list operations on dashboards, SLOs, monitors, and
+synthetic tests, delegate to the bundled script:
 
 ```bash
 DD_API_KEY={api_key} DD_APP_KEY={app_key} DD_SITE={site} \
@@ -50,10 +50,18 @@ credential values above.
 | `monitor`   | `push`  | `<file.json>`              |
 | `monitor`   | `pull`  | `<id> [output_file.json]`  |
 | `monitor`   | `list`  | `[query]`                  |
+| `synthetic` | `push`  | `<file.json>`              |
+| `synthetic` | `pull`  | `<public_id> [output_file.json]` |
+| `synthetic` | `list`  | `[query]`                  |
 
-The script handles create-vs-update logic (presence of `id` field),
-post-create pull-back to persist assigned IDs, response unwrapping,
-and credential validation automatically.
+The script handles create-vs-update logic (presence of `id` field, or
+`public_id` for synthetics), post-create pull-back to persist assigned
+IDs, response unwrapping, and credential validation automatically.
+
+`synthetic` commands require the `pup` CLI, which the script uses for
+synthetics API calls. pup uses the same DD_API_KEY/DD_APP_KEY values
+when set and falls back to its own OAuth session (`pup auth login`)
+otherwise.
 
 ## File organization
 
@@ -64,6 +72,7 @@ to the working directory:
 datadog/dashboards/
 datadog/slos/
 datadog/monitors/
+datadog/synthetics/
 ```
 
 Create directories as needed. When pulling without an explicit output
@@ -73,9 +82,9 @@ the filename. Adjust paths if the user specifies a preference.
 ## Beyond push/pull/list
 
 For capabilities the script does not cover — querying metrics,
-managing incidents, viewing traces, APM, synthetics, error tracking,
-security signals, etc. — delegate to the **Datadog MCP server**
-tools (prefixed `datadog-mcp:`).
+managing incidents, viewing traces, APM, synthetic test results,
+error tracking, security signals, etc. — delegate to the **Datadog
+MCP server** tools (prefixed `datadog-mcp:`).
 
 If the Datadog MCP server is not configured, read
 [MCP setup](reference/mcp-setup.md) and guide the user through

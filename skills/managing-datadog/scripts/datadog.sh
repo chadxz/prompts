@@ -2,12 +2,13 @@
 
 set -euo pipefail
 
-# This script manages Datadog dashboards, SLOs, and monitors - can push (create/update) or pull (download).
+# This script manages Datadog dashboards, SLOs, monitors, and synthetic tests - can push (create/update) or pull (download).
 #
 # Requirements:
 #   jq - JSON processor (install via: brew install jq, apt-get install jq, etc.)
 #   DD_API_KEY or DATADOG_API_KEY environment variable
 #   DD_APP_KEY or DATADOG_APP_KEY environment variable
+#   pup - Datadog API CLI, required for `synthetic` commands only
 # Optional:
 #   DD_SITE or DATADOG_SITE (defaults to us3.datadoghq.com)
 #
@@ -15,17 +16,21 @@ set -euo pipefail
 #   op run -- ./datadog.sh dashboard push path/to/dashboard.json
 #   op run -- ./datadog.sh slo push path/to/slo.json
 #   op run -- ./datadog.sh monitor push path/to/monitor.json
+#   op run -- ./datadog.sh synthetic push path/to/synthetic.json
 #   op run -- ./datadog.sh dashboard pull <dashboard_id> [output_file.json]
 #   op run -- ./datadog.sh slo pull <slo_id> [output_file.json]
 #   op run -- ./datadog.sh monitor pull <monitor_id> [output_file.json]
+#   op run -- ./datadog.sh synthetic pull <public_id> [output_file.json]
 #
 # Usage examples:
 #   op run -- ./datadog.sh dashboard push mulesoft-applications-overview.json
 #   op run -- ./datadog.sh slo push mulesoft-api-availability-slo.json
 #   op run -- ./datadog.sh monitor push mulesoft-api-availability-monitor.json
+#   op run -- ./datadog.sh synthetic push availability-example-synthetic.json
 #   op run -- ./datadog.sh dashboard pull 24f-emr-yzt [output_file.json]
 #   op run -- ./datadog.sh slo pull <slo_id> [output_file.json]
 #   op run -- ./datadog.sh monitor pull <monitor_id> [output_file.json]
+#   op run -- ./datadog.sh synthetic pull rce-m9e-hnr [output_file.json]
 
 PROGRAM_NAME="$(basename "$0")"
 
@@ -37,6 +42,7 @@ Resource Types:
   dashboard Manage Dashboards
   slo       Manage Service Level Objectives
   monitor   Manage Monitors
+  synthetic Manage Synthetic Tests (requires the pup CLI)
 
 Commands:
   push <file.json>              Push (create or update) from JSON file
@@ -50,15 +56,19 @@ Examples:
   $PROGRAM_NAME dashboard push mulesoft-applications-overview.json
   $PROGRAM_NAME slo push mulesoft-api-availability-slo.json
   $PROGRAM_NAME monitor push mulesoft-api-availability-monitor.json
+  $PROGRAM_NAME synthetic push availability-example-synthetic.json
   $PROGRAM_NAME dashboard pull 24f-emr-yzt [output_file.json]
   $PROGRAM_NAME slo pull <slo_id> [output_file.json]
   $PROGRAM_NAME monitor pull <monitor_id> [output_file.json]
+  $PROGRAM_NAME synthetic pull rce-m9e-hnr [output_file.json]
 
 Notes:
   • jq is required (install via: brew install jq, apt-get install jq, etc.)
   • Use \`op run\` to inject DD_API_KEY/DD_APP_KEY from 1Password (recommended).
   • Alternatively, set DD_API_KEY/DD_APP_KEY (or DATADOG_* variants) in your environment.
   • Override the Datadog site with DD_SITE (defaults to us3.datadoghq.com).
+  • synthetic commands go through the pup CLI, which also accepts its own
+    OAuth session (pup auth login) when no API keys are set.
 EOF
 }
 
@@ -598,6 +608,156 @@ pull_dashboard() {
   fi
 }
 
+# Synthetic test commands go through the pup CLI instead of curl. pup owns
+# authentication for synthetics: it uses DD_API_KEY/DD_APP_KEY when set and
+# falls back to its own OAuth session (pup auth login) otherwise, which is
+# why these commands do not call validate_credentials.
+require_pup() {
+  if ! command -v pup >/dev/null 2>&1; then
+    echo "Error: pup is required for synthetic commands but not found." >&2
+    echo "Install the pup Datadog API CLI and authenticate with 'pup auth login'," >&2
+    echo "or set DD_API_KEY/DD_APP_KEY in your environment." >&2
+    exit 1
+  fi
+
+  if [ -n "$API_KEY" ] && [ -n "$APP_KEY" ]; then
+    export DD_API_KEY="$API_KEY"
+    export DD_APP_KEY="$APP_KEY"
+  fi
+  export DD_SITE="$SITE"
+}
+
+# Synthetics write endpoints are split by test type (api/browser/mobile),
+# so push and pull derive the endpoint segment from the test's type field.
+synthetic_endpoint_segment() {
+  local TEST_TYPE="$1"
+
+  case "$TEST_TYPE" in
+    browser) echo "browser" ;;
+    mobile) echo "mobile" ;;
+    *) echo "api" ;;
+  esac
+}
+
+push_synthetic() {
+  local SYNTHETIC_JSON="$1"
+
+  if [ ! -f "$SYNTHETIC_JSON" ]; then
+    SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    RELATIVE_JSON="${SCRIPT_DIR}/$SYNTHETIC_JSON"
+    if [ -f "$RELATIVE_JSON" ]; then
+      SYNTHETIC_JSON="$RELATIVE_JSON"
+    fi
+  fi
+
+  if [ ! -f "$SYNTHETIC_JSON" ]; then
+    echo "Error: Synthetic test JSON file not found at $SYNTHETIC_JSON" >&2
+    exit 1
+  fi
+
+  PUBLIC_ID=$(jq -r '.public_id // empty' "$SYNTHETIC_JSON" 2>/dev/null || echo "")
+  TEST_TYPE=$(jq -r '.type // "api"' "$SYNTHETIC_JSON" 2>/dev/null || echo "api")
+  SEGMENT=$(synthetic_endpoint_segment "$TEST_TYPE")
+
+  # Pulled files carry read-only fields (public_id, monitor_id, creator,
+  # timestamps, ...) the write endpoints reject, so project down to the
+  # writable ones. subtype is null for browser tests, hence the null filter.
+  TMP_JSON=$(mktemp)
+  jq '{name, status, type, subtype, tags, config, locations, message, options}
+      | with_entries(select(.value != null))' "$SYNTHETIC_JSON" > "$TMP_JSON"
+
+  if [ -n "$PUBLIC_ID" ]; then
+    echo "Updating synthetic test from ${SYNTHETIC_JSON} to Datadog site ${SITE}..."
+    if ! pup --no-agent --yes api --method PUT \
+      "v1/synthetics/tests/${SEGMENT}/${PUBLIC_ID}" --input "$TMP_JSON" >/dev/null; then
+      echo "❌ Failed to push synthetic test" >&2
+      exit 1
+    fi
+  else
+    echo "Creating synthetic test from ${SYNTHETIC_JSON} to Datadog site ${SITE}..."
+    if ! RESPONSE=$(pup --no-agent --yes api --method POST \
+      "v1/synthetics/tests/${SEGMENT}" --input "$TMP_JSON"); then
+      echo "❌ Failed to push synthetic test" >&2
+      exit 1
+    fi
+    PUBLIC_ID=$(echo "$RESPONSE" | jq -r '.public_id // empty')
+  fi
+
+  echo "✅ Synthetic test pushed successfully!"
+  if [ -n "$PUBLIC_ID" ]; then
+    echo "📊 Synthetic test ID: ${PUBLIC_ID}"
+    echo "🔗 View synthetic test: https://${SITE}/synthetics/details/${PUBLIC_ID}"
+    echo "📥 Pulling synthetic test back to save server-assigned fields..."
+    pull_synthetic "$PUBLIC_ID" "$SYNTHETIC_JSON" >/dev/null
+    echo "✅ Synthetic test saved to ${SYNTHETIC_JSON}"
+  fi
+}
+
+list_synthetics() {
+  local SEARCH_QUERY="${1:-}"
+
+  echo "Listing synthetic tests from Datadog site ${SITE}..."
+
+  local PAGE=0
+  local RESULTS=""
+  while :; do
+    if ! BODY=$(pup --no-agent api v1/synthetics/tests \
+      --field page_size=100 --field "page_number=${PAGE}"); then
+      echo "❌ Failed to list synthetic tests" >&2
+      exit 1
+    fi
+    RESULTS="${RESULTS}$(echo "$BODY" | jq -r '.tests[]? | "\(.public_id)|\(.name)"')"$'\n'
+    COUNT=$(echo "$BODY" | jq '.tests | length')
+    if [ "$COUNT" -lt 100 ]; then
+      break
+    fi
+    PAGE=$((PAGE + 1))
+  done
+
+  if [ -n "$SEARCH_QUERY" ]; then
+    echo "$RESULTS" | sed '/^$/d' | { grep -i -- "$SEARCH_QUERY" || true; } | sort
+  else
+    echo "$RESULTS" | sed '/^$/d' | sort
+  fi
+}
+
+pull_synthetic() {
+  local PUBLIC_ID="$1"
+  local OUTPUT_FILE="${2:-}"
+
+  if [ -z "$PUBLIC_ID" ]; then
+    echo "Error: Synthetic test public ID is required" >&2
+    usage
+    exit 1
+  fi
+
+  echo "Pulling synthetic test ${PUBLIC_ID} from Datadog site ${SITE}..."
+
+  if ! BODY=$(pup --no-agent api "v1/synthetics/tests/${PUBLIC_ID}"); then
+    echo "❌ Failed to pull synthetic test" >&2
+    exit 1
+  fi
+
+  # The generic endpoint omits browser test steps; refetch those from the
+  # type-specific endpoint so pulled files are complete enough to push back.
+  TEST_TYPE=$(echo "$BODY" | jq -r '.type // "api"')
+  if [ "$TEST_TYPE" != "api" ]; then
+    SEGMENT=$(synthetic_endpoint_segment "$TEST_TYPE")
+    if ! BODY=$(pup --no-agent api "v1/synthetics/tests/${SEGMENT}/${PUBLIC_ID}"); then
+      echo "❌ Failed to pull synthetic test" >&2
+      exit 1
+    fi
+  fi
+
+  if [ -n "$OUTPUT_FILE" ]; then
+    echo "$BODY" | jq '.' > "$OUTPUT_FILE"
+    echo "✅ Synthetic test pulled successfully!"
+    echo "📄 Saved to: ${OUTPUT_FILE}"
+  else
+    echo "$BODY" | jq '.'
+  fi
+}
+
 # Main command handling
 if [ "$#" -eq 0 ]; then
   usage
@@ -734,13 +894,55 @@ case "$RESOURCE_TYPE" in
         ;;
     esac
     ;;
+  synthetic)
+    if [ "$#" -eq 0 ]; then
+      echo "Error: command is required" >&2
+      usage
+      exit 1
+    fi
+    COMMAND="$1"
+    shift
+    case "$COMMAND" in
+      push)
+        if [ "$#" -eq 0 ]; then
+          echo "Error: Synthetic test JSON path is required" >&2
+          usage
+          exit 1
+        fi
+        require_pup
+        push_synthetic "$1"
+        ;;
+      pull)
+        if [ "$#" -eq 0 ]; then
+          echo "Error: Synthetic test public ID is required" >&2
+          usage
+          exit 1
+        fi
+        require_pup
+        pull_synthetic "$1" "${2:-}"
+        ;;
+      list)
+        require_pup
+        list_synthetics "${1:-}"
+        ;;
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      *)
+        echo "Error: Unknown command '$COMMAND'" >&2
+        usage
+        exit 1
+        ;;
+    esac
+    ;;
   -h|--help)
     usage
     exit 0
     ;;
   *)
     echo "Error: Unknown resource type '$RESOURCE_TYPE'" >&2
-    echo "Valid resource types: dashboard, slo, monitor" >&2
+    echo "Valid resource types: dashboard, slo, monitor, synthetic" >&2
     usage
     exit 1
     ;;

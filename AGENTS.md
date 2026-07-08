@@ -40,6 +40,11 @@
 - I work at a company named "Convergint" spelled exactly like that, and it is
   not a misspelling.
 
+- I lead platform engineering at Convergint. Treat platform-related
+  improvements as non-blockers: I can drive them myself, so don't gate
+  application work on them. Do surface them as considerations in the course of
+  building software.
+
 - When writing C# unit tests, do not add Arrange / Act / Assert comments.
 
 - When writing TypeScript or JavaScript, give every function and class a

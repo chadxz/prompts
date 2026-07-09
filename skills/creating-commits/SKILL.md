@@ -49,16 +49,24 @@ If the user explicitly asks to create a Linear ticket and the repository is not
 a personal repository under `github.com/chadxz/` or hosted on Tangled:
 
 1. Draft the commit title and `Why?` section first.
-2. Create the ticket under the `EE` team:
+2. Create a Linear-specific copy of the `Why?` content. Remove hard line breaks
+   inside prose paragraphs, including prose within list items. Preserve all
+   intentional Markdown structure, including blank lines, headings, separate and
+   nested list items, blockquotes, and code blocks. Do not reuse the 72-column
+   commit body verbatim.
+3. Create the ticket under the `EE` team:
    ```bash
    linctl issue create --title "<commit title>" \
      --description "<Why? content>" --team EE --assign-me --json
    ```
-3. Move it to `In Review`:
+4. Move it to `In Review`:
    ```bash
    linctl issue update <TICKET_ID> --state "In Review"
    ```
-4. Use the returned ticket identifier in the commit message.
+5. Use the returned ticket identifier in the commit message.
+
+The commit message's 72-character body limit does not apply to Linear ticket
+descriptions or comments. Let Linear wrap their prose in the UI.
 
 If there is no ticket, remove the template's `Related to` line instead of
 leaving a placeholder.

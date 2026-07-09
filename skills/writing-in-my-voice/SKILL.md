@@ -4,11 +4,11 @@ description:
   Applies Chad's writing style and voice to any prose output. Use
   whenever the output includes prose written on Chad's behalf,
   including but not limited to announcements, RFCs, ADRs, developer
-  docs, Notion pages, emails, Slack messages, GitHub PR comments,
-  GitHub PR reviews, summaries, explanations for colleagues, or
-  messages to other teams. Trigger words include write, draft,
-  rewrite, review, comment, post, summarize, explain, announce,
-  approve with comments, and message.
+  docs, Notion pages, emails, Slack messages, Linear ticket
+  descriptions and comments, GitHub PR comments, GitHub PR reviews,
+  summaries, explanations for colleagues, or messages to other teams.
+  Trigger words include write, draft, rewrite, review, comment, post,
+  summarize, explain, announce, approve with comments, and message.
 user-invocable: true
 allowed-tools: []
 ---
@@ -100,6 +100,17 @@ without a concession-pivot formula, context before the reveal, no fanfare.
   and "how"). Don't use a table to present what should be a paragraph.
 - Numbered lists only for actual sequential steps. Bullet lists only for
   parallel items (a set of features, a set of responsibilities).
+- For ordinary chat responses, including progress updates and final answers,
+  never insert hard line breaks inside a prose paragraph, including prose within
+  a list item. Preserve all intentional Markdown structure, including blank
+  lines, headings, separate and nested list items, blockquotes, and code blocks,
+  and let the chat UI wrap prose.
+- For Linear ticket descriptions and comments, never insert hard line breaks
+  inside a prose paragraph, including prose within a list item. Preserve all
+  intentional Markdown structure, including blank lines, headings, separate and
+  nested list items, blockquotes, and code blocks, and let Linear wrap prose in
+  the UI. Apply this rule even when composing the text in a temporary file or
+  shell variable before submission.
 - Code examples should be brief and practical, just enough to show the pattern.
 - End with acknowledgements (for announcements) or next steps. Don't write a
   "conclusion" or "summary" section.

@@ -34,6 +34,9 @@ request:
 - If no ticket number was provided, create a Linear ticket by default using the
   ticket creation steps in `creating-commits`, unless the repository is a
   personal repository under `github.com/chadxz/` or hosted on Tangled.
+- Keep the Linear ticket description unwrapped even though the commit message
+  body is wrapped at 72 characters. Preserve all intentional Markdown structure
+  and let Linear wrap prose in the UI.
 - Use the ticket identifier in both the commit message and the PR body.
 - Use `main` as the PR base branch unless the user says otherwise.
 

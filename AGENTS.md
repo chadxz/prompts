@@ -25,12 +25,24 @@
   --force-with-lease. If it fails, investigate, but always use
   --force-with-lease.
 
-- When writing Markdown intended as a saved or submitted artifact, wrap prose at
-  80 characters and make sure it is easy to read without rendering. This keeps
-  durable text pleasant to review in diffs, terminals, and plain text editors.
-  This includes things like repo files, temp files, and commit messages. Do not
-  hard-wrap PR descriptions, issue comments, or ordinary chat responses unless I
-  ask for wrapped output.
+- When Markdown's durable form is a file or commit message, wrap prose at 80
+  characters and make sure it is easy to read without rendering. This keeps
+  repo files, standalone temp artifacts, and commit messages pleasant to review
+  in diffs, terminals, and plain text editors. This rule excludes chat and
+  UI-submitted text such as PR descriptions, GitHub issue comments, and Linear
+  ticket content, even when a temporary file is used only to submit the text.
+
+- Never hard-wrap ordinary chat responses, including progress updates and final
+  answers. Do not insert newlines inside a prose paragraph, including prose
+  within a list item. Preserve all intentional Markdown structure, including
+  blank lines, headings, separate and nested list items, blockquotes, and code
+  blocks, and let the chat UI wrap text.
+
+- Never hard-wrap Linear ticket descriptions or comments. Do not insert newlines
+  inside a prose paragraph, including prose within a list item or content staged
+  in a temporary file or passed to `linctl`. Preserve all intentional Markdown
+  structure, including blank lines, headings, separate and nested list items,
+  blockquotes, and code blocks, and let Linear wrap text in the UI.
 
 - Any time you want to look at a github link, use `gh` cli instead.
 

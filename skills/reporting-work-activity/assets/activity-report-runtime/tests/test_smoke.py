@@ -5,6 +5,8 @@ import json
 import sys
 from pathlib import Path
 
+from pypdf import PdfWriter
+
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -23,6 +25,7 @@ generate_report = load_module("generate_report", "generate_report.py")
 populate_data = load_module("populate_data", "populate_data.py")
 clear_runtime_cache = load_module("clear_runtime_cache", "clear_runtime_cache.py")
 report_server = load_module("report_server", "report_server.py")
+verify_report = load_module("verify_report", "verify_report.py")
 
 
 def test_slugify_normalizes_report_labels() -> None:
@@ -148,6 +151,169 @@ def test_load_datadog_activity_requires_object_snapshot(tmp_path, monkeypatch) -
 
     assert "datadog.json" in message
     assert "Expected a JSON object" in message
+
+
+def test_load_personal_report_requires_current_snapshot(tmp_path, monkeypatch) -> None:
+    snapshot_path = tmp_path / "personal-report.json"
+    monkeypatch.setattr(generate_report, "PERSONAL_REPORT_SNAPSHOT_FILE", snapshot_path)
+
+    try:
+        generate_report.load_personal_report()
+    except SystemExit as exc:
+        message = str(exc)
+    else:
+        raise AssertionError("load_personal_report should exit when the snapshot is missing")
+
+    assert "personal-report.json" in message
+    assert "$reporting-work-activity" in message
+
+
+def test_load_personal_report_accepts_current_narrative(tmp_path, monkeypatch) -> None:
+    snapshot_path = tmp_path / "personal-report.json"
+    narrative = {
+        "window": {
+            "start": generate_report.WINDOW_START,
+            "end": generate_report.WINDOW_END,
+        },
+        "lede": "Current personal work.",
+        "discussion": {"title": "Current decision."},
+        "workstreams": [{"title": "Current workstream."}],
+        "lowlights": [{"title": "Current lowlight."}],
+        "methodology": ["Current evidence only."],
+    }
+    snapshot_path.write_text(json.dumps(narrative))
+    monkeypatch.setattr(generate_report, "PERSONAL_REPORT_SNAPSHOT_FILE", snapshot_path)
+
+    assert generate_report.load_personal_report() == narrative
+
+
+def test_load_personal_report_rejects_stale_narrative(tmp_path, monkeypatch) -> None:
+    snapshot_path = tmp_path / "personal-report.json"
+    narrative = {
+        "window": {"start": "2026-06-01", "end": "2026-06-07"},
+        "lede": "Old personal work.",
+        "discussion": {"title": "Old decision."},
+        "workstreams": [{"title": "Old workstream."}],
+        "lowlights": [{"title": "Old lowlight."}],
+        "methodology": ["Old evidence."],
+    }
+    snapshot_path.write_text(json.dumps(narrative))
+    monkeypatch.setattr(generate_report, "PERSONAL_REPORT_SNAPSHOT_FILE", snapshot_path)
+
+    try:
+        generate_report.load_personal_report()
+    except SystemExit as exc:
+        message = str(exc)
+    else:
+        raise AssertionError("load_personal_report should reject a stale window")
+
+    assert "does not match the selected report window" in message
+    assert generate_report.WINDOW_START in message
+    assert generate_report.WINDOW_END in message
+
+
+def test_load_refresh_manifest_rejects_stale_window(tmp_path, monkeypatch) -> None:
+    snapshot_path = tmp_path / "refresh-manifest.json"
+    snapshot_path.write_text(
+        json.dumps(
+            {
+                "window": {
+                    "start": "2026-06-01",
+                    "end": "2026-06-07",
+                    "timezone": generate_report.REPORT_TIMEZONE.key,
+                },
+                "sources": {},
+            }
+        )
+    )
+    monkeypatch.setattr(generate_report, "REFRESH_MANIFEST_FILE", snapshot_path)
+
+    try:
+        generate_report.load_refresh_manifest()
+    except SystemExit as exc:
+        message = str(exc)
+    else:
+        raise AssertionError("load_refresh_manifest should reject a stale window")
+
+    assert "does not match the selected report window" in message
+
+
+def test_verify_report_requires_every_source_receipt() -> None:
+    manifest = {
+        "window": {
+            "start": generate_report.WINDOW_START,
+            "end": generate_report.WINDOW_END,
+            "timezone": generate_report.REPORT_TIMEZONE.key,
+        },
+        "refreshed_at": "2026-07-09T18:15:11-05:00",
+        "sources": {
+            "github": {"status": "refreshed"},
+            "linear": {"status": "refreshed"},
+            "slack": {"status": "refreshed"},
+            "notion": {"status": "refreshed"},
+        },
+    }
+
+    errors = verify_report.validate_refresh_manifest(
+        manifest,
+        generate_report.WINDOW_START,
+        generate_report.WINDOW_END,
+        generate_report.REPORT_TIMEZONE.key,
+    )
+
+    assert "Refresh manifest requires a current `datadog` receipt." in errors
+
+
+def test_verify_report_rejects_stale_narrative_window() -> None:
+    narrative = {
+        "window": {"start": "2026-06-01", "end": "2026-06-07"},
+        "lede": "Current personal work.",
+        "discussion": {"title": "Current decision.", "body": "Decision body."},
+        "workstreams": [{"title": "Current workstream.", "body": "Work body."}],
+        "lowlights": [{"title": "Current lowlight.", "body": "Risk body."}],
+        "methodology": ["Current evidence only."],
+    }
+
+    errors = verify_report.validate_narrative(
+        narrative,
+        generate_report.WINDOW_START,
+        generate_report.WINDOW_END,
+    )
+
+    assert any("does not match the selected report window" in error for error in errors)
+
+
+def test_verify_report_finds_broken_local_fragment(tmp_path) -> None:
+    (tmp_path / "index.html").write_text(
+        '<html><head><title>Home</title></head><body><main id="main">'
+        '<a href="detail.html#missing">Open</a></main></body></html>'
+    )
+    (tmp_path / "detail.html").write_text(
+        '<html><head><title>Detail</title></head><body><main id="detail">'
+        "Detail</main></body></html>"
+    )
+
+    pages, page_errors = verify_report.parse_html_pages(tmp_path)
+    link_errors = verify_report.validate_local_links(tmp_path, pages)
+
+    assert page_errors == []
+    assert any("missing fragment link" in error for error in link_errors)
+
+
+def test_verify_report_rejects_multi_page_pdf(tmp_path) -> None:
+    pdf_path = tmp_path / "report.pdf"
+    writer = PdfWriter()
+    writer.add_blank_page(width=612, height=792)
+    writer.add_blank_page(width=612, height=792)
+    with pdf_path.open("wb") as output:
+        writer.write(output)
+
+    errors = verify_report.validate_single_page_pdf(
+        pdf_path,
+        "July 3 through July 9, 2026",
+    )
+
+    assert "Report PDF has 2 pages; expected exactly 1." in errors
 
 
 def test_report_sources_reads_private_config(tmp_path, monkeypatch) -> None:

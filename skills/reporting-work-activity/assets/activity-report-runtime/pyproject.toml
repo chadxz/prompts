@@ -4,7 +4,10 @@ version = "0.1.0"
 description = "Weekly Convergint activity report generator and local controls"
 readme = "README.md"
 requires-python = ">=3.14,<3.15"
-dependencies = []
+dependencies = [
+  "playwright>=1.52,<2",
+  "pypdf>=5.5,<7",
+]
 
 [dependency-groups]
 dev = [

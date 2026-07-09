@@ -48,14 +48,10 @@ report when Chad's Linear issue, Slack guidance, or support thread explains why
 it mattered.
 
 Structure the personal report around a small number of bodies of work, not
-around tools. The user specifically preferred this pattern:
-
-- CTC Financials as a platform-owned application path.
-- Windows Server 2025 platform support for iQuote.
-- IT and Infrastructure support, including Saviynt audit-log ingest and iCare
-  private-link access.
-- Platform runtime and agent tooling.
-- Observability and data reliability.
+around tools. Derive those bodies of work from the current window each time.
+Do not preserve last week's workstream names as a template. A useful current
+workstream connects a concrete outcome or decision to two or more pieces of
+evidence, regardless of which source supplied them.
 
 For personal reports, avoid separate broad sections titled Slack, GitHub,
 Notion, Linear, or Datadog unless the user asks for a ledger. Put evidence links
@@ -65,7 +61,7 @@ The hero should make the scope obvious. Use copy like "Chad's week in platform
 work" and include personal counts only after the story:
 
 - PRs opened by Chad.
-- Chad-assigned Linear issues moved to Done.
+- Chad-assigned Linear issues moved to a completed state.
 - Number of major bodies of work.
 - Number of demo-worthy threads or discussion highlights.
 
@@ -94,37 +90,42 @@ week, make it visually obvious. Good treatments:
 - a highlighted "Demo angle" line inside the card
 - a top-level "Discuss this week" callout for meetings or transcripts
 
-Keep the treatment consistent. During the June 12 through June 18, 2026 personal
-report, these were marked demo-worthy:
+Keep the treatment consistent, but do not carry demo-worthy projects forward
+as a standing source list. Choose demo and discussion highlights again from the
+current evidence on every run.
 
-- CTC Financials
-- Windows Server 2025 platform support
-- Saviynt audit-log Datadog ingest
+## Visual redesigns
 
-The Sergio Botero Temporal pairing transcript was marked as "Discuss this week"
-because it was a cross-team adoption thread. It linked to the Notion transcript
-and the Saviynt reference PR.
+Personal and org reports can use different information architectures, but a
+redesign request still needs a coherent visual system across the home page and
+drill-down pages. Read `visual-design-contract.md` before changing markup, CSS,
+JavaScript, or generated assets. Preserve scope and evidence contracts while
+passing its four-of-five distinctness gate.
 
-## Single-page PDF export
+## Required single-page PDF export
 
-The browser page and one-page PDF need different layout rules. Browser CSS can
-use sticky nav, rotated ribbons, clipped overflow, and scrollable tables. A
-static PDF should not.
+Every report includes
+`dist/chad-weekly-activity-report-single-page.pdf`. `mise run report` builds it
+after the HTML, and `mise run pdf` re-exports an unchanged HTML report. The
+browser page and one-page PDF need different layout rules. Browser CSS can use
+sticky navigation, clipped overflow, and scrollable tables. A static PDF should
+not.
 
 When exporting a full report as a single PDF page:
 
-1. Open the served report with Playwright.
-2. Expand all `details` elements before export so the PDF is complete.
-3. Inject export-only CSS rather than changing the interactive HTML.
-4. Disable sticky positioning for navigation.
-5. Embed the hero background as an actual image layer, not only as a CSS
-   background, so PDF viewers do not suppress it.
-6. Convert rotated corner ribbons into non-rotated corner badges.
-7. Remove card shadows if the PDF viewer renders them as gray blocks.
-8. Stack evidence tables and set `table-layout: fixed`.
-9. Wrap table cells with `overflow-wrap: anywhere`.
-10. Set the PDF height to the rendered document height so the output is exactly
-    one page.
+`export_single_page_pdf.py` owns the export-only CSS and these behaviors:
+
+1. Expand all `details` elements so the PDF is complete.
+2. Disable fixed or sticky positioning.
+3. Preserve backgrounds with browser print-color adjustment.
+4. Convert any overlapping ribbon treatment into a safe badge.
+5. Remove shadows when the PDF viewer renders them as gray blocks.
+6. Set evidence tables to fixed layout and wrap long cells.
+7. Set the PDF height to the rendered document height so the output is exactly
+   one page.
+
+Update that script alongside any redesign. Do not make the interactive HTML
+worse merely to accommodate print output.
 
 After export, verify:
 
@@ -150,9 +151,9 @@ PY
 ```bash
 pdftoppm -png -singlefile -r 90 \
   dist/chad-weekly-activity-report-single-page.pdf \
-  dist/pdf-debug/single-page-check
+  tmp/pdfs/single-page-check
 ```
 
 Visually inspect the rendered PNG, not only the browser page. The PDF can have
 viewer-specific artifacts that do not appear in Chromium's normal screen
-rendering.
+rendering. This inspection is required on every report run.

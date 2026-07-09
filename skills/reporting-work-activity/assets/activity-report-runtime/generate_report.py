@@ -21,7 +21,10 @@ from report_config import (
     NOTION_SNAPSHOT_FILE,
     ORG,
     OUTPUT_DIR,
+    PERSONAL_REPORT_SNAPSHOT_FILE,
+    REFRESH_MANIFEST_FILE,
     REPORT_SERVER_ORIGIN,
+    REPORT_TIMEZONE,
     REPORT_TITLE,
     REQUIRED_DATA_FILES,
     SLACK_SNAPSHOT_FILE,
@@ -175,6 +178,107 @@ def load_datadog_activity() -> dict:
             f"- {DATADOG_SNAPSHOT_FILE.name}\n"
             "Expected a JSON object with counts, highlights, and lowlights."
         )
+    return data
+
+
+def load_personal_report() -> dict:
+    if not PERSONAL_REPORT_SNAPSHOT_FILE.exists():
+        raise SystemExit(
+            "Missing required personal report narrative snapshot.\n"
+            f"- {PERSONAL_REPORT_SNAPSHOT_FILE.name}\n"
+            "Refresh the current conclusions with $reporting-work-activity before building the report."
+        )
+    try:
+        data = json.loads(PERSONAL_REPORT_SNAPSHOT_FILE.read_text())
+    except json.JSONDecodeError:
+        raise SystemExit(
+            "Invalid personal report narrative snapshot JSON.\n"
+            f"- {PERSONAL_REPORT_SNAPSHOT_FILE.name}\n"
+            "Refresh the current conclusions with $reporting-work-activity before building the report."
+        ) from None
+    if not isinstance(data, dict):
+        raise SystemExit(
+            "Invalid personal report narrative snapshot shape.\n"
+            f"- {PERSONAL_REPORT_SNAPSHOT_FILE.name}\n"
+            "Expected an object with the current lede, discussion, workstreams, lowlights, and methodology."
+        )
+
+    lede = data.get("lede")
+    window = data.get("window")
+    discussion = data.get("discussion")
+    workstreams = data.get("workstreams")
+    lowlights = data.get("lowlights")
+    methodology = data.get("methodology")
+    if not isinstance(lede, str) or not lede.strip():
+        raise SystemExit("Personal report narrative requires a non-empty `lede` string.")
+    expected_window = {"start": WINDOW_START, "end": WINDOW_END}
+    if (
+        not isinstance(window, dict)
+        or {
+            "start": window.get("start"),
+            "end": window.get("end"),
+        }
+        != expected_window
+    ):
+        raise SystemExit(
+            "Personal report narrative window does not match the selected report window.\n"
+            f"- expected: {WINDOW_START} through {WINDOW_END}\n"
+            "Refresh `personal_report.json` from current evidence before building the report."
+        )
+    if not isinstance(discussion, dict):
+        raise SystemExit("Personal report narrative requires a `discussion` object.")
+    if not isinstance(workstreams, list) or not workstreams:
+        raise SystemExit("Personal report narrative requires at least one workstream.")
+    if not isinstance(lowlights, list) or not lowlights:
+        raise SystemExit("Personal report narrative requires at least one lowlight.")
+    if not isinstance(methodology, list) or not methodology:
+        raise SystemExit("Personal report narrative requires methodology notes.")
+    return data
+
+
+def load_refresh_manifest() -> dict:
+    if not REFRESH_MANIFEST_FILE.exists():
+        raise SystemExit(
+            "Missing required refresh manifest.\n"
+            f"- {REFRESH_MANIFEST_FILE.name}\n"
+            "Finish every evidence refresh and write its receipt before building the report."
+        )
+    try:
+        data = json.loads(REFRESH_MANIFEST_FILE.read_text())
+    except json.JSONDecodeError:
+        raise SystemExit(
+            "Invalid refresh manifest JSON.\n"
+            f"- {REFRESH_MANIFEST_FILE.name}\n"
+            "Rewrite the refresh receipt from the current evidence pass."
+        ) from None
+    if not isinstance(data, dict):
+        raise SystemExit("Refresh manifest must be a JSON object.")
+
+    window = data.get("window")
+    expected_window = {
+        "start": WINDOW_START,
+        "end": WINDOW_END,
+        "timezone": REPORT_TIMEZONE.key,
+    }
+    if window != expected_window:
+        raise SystemExit(
+            "Refresh manifest window does not match the selected report window.\n"
+            f"- expected: {WINDOW_START} through {WINDOW_END} in {REPORT_TIMEZONE.key}\n"
+            "Refresh every evidence source for the selected window before building the report."
+        )
+
+    sources = data.get("sources")
+    if not isinstance(sources, dict):
+        raise SystemExit("Refresh manifest requires a `sources` object.")
+    allowed_statuses = {"refreshed", "confirmed_current"}
+    for source in ["github", "linear", "slack", "notion", "datadog"]:
+        receipt = sources.get(source)
+        if not isinstance(receipt, dict) or receipt.get("status") not in allowed_statuses:
+            raise SystemExit(
+                f"Refresh manifest requires a current receipt for `{source}`.\n"
+                "Use `refreshed`, or `confirmed_current` only when the user explicitly "
+                "approved preserved cache."
+            )
     return data
 
 
@@ -662,64 +766,52 @@ def datadog_summary() -> dict:
 
 LINEAR_INTERESTING_NOTES = [
     (
-        "EE-981",
-        "Adds Windows Server 2025 node-pool support for iQuote, which is platform plumbing that quietly reduces future hosting friction.",
+        "EE-1057",
+        "Removes a no-op tracing variable from every platform workload after the current Datadog injection path made the old setting obsolete.",
     ),
     (
-        "EE-966",
-        "Ties directly to the Datadog certification dashboard work: award-row data needed to be trustworthy before the dashboard could be useful.",
+        "EE-1058",
+        "Keeps root mise installs reproducible by pinning the missing npm tool and resolving Nx from the workspace dependency.",
     ),
     (
-        "EE-986",
-        "Moves DBM from surface-level database monitoring toward query and wait-event visibility for MySQL workloads.",
+        "VIB-47",
+        "Closes the production secret-management prerequisite for the CTC Financials project.",
     ),
     (
-        "EE-985",
-        "Turns three local CTC financial dashboards into one platform-hosted app with a clearer auth and deployment path.",
+        "EE-997",
+        "Completes the managed GitHub access path for Salesforce contributors.",
     ),
     (
-        "EE-929",
-        "The main Insights staging migration thread, backed by GitHub, Notion planning, and Datadog DBM work.",
+        "EE-959",
+        "Connects the Salesforce access work to the wider SOC2 repository-permission cleanup.",
     ),
     (
-        "EE-969",
-        "Keeps the production side of the Insights database move explicit instead of hiding it inside app deployment work.",
+        "EE-1044",
+        "Renames the shared dependency review action around its support for both Dependabot and Renovate.",
     ),
     (
-        "DAT-2592",
-        "Matches the SQLMesh RFC lowlight: audit and run failures need first-class alerts before the Tobiko migration is safe.",
+        "EE-1047",
+        "Moves Linear invitations and Entra group assignment into the same onboarding CLI as the other engineering applications.",
     ),
     (
-        "DAT-2595",
-        "Connects SQLMesh run logs to Datadog so data-platform failures have a durable operating surface.",
+        "PE-5",
+        "Closes the Salesforce governance discovery that informed the repository access model.",
     ),
     (
-        "DAT-2594",
-        "Adds freshness monitoring to the SQLMesh migration story, which is the difference between jobs running and users trusting outputs.",
+        "EE-1043",
+        "Makes Terraform and managed teams the source of truth for Salesforce repository access.",
     ),
     (
-        "DAT-2593",
-        "Keeps the GitHub Actions path honest by alerting when the workflow layer fails before SQLMesh can report anything.",
+        "EE-1041",
+        "Turns the availability synthetics into code and adds the five-minute gate that removes short-lived pages.",
     ),
     (
-        "CUS-1338",
-        "Customer Portal DataSync work ties the Insights webhook integration to customer-facing operations.",
+        "EE-1039",
+        "Encodes Claude's three spend-tier groups in the shared onboarding CLI.",
     ),
     (
-        "CUS-1195",
-        "A concrete support blocker around Alta Video lab testing; useful because enablement work is not only platform primitives.",
-    ),
-    (
-        "CP-497",
-        "The Customer Portal Datadog-triggered error shows monitoring creating work instead of waiting for a human to notice.",
-    ),
-    (
-        "GAM-1245",
-        "Gamma pre-deployment prep paired with Datadog and E2E activity shows the release path getting more observable.",
-    ),
-    (
-        "QAE-146",
-        "E2E support for site-priority updates helped keep the iCare and Gamma release work testable.",
+        "EE-1012",
+        "Makes approved and rejected 1Password references readable when platform manifest validation fails.",
     ),
 ]
 
@@ -2145,132 +2237,137 @@ def generate_hero_image() -> None:
 def render_workstream_bodies() -> str:
     workstreams = [
         {
-            "kicker": "CTC financials",
-            "title": "The dashboard work became a demo-ready platform application path.",
+            "kicker": "Alert management",
+            "title": "Alert triage became a durable weekly product, and CD learned how to ship it.",
             "body": (
-                "Hari's CTC financial dashboard started as a useful internal tool. Chad turned the week "
-                "into repo access, production-readiness notes, CI, agent tooling, and a consolidation path "
-                "for the dashboard app. Wendy and Chad kept the SSO and platform-hosting path explicit, "
-                "and Chad held the database-table change until the team understood the data behavior. "
-                "It is now a visible example of how an internal dashboard can move onto the platform."
+                "Chad merged the alert-fatigue-triage worker as a scheduled Go Temporal app. Each run "
+                "reviews the prior week's Datadog monitor and SLO traffic, carries Slack feedback "
+                "forward, asks a bounded judge for up to five recommendations, and posts one visible "
+                "result. Shipping it also added mise-backed CD targets, phased deployment for the "
+                "managed agent and worker, and the missing Anthropic secret path."
             ),
-            "proof": "10 Chad-authored PRs in convergint/ctc-financials, with EE-980, EE-983, and EE-985 carrying the Linear trail.",
-            "demo_note": "Demo angle: repo-backed app path, CI, agent image, production-readiness notes, and dashboard consolidation.",
+            "proof": "EE-992 closed; PRs #1617, #1631, #1638, and #1647 merged; the live worker path now has durable scheduling and repo-owned release steps.",
+            "demo_note": "Demo angle: one weekly workflow connects Datadog evidence, Slack feedback, a managed-agent review, and a single actionable post.",
             "evidence": [
-                ("Planning notes", "https://app.notion.com/p/3815f445bd31806f8634d7d6abdc70b4"),
-                ("PR #1", "https://github.com/convergint/ctc-financials/pull/1"),
-                ("PR #2", "https://github.com/convergint/ctc-financials/pull/2"),
-                ("PR #8", "https://github.com/convergint/ctc-financials/pull/8"),
-                ("PR #9", "https://github.com/convergint/ctc-financials/pull/9"),
-                ("PR #10", "https://github.com/convergint/ctc-financials/pull/10"),
                 (
-                    "Slack thread",
-                    "https://convergint.enterprise.slack.com/archives/C0AQHKE74MT/p1781818845350249?thread_ts=1781818845.350249&cid=C0AQHKE74MT",
+                    "EE-992",
+                    "https://linear.app/convergint/issue/EE-992/run-alert-triage-as-a-temporal-worker",
+                ),
+                ("Worker PR", "https://github.com/convergint/ee-monorepo/pull/1617"),
+                ("CD ADR", "https://github.com/convergint/ee-monorepo/pull/1631"),
+                ("CD implementation", "https://github.com/convergint/ee-monorepo/pull/1638"),
+                ("Deploy secret fix", "https://github.com/convergint/ee-monorepo/pull/1647"),
+                ("Datadog QBR", "https://app.notion.com/p/3905f445bd3180aa9461f1035d14393b"),
+            ],
+        },
+        {
+            "kicker": "Temporal self-service",
+            "title": "Temporal access moved from a platform exception to a documented operator path.",
+            "body": (
+                "Chad moved every shared Temporal namespace to dual authentication, kept workers on "
+                "platform-managed mTLS, and documented personal API-key access through the regional CLI "
+                "endpoint. When that CLI path failed from the Huntsville office, he proved the account "
+                "and namespace were healthy, isolated outbound port 7233, and worked with Michael Gorsuch "
+                "to route Temporal through a Tailscale app connector."
+            ),
+            "proof": "EE-999 closed and PR #1637 left all 14 staging and production namespaces active with API-key-or-mTLS auth; it-monorepo PR #84 restored office access the same day.",
+            "demo_note": "Demo angle: an engineer can create a personal API key, configure the CLI, inspect a workflow, and keep production workers on managed certificates.",
+            "evidence": [
+                (
+                    "EE-999",
+                    "https://linear.app/convergint/issue/EE-999/enable-dual-temporal-namespace-auth",
+                ),
+                ("Dual-auth PR", "https://github.com/convergint/ee-monorepo/pull/1637"),
+                ("Temporal guide", "https://app.notion.com/p/3105f445bd3180759f1bd60b89bb79ef"),
+                (
+                    "Announcement",
+                    "https://convergint.enterprise.slack.com/archives/C07EUS59F7C/p1782772398151829?thread_ts=1782772398.151829&cid=C07EUS59F7C",
+                ),
+                (
+                    "Egress diagnosis",
+                    "https://convergint.enterprise.slack.com/archives/C07GXTS5YP8/p1783011006872829?thread_ts=1783011006.872829&cid=C07GXTS5YP8",
+                ),
+                ("Tailscale route PR", "https://github.com/convergint/it-monorepo/pull/84"),
+            ],
+        },
+        {
+            "kicker": "Mulesoft QA ingress",
+            "title": "A DNS question became an applied CloudHub path with Terraform-owned TLS contexts.",
+            "body": (
+                "Shamyr Bogossian asked how to register the new Mulesoft QA domain. Chad compared the "
+                "existing environments, added and applied the Cloudflare zone, then followed the certificate "
+                "problem into Anypoint. He imported the existing private spaces and TLS contexts, generated "
+                "the QA Origin CA certificate, kept private keys out of Terraform state, and added "
+                "infrastructure-scoped CI."
+            ),
+            "proof": "PR #2270 applied 9 DNS resources and merged in-window. PR #2271 opened in-window with the TLS ownership path and merged on July 7.",
+            "demo_note": "Demo angle: start with a QA hostname, follow it through Cloudflare and Anypoint, and finish with a repeatable Terraform and CI path.",
+            "evidence": [
+                (
+                    "Support thread",
+                    "https://convergint.enterprise.slack.com/archives/C07EN6LGE5C/p1782918629548409?thread_ts=1782918629.548409&cid=C07EN6LGE5C",
+                ),
+                (
+                    "EE-1006",
+                    "https://linear.app/convergint/issue/EE-1006/add-qa-mulesoft-cloudhub-dns-zone",
+                ),
+                (
+                    "EE-1007",
+                    "https://linear.app/convergint/issue/EE-1007/capture-anypoint-tls-contexts",
+                ),
+                ("DNS PR", "https://github.com/convergint/mulesoft-integrations/pull/2270"),
+                (
+                    "TLS contexts PR",
+                    "https://github.com/convergint/mulesoft-integrations/pull/2271",
                 ),
             ],
         },
         {
-            "kicker": "Windows platform support",
-            "title": "Windows Server 2025 support made the iQuote platform path concrete.",
+            "kicker": "Shared delivery contracts",
+            "title": "Support failures turned into fixes that improved the common platform path.",
             "body": (
-                "Chad added Windows Server 2025 node-pool support for iQuote container hosting in platform "
-                "AKS. The work keeps the capacity managed through IaC, uses explicit scheduling controls "
-                "for the w2025 pool, preserves existing Linux workload behavior, and documents the "
-                "host/image compatibility app teams need to understand."
+                "A DATABASICS job exposed multiline JSON handling in the shared manifest schema. Chad fixed "
+                "web app, worker, and job validation, then confirmed the original workflow passed. The same "
+                "week included stable mise monorepo settings across three repositories, clearer deploy errors, "
+                "OpenFGA CI and action repairs, .NET 10 runtime alignment, and Terraform ownership for Oracle "
+                "repository access."
             ),
-            "proof": "EE-981 is Done and ee-monorepo PR #1603 merged after adding the Windows Server 2025 AKS node pool.",
-            "demo_note": "Demo angle: a Windows workload can target platform capacity through explicit AKS scheduling instead of a one-off hosting path.",
+            "proof": "The DATABASICS rerun succeeded after PR #1656; 11 Chad-authored ee-monorepo PRs and nine more across five repos kept the shared path moving.",
             "evidence": [
                 (
-                    "EE-981",
-                    "https://linear.app/convergint/issue/EE-981/add-windows-server-2025-node-pool-support-for-iquote-container-hosting",
+                    "DATABASICS thread",
+                    "https://convergint.enterprise.slack.com/archives/C08LY5M58FM/p1783003547709159?thread_ts=1783003547.709159&cid=C08LY5M58FM",
                 ),
-                ("PR #1603", "https://github.com/convergint/ee-monorepo/pull/1603"),
+                (
+                    "EE-1011",
+                    "https://linear.app/convergint/issue/EE-1011/fix-multiline-manifest-env-validation",
+                ),
+                ("Manifest fix", "https://github.com/convergint/ee-monorepo/pull/1656"),
+                ("Stable mise", "https://github.com/convergint/ee-monorepo/pull/1651"),
+                ("OpenFGA action", "https://github.com/convergint/customer-portal/pull/937"),
+                ("OpenFGA build", "https://github.com/convergint/customer-portal/pull/938"),
+                (".NET runtime", "https://github.com/convergint/platform-examples/pull/645"),
+                ("Oracle access", "https://github.com/convergint/ee-monorepo/pull/1653"),
             ],
         },
         {
-            "kicker": "IT and Infrastructure support",
-            "title": "Saviynt audit ingest and iCare access turned IT support into working platform code.",
+            "kicker": "Datadog operating model",
+            "title": "Dashboard work and the first QBR made observability adoption measurable.",
             "body": (
-                "Chad's open it-monorepo PR #67 built the MVP Saviynt audit-log ingest path for the IT "
-                "and Infrastructure team: a Go Temporal worker reads the Saviynt runtime-control API, stores "
-                "a compact cursor in Azure Table Storage, and submits confirmed pages as OTLP logs to Datadog. "
-                "The same workstream includes EE-961 and the iCare private-link DNS follow-through, so the "
-                "report shows both the security ingest app and the access plumbing."
+                "Chad added a participant-by-participant course trend to the Datadog Certifications Cohort "
+                "dashboard and fixed top lists that could show an older sparse snapshot. The first QBR then "
+                "put numbers behind the wider work: monthly active users grew 186 percent, dashboards grew "
+                "from 4 to 60, monitors grew from 4 to roughly 321, and Chad ranked second in active usage."
             ),
-            "proof": "EE-962 is In Review with it-monorepo PR #67 open; EE-961 is Done, PR #68 merged, and PR #69 kept the iCare domain follow-up visible.",
-            "demo_note": "Demo angle: Saviynt audit rows flow through a Temporal collector into Datadog with cursoring, infrastructure, and CI/CD attached.",
+            "proof": "EE-1003 closed and PR #1643 merged after the live metric API confirmed Gustavo Vargas at 7 completed classes; the QBR set follow-up for product-level usage and spend visibility.",
             "evidence": [
                 (
-                    "EE-962",
-                    "https://linear.app/convergint/issue/EE-962/add-saviynt-audit-log-collector",
+                    "EE-1003",
+                    "https://linear.app/convergint/issue/EE-1003/add-datadog-participant-class-trend",
                 ),
-                ("it-monorepo #67", "https://github.com/convergint/it-monorepo/pull/67"),
-                (
-                    "EE-961",
-                    "https://linear.app/convergint/issue/EE-961/onboard-it-and-infrastructure-to-platform",
-                ),
-                ("it-monorepo #68", "https://github.com/convergint/it-monorepo/pull/68"),
-                ("it-monorepo #69", "https://github.com/convergint/it-monorepo/pull/69"),
-                (
-                    "Infrastructure thread",
-                    "https://convergint.enterprise.slack.com/archives/C07GXTS5YP8/p1781813650447989?thread_ts=1781813349.829749&cid=C07GXTS5YP8",
-                ),
-            ],
-        },
-        {
-            "kicker": "Platform runtime and agent tooling",
-            "title": "The runtime and tooling work kept delivery from becoming bespoke.",
-            "body": (
-                "Dependency pinning, Cursor Cloud fixes, the CTC agent image, and the spend-control discussion "
-                "all sit in the same bucket: reduce surprises before teams depend on the platform. Chad treated "
-                "agent tooling like production developer experience, including removing a brittle 1Password skill "
-                "when it stopped helping."
-            ),
-            "proof": "EE-976, PR #1596, and the CTC Cursor image PR formed the concrete trail behind the runtime cleanup.",
-            "evidence": [
-                (
-                    "EE-976",
-                    "https://linear.app/convergint/issue/EE-976/chore-pin-dependency-versions",
-                ),
-                ("PR #1596", "https://github.com/convergint/ee-monorepo/pull/1596"),
-                ("CTC PR #8", "https://github.com/convergint/ctc-financials/pull/8"),
-                (
-                    "Spend controls",
-                    "https://convergint.enterprise.slack.com/archives/C08PAQARM8E/p1781812786634649",
-                ),
-                (
-                    "Skill removal",
-                    "https://convergint.enterprise.slack.com/archives/C08PAQARM8E/p1781814755410889",
-                ),
-            ],
-        },
-        {
-            "kicker": "Observability and data reliability",
-            "title": "The Datadog and SQLMesh work kept reliability tied to evidence.",
-            "body": (
-                "Chad fixed Datadog award-row reads for the certification dashboard, helped narrow an "
-                "Insights Service Catalog 403, and kept SQLMesh alerting tied to the self-hosting plan. "
-                "This is the connective tissue between dashboards, DBM, Slack alerts, and model freshness: "
-                "the team can only operate what it can trust and explain."
-            ),
-            "proof": "EE-966 closed, the certification dashboard had a cleaner data path, and the SQLMesh RFC carried Datadog follow-up into the plan.",
-            "evidence": [
-                (
-                    "EE-966",
-                    "https://linear.app/convergint/issue/EE-966/fix-datadog-award-row-reads",
-                ),
-                ("PR #1578", "https://github.com/convergint/ee-monorepo/pull/1578"),
+                ("Dashboard PR", "https://github.com/convergint/ee-monorepo/pull/1643"),
                 ("Cert dashboard", "https://us3.datadoghq.com/dashboard/vtg-s2b-mv2"),
-                (
-                    "Datadog thread",
-                    "https://convergint.enterprise.slack.com/archives/C08MGCF1FHN/p1781816378224209?thread_ts=1781816378.224209&cid=C08MGCF1FHN",
-                ),
-                ("SQLMesh RFC", "https://app.notion.com/p/3735f445bd31818591c4c181cdfa90a9"),
-                (
-                    "Data alert",
-                    "https://convergint.enterprise.slack.com/archives/C08BFTMLYM9/p1781619942362409",
-                ),
+                ("QBR notes", "https://app.notion.com/p/3905f445bd3180aa9461f1035d14393b"),
             ],
         },
     ]
@@ -2448,17 +2545,23 @@ def render_personal_workstreams() -> str:
 def render_personal_lowlights() -> str:
     lowlights = [
         (
-            "CTC financials still had data-table uncertainty.",
-            "The consolidation work moved, but Chad held a database change until the team understood "
-            "the table behavior. That restraint belongs in the report because it protected the app from "
-            "a fast but brittle decision.",
-            "https://convergint.enterprise.slack.com/archives/C0AQHKE74MT/p1781818845350249?thread_ts=1781818845.350249&cid=C0AQHKE74MT",
+            "Insights staging could not exercise the complete production path.",
+            "The web app, database, and workers were deployed. MQTT still needed a dedicated broker and "
+            "representative traffic, and the staging review found Datadog logs without traces or metrics.",
+            "https://app.notion.com/p/3915f445bd31816a9a6eefc0fb32884a",
         ),
         (
-            "SQLMesh and Tobiko failures kept showing up in alerts.",
-            "The failures made the migration risks concrete. The follow-up is already in the SQLMesh RFC: "
-            "Slack alerts, Datadog logs, freshness metrics, and GitHub Actions failure coverage.",
-            "https://convergint.enterprise.slack.com/archives/C08BFTMLYM9/p1781619942362409",
+            "Mulesoft QA TLS crossed the report boundary.",
+            "The DNS zone applied and merged during the week. The TLS-context PR remained open at the "
+            "end of the window, merged on July 7, and still needed an operational confirmation from the "
+            "requesting team.",
+            "https://github.com/convergint/mulesoft-integrations/pull/2271",
+        ),
+        (
+            "CTC Fleet still depended on a Dallas-only manual upload.",
+            "Hari Gunturu and Chad split Fleet from the other two dashboards. That decision narrowed the "
+            "platform app scope and left a separate path to design for Fleet.",
+            "https://convergint.enterprise.slack.com/archives/C0AQHKE74MT/p1782915645333609?thread_ts=1782915645.333609&cid=C0AQHKE74MT",
         ),
     ]
 
@@ -2471,6 +2574,55 @@ def render_personal_lowlights() -> str:
             "</article>"
         )
     return '<div class="lowlight-grid">' + "".join(cards) + "</div>"
+
+
+def render_snapshot_workstreams(workstreams: list[dict]) -> str:
+    articles = []
+    for index, workstream in enumerate(workstreams, start=1):
+        demo_note = workstream.get("demo_note")
+        article_class = "body-card demo-card" if demo_note else "body-card"
+        demo_ribbon = '<div class="demo-ribbon">Demo-worthy</div>' if demo_note else ""
+        demo_line = f'<p class="demo-line">{esc(demo_note)}</p>' if demo_note else ""
+        evidence = [
+            (item["label"], item["url"])
+            for item in workstream.get("evidence", [])
+            if isinstance(item, dict) and item.get("label") and item.get("url")
+        ]
+        articles.append(
+            f'<article class="{article_class}">'
+            f"{demo_ribbon}"
+            f'<div class="body-index">{index}</div>'
+            '<div class="body-content">'
+            f'<div class="work-kicker">{esc(workstream.get("kicker"))}</div>'
+            f"<h3>{esc(workstream.get('title'))}</h3>"
+            f"<p>{esc(workstream.get('body'))}</p>"
+            f"{demo_line}"
+            f'<p class="proof-line">{esc(workstream.get("proof"))}</p>'
+            f"{render_evidence_links(evidence)}"
+            "</div>"
+            "</article>"
+        )
+    return '<div class="body-grid">' + "".join(articles) + "</div>"
+
+
+def render_snapshot_lowlights(lowlights: list[dict]) -> str:
+    cards = []
+    for lowlight in lowlights:
+        cards.append(
+            '<article class="lowlight-card">'
+            f"<h4>{link_text(lowlight.get('title'), lowlight.get('url'))}</h4>"
+            f"<p>{esc(lowlight.get('body'))}</p>"
+            "</article>"
+        )
+    return '<div class="lowlight-grid">' + "".join(cards) + "</div>"
+
+
+def render_snapshot_methodology(methodology: list[str]) -> str:
+    return (
+        '<ul class="method-list">'
+        + "".join(f"<li>{esc(note)}</li>" for note in methodology if isinstance(note, str) and note)
+        + "</ul>"
+    )
 
 
 def render_personal_pr_table(title: str, items: list[dict], date_field: str) -> str:
@@ -3072,6 +3224,8 @@ def build_personal_html(summary: dict) -> str:
 def build_streamlined_personal_html(summary: dict) -> str:
     github_data = summary["github"]
     linear_data = summary["linear"]
+    narrative = summary["narrative"]
+    discussion = narrative["discussion"]
     window_label = report_window_label()
     primary_repo = (
         github_data["personal_top_pr_repos"][0][0]
@@ -3081,6 +3235,11 @@ def build_streamlined_personal_html(summary: dict) -> str:
     primary_repo_count = (
         github_data["personal_top_pr_repos"][0][1] if github_data["personal_top_pr_repos"] else 0
     )
+    discussion_evidence = [
+        (item["label"], item["url"])
+        for item in discussion.get("evidence", [])
+        if isinstance(item, dict) and item.get("label") and item.get("url")
+    ]
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -3540,35 +3699,1061 @@ def build_streamlined_personal_html(summary: dict) -> str:
       }}
     }}
   </style>
+  <style id="technical-brief-redesign">
+    :root {{
+      --void: #060b0d;
+      --rail: #080f12;
+      --surface: #0d171a;
+      --surface-raised: #132125;
+      --ink: #edf5f1;
+      --muted: #8da19b;
+      --line: #26373c;
+      --acid: #c9ff4a;
+      --cyan: #61d9e8;
+      --coral: #ff765f;
+      --black: #05090a;
+      --display: "Arial Narrow", "Roboto Condensed", "Helvetica Neue", sans-serif;
+      --body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }}
+
+    html {{
+      color-scheme: dark;
+      scroll-behavior: smooth;
+      background: var(--void);
+    }}
+
+    body {{
+      margin: 0;
+      color: var(--ink);
+      font-family: var(--body);
+      background-color: var(--void);
+      background-image:
+        linear-gradient(rgba(97, 217, 232, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(97, 217, 232, 0.035) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }}
+
+    body::before {{
+      position: fixed;
+      z-index: 50;
+      top: 0;
+      right: 0;
+      left: 0;
+      height: 3px;
+      background: var(--acid);
+      content: "";
+    }}
+
+    ::selection {{
+      color: var(--black);
+      background: var(--acid);
+    }}
+
+    a {{
+      color: inherit;
+      text-decoration-color: var(--cyan);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 0.22em;
+    }}
+
+    a:focus-visible,
+    summary:focus-visible {{
+      outline: 2px solid var(--acid);
+      outline-offset: 4px;
+    }}
+
+    .skip-link {{
+      position: fixed;
+      z-index: 100;
+      top: 10px;
+      left: 10px;
+      padding: 10px 14px;
+      color: var(--black);
+      background: var(--acid);
+      font: 800 0.76rem/1 var(--mono);
+      text-transform: uppercase;
+      transform: translateY(-160%);
+    }}
+
+    .skip-link:focus {{
+      transform: translateY(0);
+    }}
+
+    .shell {{
+      max-width: none;
+      margin: 0;
+      padding: 0 0 0 240px;
+    }}
+
+    .hero,
+    section {{
+      width: min(1380px, calc(100% - 96px));
+      margin-inline: auto;
+    }}
+
+    .hero {{
+      min-height: 720px;
+      display: block;
+      position: relative;
+      isolation: isolate;
+      margin-top: 48px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 0;
+      background: var(--surface);
+      box-shadow: 14px 14px 0 rgba(97, 217, 232, 0.12);
+    }}
+
+    .hero::before {{
+      position: absolute;
+      z-index: -1;
+      inset: 0;
+      background:
+        linear-gradient(90deg, transparent 49.9%, var(--line) 50%, transparent 50.1%),
+        linear-gradient(transparent 49.9%, rgba(38, 55, 60, 0.7) 50%, transparent 50.1%);
+      content: "";
+      opacity: 0.6;
+    }}
+
+    .hero::after {{
+      position: absolute;
+      top: 24px;
+      right: 28px;
+      color: rgba(237, 245, 241, 0.06);
+      content: "7D";
+      font: 900 clamp(6rem, 13vw, 13rem)/0.8 var(--display);
+      letter-spacing: -0.08em;
+    }}
+
+    .hero-content {{
+      width: 100%;
+      min-height: 718px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(360px, 0.92fr);
+      grid-template-rows: auto 1fr auto;
+      gap: 42px 64px;
+      align-items: end;
+      padding: 64px;
+      color: var(--ink);
+    }}
+
+    .eyebrow,
+    .kicker,
+    .work-kicker,
+    .section-heading .tag {{
+      color: var(--acid);
+      font: 800 0.76rem/1.2 var(--mono);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }}
+
+    .eyebrow {{
+      grid-column: 1 / -1;
+      align-self: start;
+      width: fit-content;
+      padding: 8px 10px;
+      border: 1px solid var(--acid);
+      background: rgba(201, 255, 74, 0.06);
+    }}
+
+    h1,
+    h2,
+    h3,
+    h4 {{
+      margin: 0;
+      color: var(--ink);
+      font-family: var(--display);
+      letter-spacing: -0.035em;
+    }}
+
+    h1 {{
+      grid-column: 1;
+      grid-row: 2;
+      align-self: end;
+      max-width: 8.5ch;
+      margin: 0;
+      font-size: clamp(4.8rem, 8.5vw, 9rem);
+      font-weight: 900;
+      line-height: 0.82;
+      text-transform: uppercase;
+    }}
+
+    h1 span {{
+      color: var(--acid);
+    }}
+
+    .lede {{
+      grid-column: 1;
+      grid-row: 3;
+      max-width: 62ch;
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.06rem;
+      line-height: 1.72;
+    }}
+
+    .lede strong {{
+      color: var(--ink);
+      font-weight: 750;
+    }}
+
+    .metric-strip {{
+      grid-column: 2;
+      grid-row: 2 / span 2;
+      align-self: end;
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 1px;
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      border: 1px solid var(--line);
+      background: var(--line);
+    }}
+
+    .metric {{
+      min-height: 148px;
+      grid-column: span 4;
+      padding: 24px;
+      border: 0;
+      border-radius: 0;
+      background: var(--surface-raised);
+      backdrop-filter: none;
+    }}
+
+    .metric:first-child {{
+      min-height: 260px;
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      background: var(--acid);
+    }}
+
+    .metric strong {{
+      display: block;
+      color: var(--ink);
+      font: 900 2.4rem/0.9 var(--display);
+      letter-spacing: -0.05em;
+    }}
+
+    .metric:first-child strong {{
+      color: var(--black);
+      font-size: clamp(6.5rem, 10vw, 10rem);
+    }}
+
+    .metric span {{
+      display: block;
+      margin-top: 12px;
+      color: var(--muted);
+      font: 600 0.76rem/1.45 var(--mono);
+      text-transform: uppercase;
+    }}
+
+    .metric:first-child span {{
+      max-width: 36ch;
+      color: rgba(5, 9, 10, 0.72);
+    }}
+
+    .sticky-nav {{
+      position: fixed;
+      z-index: 30;
+      inset: 3px auto 0 0;
+      width: 240px;
+      height: calc(100vh - 3px);
+      display: flex;
+      flex-direction: column;
+      flex-wrap: nowrap;
+      gap: 0;
+      margin: 0;
+      padding: 28px 22px 24px;
+      border: 0;
+      border-right: 1px solid var(--line);
+      border-radius: 0;
+      background: var(--rail);
+      backdrop-filter: none;
+    }}
+
+    .rail-brand {{
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 42px;
+    }}
+
+    .brand-mark {{
+      width: 52px;
+      height: 52px;
+      display: grid;
+      place-items: center;
+      color: var(--black);
+      background: var(--acid);
+      font: 900 1.15rem/1 var(--mono);
+    }}
+
+    .rail-brand strong,
+    .rail-brand small {{
+      display: block;
+    }}
+
+    .rail-brand strong {{
+      color: var(--ink);
+      font: 800 0.82rem/1.2 var(--mono);
+      text-transform: uppercase;
+    }}
+
+    .rail-brand small {{
+      margin-top: 4px;
+      color: var(--muted);
+      font: 600 0.66rem/1.2 var(--mono);
+      text-transform: uppercase;
+    }}
+
+    .rail-label {{
+      margin-bottom: 10px;
+      color: var(--muted);
+      font: 700 0.62rem/1 var(--mono);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }}
+
+    .sticky-nav a {{
+      display: grid;
+      grid-template-columns: 30px 1fr;
+      gap: 8px;
+      align-items: center;
+      padding: 14px 0;
+      border-top: 1px solid var(--line);
+      border-radius: 0;
+      color: var(--muted);
+      background: none;
+      font: 700 0.76rem/1.2 var(--mono);
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color 160ms ease, padding-left 160ms ease;
+    }}
+
+    .sticky-nav a:last-of-type {{
+      border-bottom: 1px solid var(--line);
+    }}
+
+    .sticky-nav a:hover {{
+      padding-left: 8px;
+      color: var(--acid);
+    }}
+
+    .sticky-nav a .nav-index {{
+      color: var(--acid);
+      font-size: 0.62rem;
+    }}
+
+    .rail-status {{
+      display: grid;
+      grid-template-columns: 10px 1fr;
+      gap: 10px;
+      align-items: start;
+      margin-top: auto;
+      padding-top: 18px;
+      color: var(--muted);
+      font: 600 0.68rem/1.45 var(--mono);
+      text-transform: uppercase;
+    }}
+
+    .rail-status strong,
+    .rail-status small {{
+      display: block;
+    }}
+
+    .rail-status strong {{
+      color: var(--ink);
+    }}
+
+    .status-dot {{
+      width: 8px;
+      height: 8px;
+      margin-top: 2px;
+      border-radius: 50%;
+      background: var(--acid);
+      box-shadow: 0 0 0 4px rgba(201, 255, 74, 0.1);
+    }}
+
+    section {{
+      position: relative;
+      padding: 112px 0;
+      border-top: 1px solid var(--line);
+      scroll-margin-top: 24px;
+    }}
+
+    .section-heading {{
+      display: grid;
+      grid-template-columns: 190px minmax(0, 1fr);
+      gap: 28px;
+      align-items: end;
+      margin-bottom: 48px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }}
+
+    .section-heading h2 {{
+      grid-column: 2;
+      grid-row: 1;
+      font-size: clamp(3rem, 5.8vw, 6rem);
+      font-weight: 900;
+      line-height: 0.88;
+      text-transform: uppercase;
+    }}
+
+    .section-heading .tag {{
+      grid-column: 1;
+      grid-row: 1;
+      align-self: end;
+      padding-bottom: 5px;
+    }}
+
+    section > p {{
+      max-width: 76ch;
+      margin: 0 0 34px 218px;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.72;
+    }}
+
+    .discussion-card {{
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 74px;
+      gap: 0;
+      align-items: stretch;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      color: var(--black);
+      background: var(--acid);
+      box-shadow: 12px 12px 0 var(--cyan);
+    }}
+
+    .discussion-card > div:first-child {{
+      padding: 52px 56px;
+    }}
+
+    .discussion-card .work-kicker {{
+      color: rgba(5, 9, 10, 0.68);
+    }}
+
+    .discussion-card h3 {{
+      max-width: 22ch;
+      margin-top: 16px;
+      color: var(--black);
+      font-size: clamp(2.2rem, 4vw, 4.4rem);
+      font-weight: 900;
+      line-height: 0.96;
+      text-transform: uppercase;
+    }}
+
+    .discussion-card p {{
+      max-width: 78ch;
+      margin: 24px 0 0;
+      color: rgba(5, 9, 10, 0.72);
+      font-size: 1.02rem;
+      line-height: 1.68;
+    }}
+
+    .discussion-card .evidence-links {{
+      border-top-color: rgba(5, 9, 10, 0.24);
+    }}
+
+    .discussion-card .evidence-links a {{
+      border-color: rgba(5, 9, 10, 0.36);
+      color: var(--black);
+      background: rgba(5, 9, 10, 0.04);
+    }}
+
+    .discussion-badge {{
+      min-height: 100%;
+      display: grid;
+      place-items: center;
+      align-self: stretch;
+      padding: 18px;
+      border-radius: 0;
+      color: var(--acid);
+      background: var(--black);
+      font: 900 0.72rem/1 var(--mono);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      writing-mode: vertical-rl;
+    }}
+
+    .body-grid {{
+      display: grid;
+      gap: 0;
+      border-top: 1px solid var(--line);
+    }}
+
+    .body-card {{
+      min-height: 380px;
+      display: grid;
+      grid-template-columns: 140px minmax(0, 1fr);
+      gap: 0;
+      position: relative;
+      padding: 0;
+      overflow: hidden;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      background: rgba(13, 23, 26, 0.68);
+      box-shadow: none;
+      transition: background 180ms ease;
+    }}
+
+    .body-card:nth-child(even) {{
+      background: rgba(19, 33, 37, 0.76);
+    }}
+
+    .body-card:hover {{
+      background: var(--surface-raised);
+    }}
+
+    .demo-card {{
+      border-color: var(--line);
+      box-shadow: none;
+    }}
+
+    .body-index {{
+      width: auto;
+      height: auto;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 46px;
+      border-right: 1px solid var(--line);
+      border-radius: 0;
+      color: rgba(141, 161, 155, 0.28);
+      background: none;
+      font: 900 4.8rem/1 var(--display);
+      letter-spacing: -0.08em;
+    }}
+
+    .demo-card .body-index {{
+      color: var(--acid);
+    }}
+
+    .body-content {{
+      padding: 46px 64px 52px;
+    }}
+
+    .demo-card .body-content {{
+      padding-right: 200px;
+    }}
+
+    .body-card h3 {{
+      max-width: 28ch;
+      margin-top: 14px;
+      color: var(--ink);
+      font-size: clamp(2rem, 3.4vw, 3.7rem);
+      font-weight: 900;
+      line-height: 0.98;
+      text-transform: uppercase;
+    }}
+
+    .body-card p {{
+      max-width: 82ch;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.72;
+    }}
+
+    .demo-ribbon {{
+      position: absolute;
+      z-index: 2;
+      top: 36px;
+      right: 0;
+      width: auto;
+      padding: 10px 16px;
+      transform: none;
+      color: var(--black);
+      background: var(--acid);
+      font: 900 0.68rem/1 var(--mono);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      box-shadow: -6px 6px 0 rgba(97, 217, 232, 0.75);
+    }}
+
+    .demo-line {{
+      width: auto;
+      max-width: 80ch;
+      margin: 26px 0 0;
+      padding: 16px 18px;
+      border: 0;
+      border-left: 4px solid var(--acid);
+      border-radius: 0;
+      color: var(--ink) !important;
+      background: rgba(201, 255, 74, 0.06);
+      font-weight: 700;
+    }}
+
+    .proof-line {{
+      margin-top: 28px !important;
+      padding: 20px 0 0;
+      border-top: 1px solid var(--line);
+      border-left: 0;
+      color: var(--ink) !important;
+      font-family: var(--mono);
+      font-size: 0.82rem !important;
+      line-height: 1.65 !important;
+    }}
+
+    .evidence-links {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }}
+
+    .evidence-links a {{
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 9px 11px;
+      border: 1px solid var(--line);
+      color: var(--ink);
+      background: var(--surface);
+      font: 700 0.68rem/1 var(--mono);
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: border-color 140ms ease, color 140ms ease, transform 140ms ease;
+    }}
+
+    .evidence-links a::before {{
+      width: 5px;
+      height: 5px;
+      background: var(--cyan);
+      content: "";
+    }}
+
+    .evidence-links a:hover {{
+      border-color: var(--acid);
+      color: var(--acid);
+      transform: translateY(-2px);
+    }}
+
+    .lowlight-grid {{
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1px;
+      border: 1px solid var(--line);
+      background: var(--line);
+    }}
+
+    .lowlight-card,
+    .table-wrap {{
+      border: 0;
+      border-radius: 0;
+      background: var(--surface);
+      box-shadow: none;
+    }}
+
+    .lowlight-card {{
+      min-height: 300px;
+      position: relative;
+      padding: 64px 34px 34px;
+    }}
+
+    .lowlight-card::before {{
+      position: absolute;
+      top: 28px;
+      left: 34px;
+      color: var(--coral);
+      content: "OPEN EDGE";
+      font: 800 0.65rem/1 var(--mono);
+      letter-spacing: 0.12em;
+    }}
+
+    .lowlight-card h4 {{
+      margin: 0 0 18px;
+      font-size: 1.55rem;
+      font-weight: 850;
+      line-height: 1.08;
+      letter-spacing: -0.025em;
+    }}
+
+    .lowlight-card h4 a {{
+      color: var(--ink);
+      text-decoration: none;
+    }}
+
+    .lowlight-card h4 a:hover {{
+      color: var(--coral);
+    }}
+
+    .lowlight-card p {{
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.68;
+    }}
+
+    details {{
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 0;
+      background: var(--surface);
+    }}
+
+    summary {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 22px;
+      color: var(--black);
+      background: var(--acid);
+      cursor: pointer;
+      font: 850 0.78rem/1 var(--mono);
+      text-transform: uppercase;
+    }}
+
+    summary::after {{
+      content: "+";
+      font-size: 1.3rem;
+    }}
+
+    details[open] summary::after {{
+      content: "x";
+    }}
+
+    .evidence-panel {{
+      padding: 1px;
+      background: var(--line);
+    }}
+
+    .split {{
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 1px;
+    }}
+
+    .table-wrap {{
+      margin: 0;
+      padding: 24px;
+      overflow: auto;
+    }}
+
+    .table-wrap h4 {{
+      margin-bottom: 18px;
+      color: var(--ink);
+      font-size: 1rem;
+      font-family: var(--mono);
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }}
+
+    .metric-table {{
+      width: 100%;
+      min-width: 660px;
+      border-collapse: collapse;
+    }}
+
+    .metric-table th,
+    .metric-table td {{
+      padding: 13px 10px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.84rem;
+      text-align: left;
+      vertical-align: top;
+    }}
+
+    .metric-table td a {{
+      color: var(--ink);
+    }}
+
+    .metric-table td a:hover {{
+      color: var(--acid);
+    }}
+
+    .metric-table thead th {{
+      border-top: 0;
+      color: var(--cyan);
+      font: 700 0.67rem/1 var(--mono);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }}
+
+    .method-list {{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1px;
+      margin: 0;
+      padding: 1px;
+      color: var(--muted);
+      background: var(--line);
+      counter-reset: method;
+      list-style: none;
+    }}
+
+    .method-list li {{
+      min-height: 170px;
+      position: relative;
+      padding: 32px 32px 32px 82px;
+      background: var(--surface);
+      counter-increment: method;
+      line-height: 1.68;
+    }}
+
+    .method-list li::before {{
+      position: absolute;
+      top: 32px;
+      left: 30px;
+      color: var(--acid);
+      content: "0" counter(method);
+      font: 850 0.78rem/1 var(--mono);
+    }}
+
+    @media (max-width: 1160px) {{
+      .shell {{
+        padding-left: 0;
+      }}
+
+      .hero,
+      section {{
+        width: min(100% - 48px, 1100px);
+      }}
+
+      .sticky-nav {{
+        position: sticky;
+        inset: 0 auto auto;
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        align-items: center;
+        overflow-x: auto;
+        padding: 12px 18px;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }}
+
+      .rail-brand {{
+        grid-template-columns: 38px 1fr;
+        min-width: 170px;
+        margin: 0 22px 0 0;
+      }}
+
+      .brand-mark {{
+        width: 38px;
+        height: 38px;
+        font-size: 0.8rem;
+      }}
+
+      .rail-label,
+      .rail-status {{
+        display: none;
+      }}
+
+      .sticky-nav a,
+      .sticky-nav a:last-of-type {{
+        min-width: max-content;
+        padding: 12px 16px;
+        border: 0;
+        border-left: 1px solid var(--line);
+      }}
+
+      .sticky-nav a:hover {{
+        padding-left: 16px;
+      }}
+
+      .hero {{
+        margin-top: 24px;
+      }}
+
+      .hero-content {{
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto auto;
+        gap: 34px;
+      }}
+
+      .eyebrow,
+      h1,
+      .lede,
+      .metric-strip {{
+        grid-column: 1;
+        grid-row: auto;
+      }}
+
+      .metric-strip {{
+        margin-top: 16px;
+      }}
+    }}
+
+    @media (max-width: 760px) {{
+      .hero,
+      section {{
+        width: calc(100% - 28px);
+      }}
+
+      .hero {{
+        min-height: 0;
+        box-shadow: 7px 7px 0 rgba(97, 217, 232, 0.12);
+      }}
+
+      .hero-content {{
+        min-height: 0;
+        padding: 34px 26px;
+      }}
+
+      .hero::after {{
+        top: 24px;
+        font-size: 5rem;
+      }}
+
+      h1 {{
+        max-width: 9ch;
+        font-size: clamp(3.5rem, 18vw, 6rem);
+      }}
+
+      .metric-strip {{
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }}
+
+      .metric,
+      .metric:first-child {{
+        min-height: 132px;
+        grid-column: span 1;
+      }}
+
+      .metric:first-child {{
+        grid-column: 1 / -1;
+      }}
+
+      .metric:first-child strong {{
+        font-size: 5.5rem;
+      }}
+
+      section {{
+        padding: 78px 0;
+      }}
+
+      .section-heading {{
+        display: block;
+        margin-bottom: 34px;
+      }}
+
+      .section-heading h2 {{
+        margin-top: 14px;
+        font-size: 3.4rem;
+      }}
+
+      section > p {{
+        margin-left: 0;
+      }}
+
+      .discussion-card {{
+        grid-template-columns: 1fr;
+        box-shadow: 7px 7px 0 var(--cyan);
+      }}
+
+      .discussion-card > div:first-child {{
+        padding: 34px 26px;
+      }}
+
+      .discussion-card h3 {{
+        font-size: 2.55rem;
+      }}
+
+      .discussion-badge {{
+        min-height: 0;
+        padding: 14px;
+        writing-mode: horizontal-tb;
+      }}
+
+      .body-card {{
+        min-height: 0;
+        grid-template-columns: 1fr;
+      }}
+
+      .body-index {{
+        justify-content: flex-start;
+        padding: 24px 26px;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+        font-size: 2.8rem;
+      }}
+
+      .body-content,
+      .demo-card .body-content {{
+        padding: 34px 26px 38px;
+      }}
+
+      .body-card h3 {{
+        font-size: 2.35rem;
+      }}
+
+      .demo-ribbon {{
+        top: 24px;
+        font-size: 0.58rem;
+      }}
+
+      .lowlight-grid,
+      .split,
+      .method-list {{
+        grid-template-columns: 1fr;
+      }}
+
+      .lowlight-card {{
+        min-height: 0;
+      }}
+    }}
+
+    @media (prefers-reduced-motion: reduce) {{
+      html {{
+        scroll-behavior: auto;
+      }}
+
+      *,
+      *::before,
+      *::after {{
+        transition-duration: 0.01ms !important;
+      }}
+    }}
+  </style>
 </head>
 <body>
-  <div class="shell">
+  <a class="skip-link" href="#main-content">Skip to report</a>
+  <main id="main-content" class="shell">
     <header class="hero">
       <div class="hero-content">
-        <div class="eyebrow">{esc(window_label)}</div>
-        <h1>Chad's week in platform work.</h1>
+        <div class="eyebrow">Personal activity / {esc(window_label)}</div>
+        <h1>Chad's week in <span>platform work.</span></h1>
         <p class="lede">
-          The bigger story this week wasn't raw activity volume. It was five bodies of work moving together:
-          CTC financials, Windows support, IT and Infrastructure support, platform runtime/tooling, and
-          observability. The raw count still matters: Chad opened <strong>{github_data["personal_prs_created"]}</strong> PRs, merged
+          {esc(narrative["lede"])} Chad opened <strong>{github_data["personal_prs_created"]}</strong> PRs, merged
           <strong>{github_data["personal_prs_merged"]}</strong>, and moved
-          <strong>{linear_data["personal_issues_updated"]}</strong> assigned Linear issues.
+          <strong>{linear_data["personal_issues_done_like"]}</strong> assigned Linear issues into completed states.
         </p>
         <div class="metric-strip">
           <div class="metric"><strong>{github_data["personal_prs_created"]}</strong><span>PRs opened, mostly in {esc(primary_repo)} ({primary_repo_count})</span></div>
-          <div class="metric"><strong>{linear_data["personal_issues_done_like"]}</strong><span>assigned Linear issues moved to Done</span></div>
-          <div class="metric"><strong>5</strong><span>major bodies of work carried the week</span></div>
-          <div class="metric"><strong>3</strong><span>demo-worthy threads ready to show</span></div>
+          <div class="metric"><strong>{github_data["personal_prs_merged"]}</strong><span>Chad-authored PRs merged in the window</span></div>
+          <div class="metric"><strong>{linear_data["personal_issues_done_like"]}</strong><span>assigned Linear issues reached completed states</span></div>
+          <div class="metric"><strong>{len(narrative["workstreams"])}</strong><span>major bodies of work carried the window</span></div>
         </div>
       </div>
     </header>
 
-    <nav class="sticky-nav">
-      <a href="#discussion">Discuss this week</a>
-      <a href="#workstreams">Bodies of work</a>
-      <a href="#lowlights">Lowlights</a>
-      <a href="#evidence">Evidence index</a>
-      <a href="#method">Methodology</a>
+    <nav class="sticky-nav" aria-label="Report sections">
+      <div class="rail-brand">
+        <span class="brand-mark">CM</span>
+        <span><strong>Weekly activity</strong><small>Platform engineering</small></span>
+      </div>
+      <div class="rail-label">Sections</div>
+      <a href="#discussion"><span class="nav-index">01</span><span>Discuss</span></a>
+      <a href="#workstreams"><span class="nav-index">02</span><span>Workstreams</span></a>
+      <a href="#lowlights"><span class="nav-index">03</span><span>Open edges</span></a>
+      <a href="#evidence"><span class="nav-index">04</span><span>Evidence</span></a>
+      <a href="#method"><span class="nav-index">05</span><span>Method</span></a>
+      <div class="rail-status">
+        <span class="status-dot"></span>
+        <span><strong>Report online</strong><small>{esc(window_label)}</small></span>
+      </div>
     </nav>
 
     <section id="discussion">
@@ -3578,21 +4763,12 @@ def build_streamlined_personal_html(summary: dict) -> str:
       </div>
       <article class="discussion-card">
         <div>
-          <div class="work-kicker">Temporal for data jobs</div>
-          <h3>The Sergio Botero pairing session is a cross-team adoption thread worth raising.</h3>
-          <p>
-            Chad gave Sergio admin access to the data and analytics Temporal namespaces, walked through the
-            current Temporal UI and worker model, and connected the discussion to the open Saviynt collector as
-            a concrete reference. The follow-up is practical: Sergio can wrap one or two years of an existing
-            DLT/Airflow historical data load in Temporal, test heartbeat/checkpoint behavior for paginated API
-            failures, and schedule another pairing session once he starts building.
-          </p>
-          <div class="evidence-links">
-            <a href="https://app.notion.com/p/3825f445bd31807eb469c3e3e8d1f184">Notion transcript</a>
-            <a href="https://github.com/convergint/it-monorepo/pull/67">Saviynt reference PR</a>
-          </div>
+          <div class="work-kicker">{esc(discussion.get("kicker"))}</div>
+          <h3>{esc(discussion.get("title"))}</h3>
+          <p>{esc(discussion.get("body"))}</p>
+          {render_evidence_links(discussion_evidence)}
         </div>
-        <div class="discussion-badge">Discuss this week</div>
+        <div class="discussion-badge">{esc(discussion.get("badge", "Discuss this week"))}</div>
       </article>
     </section>
 
@@ -3601,7 +4777,7 @@ def build_streamlined_personal_html(summary: dict) -> str:
         <h2>Bodies of work</h2>
         <span class="tag">The main story</span>
       </div>
-      {render_workstream_bodies()}
+      {render_snapshot_workstreams(narrative["workstreams"])}
     </section>
 
     <section id="lowlights">
@@ -3609,7 +4785,7 @@ def build_streamlined_personal_html(summary: dict) -> str:
         <h2>Lowlights</h2>
         <span class="tag">Kept short</span>
       </div>
-      {render_personal_lowlights()}
+      {render_snapshot_lowlights(narrative["lowlights"])}
     </section>
 
     <section id="evidence">
@@ -3633,14 +4809,9 @@ def build_streamlined_personal_html(summary: dict) -> str:
         <h2>Methodology</h2>
         <span class="tag">How to read it</span>
       </div>
-      <ul class="method-list">
-        <li>GitHub is filtered to PRs authored by {esc(PERSON_GITHUB_LOGIN)} from {esc(window_label)}, with it-monorepo evidence added where it explains Chad's IT and Infrastructure support work.</li>
-        <li>Linear is filtered to issues assigned to {esc(PERSON_LINEAR_ASSIGNEE)} and updated in the same window.</li>
-        <li>Slack, Notion, and Datadog links are used as supporting evidence inside the relevant bodies of work instead of repeated as separate digest sections. The Sergio Botero pairing transcript is called out separately because it is a discussion item for this week.</li>
-        <li>The hero image is a locally generated PNG asset created by the report generator.</li>
-      </ul>
+      {render_snapshot_methodology(narrative["methodology"])}
     </section>
-  </div>
+  </main>
 </body>
 </html>
 """
@@ -3760,9 +4931,243 @@ def build_detail_html(title: str, intro: str, body_html: str, back_href: str) ->
       letter-spacing: 0;
     }}
   </style>
+  <style id="technical-brief-detail-redesign">
+    :root {{
+      --void: #060b0d;
+      --surface: #0d171a;
+      --surface-raised: #132125;
+      --ink: #edf5f1;
+      --muted: #8da19b;
+      --line: #26373c;
+      --acid: #c9ff4a;
+      --cyan: #61d9e8;
+      --black: #05090a;
+      --display: "Arial Narrow", "Roboto Condensed", "Helvetica Neue", sans-serif;
+      --body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }}
+
+    html {{
+      color-scheme: dark;
+      background: var(--void);
+    }}
+
+    body {{
+      margin: 0;
+      color: var(--ink);
+      font-family: var(--body);
+      background-color: var(--void);
+      background-image:
+        linear-gradient(rgba(97, 217, 232, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(97, 217, 232, 0.035) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }}
+
+    body::before {{
+      position: fixed;
+      z-index: 10;
+      top: 0;
+      right: 0;
+      left: 0;
+      height: 3px;
+      background: var(--acid);
+      content: "";
+    }}
+
+    ::selection {{
+      color: var(--black);
+      background: var(--acid);
+    }}
+
+    a {{
+      color: var(--ink);
+      text-decoration-color: var(--cyan);
+      text-underline-offset: 0.2em;
+    }}
+
+    a:hover {{
+      color: var(--acid);
+      text-decoration: underline;
+    }}
+
+    a:focus-visible {{
+      outline: 2px solid var(--acid);
+      outline-offset: 4px;
+    }}
+
+    .shell {{
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 48px;
+    }}
+
+    .hero,
+    .table-wrap {{
+      border: 1px solid var(--line);
+      border-radius: 0;
+      background: var(--surface);
+      box-shadow: none;
+    }}
+
+    .hero {{
+      min-height: 430px;
+      display: grid;
+      align-content: end;
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+      padding: 54px;
+      box-shadow: 12px 12px 0 rgba(97, 217, 232, 0.12);
+    }}
+
+    .hero::before {{
+      position: absolute;
+      z-index: -1;
+      inset: 0 auto 0 0;
+      width: 14px;
+      background: var(--acid);
+      content: "";
+    }}
+
+    .hero::after {{
+      position: absolute;
+      z-index: -1;
+      top: 28px;
+      right: 34px;
+      color: rgba(237, 245, 241, 0.045);
+      content: "EVIDENCE";
+      font: 900 clamp(4rem, 10vw, 10rem)/0.9 var(--display);
+      letter-spacing: -0.07em;
+    }}
+
+    .eyebrow {{
+      width: fit-content;
+      padding: 8px 10px;
+      border: 1px solid var(--acid);
+      color: var(--acid);
+      font: 800 0.7rem/1 var(--mono);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }}
+
+    h1,
+    h2,
+    h3,
+    h4 {{
+      margin: 0;
+      color: var(--ink);
+      font-family: var(--display);
+      letter-spacing: -0.035em;
+    }}
+
+    h1 {{
+      max-width: 19ch;
+      margin-top: 24px;
+      font-size: clamp(3.3rem, 7vw, 7rem);
+      font-weight: 900;
+      line-height: 0.88;
+      text-transform: uppercase;
+    }}
+
+    p {{
+      max-width: 78ch;
+      margin: 24px 0 0;
+      color: var(--muted);
+      font-size: 1.02rem;
+      line-height: 1.7;
+    }}
+
+    .back-link {{
+      display: inline-flex;
+      width: fit-content;
+      margin-top: 28px;
+      padding: 11px 13px;
+      border: 1px solid var(--acid);
+      color: var(--acid);
+      font: 800 0.7rem/1 var(--mono);
+      text-decoration: none;
+      text-transform: uppercase;
+    }}
+
+    .back-link:hover {{
+      color: var(--black);
+      background: var(--acid);
+      text-decoration: none;
+    }}
+
+    .table-wrap {{
+      margin-top: 28px;
+      padding: 28px;
+      overflow: auto;
+    }}
+
+    .table-wrap h4 {{
+      margin-bottom: 20px;
+      color: var(--cyan);
+      font: 800 0.78rem/1 var(--mono);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }}
+
+    .metric-table {{
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+    }}
+
+    .metric-table th,
+    .metric-table td {{
+      padding: 14px 12px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.88rem;
+      text-align: left;
+      vertical-align: top;
+    }}
+
+    .metric-table td a {{
+      color: var(--ink);
+    }}
+
+    .metric-table td a:hover {{
+      color: var(--acid);
+    }}
+
+    .metric-table thead th {{
+      border-top: 0;
+      color: var(--cyan);
+      font: 750 0.68rem/1 var(--mono);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }}
+
+    @media (max-width: 760px) {{
+      .shell {{
+        padding: 22px 14px 36px;
+      }}
+
+      .hero {{
+        min-height: 360px;
+        padding: 32px 26px;
+        box-shadow: 7px 7px 0 rgba(97, 217, 232, 0.12);
+      }}
+
+      .hero::after {{
+        font-size: 4rem;
+      }}
+
+      h1 {{
+        font-size: 3.4rem;
+      }}
+
+      .table-wrap {{
+        padding: 20px 14px;
+      }}
+    }}
+  </style>
 </head>
 <body>
-  <div class="shell">
+  <main class="shell">
     <section class="hero">
       <div class="eyebrow">Convergint weekly drill-down</div>
       <h1>{esc(title)}</h1>
@@ -3770,7 +5175,7 @@ def build_detail_html(title: str, intro: str, body_html: str, back_href: str) ->
       <a class="back-link" href="{esc(back_href)}">Back to the main report</a>
     </section>
     {body_html}
-  </div>
+  </main>
 </body>
 </html>
 """
@@ -3948,7 +5353,7 @@ def write_detail_pages() -> None:
 def reset_output_dir() -> None:
     OUTPUT_DIR.mkdir(exist_ok=True)
     for path in OUTPUT_DIR.iterdir():
-        if path.is_file() and path.suffix in {".html", ".json"}:
+        if path.is_file() and path.suffix in {".html", ".json", ".pdf"}:
             path.unlink()
 
 
@@ -4007,6 +5412,8 @@ def main() -> None:
     github_data = github_summary()
     linear_data = linear_summary()
     datadog_data = datadog_summary()
+    refresh_manifest = load_refresh_manifest()
+    narrative = load_personal_report()
     slack_highlights = load_slack_highlights()
     notion_highlights = load_notion_highlights()
     muted_slack_channels = sorted(load_muted_slack_channels())
@@ -4018,6 +5425,8 @@ def main() -> None:
         "github": github_data,
         "linear": linear_data,
         "datadog": datadog_data,
+        "refresh_manifest": refresh_manifest,
+        "narrative": narrative,
         "slack_highlights": slack_highlights,
         "muted_slack_channels": muted_slack_channels,
         "notion_highlights": notion_highlights,

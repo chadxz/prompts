@@ -19,8 +19,16 @@ description = "Clear generated snapshots and report output"
 run = "uv run python clear_runtime_cache.py"
 
 [tasks.report]
-description = "Regenerate the HTML report and drill-down pages"
-run = "uv run python generate_report.py"
+description = "Regenerate the HTML report, drill-down pages, and one-page PDF"
+run = "uv run python build_report.py"
+
+[tasks.pdf]
+description = "Re-export the generated HTML report as a single-page PDF"
+run = "uv run python export_single_page_pdf.py"
+
+[tasks.verify-report]
+description = "Verify the selected window, narrative, HTML, and local links"
+run = "uv run python verify_report.py"
 
 [tasks.serve]
 description = "Run the local report controls server"

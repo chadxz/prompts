@@ -8,9 +8,12 @@ from zoneinfo import ZoneInfo
 ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "data"
 OUTPUT_DIR = ROOT / "dist"
+SINGLE_PAGE_PDF_FILE = OUTPUT_DIR / "chad-weekly-activity-report-single-page.pdf"
 SLACK_SNAPSHOT_FILE = DATA_DIR / "slack_channels.json"
 NOTION_SNAPSHOT_FILE = DATA_DIR / "notion_pages.json"
 DATADOG_SNAPSHOT_FILE = DATA_DIR / "datadog_activity.json"
+PERSONAL_REPORT_SNAPSHOT_FILE = DATA_DIR / "personal_report.json"
+REFRESH_MANIFEST_FILE = DATA_DIR / "refresh_manifest.json"
 REPORT_TIMEZONE = ZoneInfo(os.environ.get("REPORT_TIMEZONE", "America/Chicago"))
 REPORT_DATE = date.fromisoformat(
     os.environ.get("REPORT_DATE", datetime.now(REPORT_TIMEZONE).date().isoformat())
@@ -39,4 +42,6 @@ REQUIRED_DATA_FILES = [
     "slack_channels.json",
     "notion_pages.json",
     "datadog_activity.json",
+    "personal_report.json",
+    "refresh_manifest.json",
 ]

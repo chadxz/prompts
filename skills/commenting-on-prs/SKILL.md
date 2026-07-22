@@ -1,10 +1,10 @@
 ---
 name: commenting-on-prs
 description:
-  Posts comments and review replies on GitHub pull requests on
-  Chad's behalf. Trigger when replying to PR review comments,
-  leaving PR comments, or responding to review feedback. Applies
-  Chad's writing voice and uses the gh CLI.
+  Posts inline comments, file-level comments, and review replies on
+  GitHub pull requests on Chad's behalf. Trigger when replying to PR
+  review comments, leaving PR comments, or responding to review
+  feedback. Applies Chad's writing voice and uses the gh CLI.
 ---
 
 # Commenting on PRs
@@ -16,6 +16,19 @@ Use `gh` to post comments. Prefer feeding multiline bodies through stdin instead
 of embedding escaped newlines in a quoted argument. Shells do not turn `\n`
 inside ordinary quotes into newline characters, so GitHub will receive the
 literal backslash-n text.
+
+## Comment Placement
+
+Start every new comment as a review thread attached to the relevant changed
+line or file. Never leave a top-level pull request comment, including for
+overall feedback, status updates, or feedback that doesn't apply to a specific
+line. When there isn't a useful line target, attach a file-level comment to the
+most relevant file.
+
+Keep each new review thread unresolved until the pull request owner replies and
+acknowledges it. A code change without a reply isn't an acknowledgement. Treat
+any unacknowledged thread as blocking approval or merge so the owner has to
+respond before the pull request can merge.
 
 ## Review Feedback Workflow
 
@@ -31,13 +44,28 @@ and resolve the thread once the feedback has been addressed. Leave a thread
 unresolved only when the response asks for clarification, explains that the
 feedback won't be addressed, or the user explicitly asks not to resolve it.
 
-Do not leave a top-level PR comment for inline feedback when a review thread is
-available. Top-level PR comments are only appropriate for top-level feedback,
-overall status updates, or comments that aren't attached to a review thread.
-
 Common patterns:
 
 ```bash
+# Start an inline review thread
+gh api --method POST repos/{owner}/{repo}/pulls/{pr}/comments \
+  -f commit_id='{head_sha}' \
+  -f path='{path}' \
+  -f side='RIGHT' \
+  -F line=42 \
+  -F body=@- <<'EOF'
+<comment>
+EOF
+
+# Start a file-level review thread
+gh api --method POST repos/{owner}/{repo}/pulls/{pr}/comments \
+  -f commit_id='{head_sha}' \
+  -f path='{path}' \
+  -f subject_type='file' \
+  -F body=@- <<'EOF'
+<comment>
+EOF
+
 # Reply to a review comment thread
 gh api repos/{owner}/{repo}/pulls/{pr}/comments/{id}/replies \
   -F body=@- <<'EOF'
@@ -54,11 +82,6 @@ mutation($threadId: ID!) {
 }
 ' \
   -f threadId='{thread_id}'
-
-# Leave a top-level PR comment
-gh pr comment {pr} --repo {owner}/{repo} --body-file - <<'EOF'
-<comment>
-EOF
 ```
 
 If a comment is short enough for a single line, `--body "<comment>"` and

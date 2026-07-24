@@ -38,10 +38,10 @@ jobs:
         working-directory: apps/wt-stack
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install mise tools
-        uses: jdx/mise-action@v3
+        uses: jdx/mise-action@v4
         with:
           cache: true
           working_directory: apps/wt-stack

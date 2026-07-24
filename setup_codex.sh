@@ -19,6 +19,7 @@ mkdir -p "$CODEX_DIR/skills"
 setup_global_gitignore "$PROMPTS_DIR/.gitignore_global"
 setup_git_clone_override "$PROMPTS_DIR/bin"
 ensure_mise_shims_on_zprofile
+install_wt_stack "$PROMPTS_DIR"
 link_path "$PROMPTS_DIR" "$CODEX_DIR/prompts"
 link_path "$PROMPTS_DIR/AGENTS.md" "$CODEX_DIR/AGENTS.md"
 link_path "$PROMPTS_DIR/skills" "$CODEX_DIR/skills/personal"

@@ -1,0 +1,51 @@
+[tools]
+go = "1.26.5"
+golangci-lint = "2.12.2"
+
+[tasks.format]
+run = "gofmt -w ."
+
+[tasks.format-check]
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+files="$(gofmt -l .)"
+if [[ -n "$files" ]]; then
+  echo "$files"
+  gofmt -d .
+  exit 1
+fi
+"""
+
+[tasks.lint]
+run = "golangci-lint run"
+
+[tasks.test]
+run = """
+mkdir -p dist
+go test -v -race -coverprofile=dist/coverage.out -covermode=atomic ./...
+go run github.com/boumenot/gocover-cobertura@v1.5.0 \
+  < dist/coverage.out > dist/coverage.xml
+"""
+
+[tasks.vet]
+run = "go vet ./..."
+
+[tasks.tidy]
+run = "go mod tidy"
+
+[tasks.build]
+run = """
+mkdir -p dist
+go build -buildvcs=false -trimpath -o dist/wt-stack ./cmd/wt-stack
+"""
+
+[tasks.install]
+run = """
+mkdir -p "$HOME/.local/bin"
+go build -buildvcs=false -trimpath -o "$HOME/.local/bin/wt-stack" \
+  ./cmd/wt-stack
+"""
+
+[tasks.ci]
+depends = ["format-check", "lint", "test", "vet", "build"]

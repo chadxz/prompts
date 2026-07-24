@@ -128,3 +128,22 @@ setup_git_clone_override() {
     echo "Resolved git: ${resolved_git:-not found}" >&2
   fi
 }
+
+install_wt_stack() {
+  local prompts_dir="$1"
+  local app_dir="$prompts_dir/apps/wt-stack"
+
+  if ! command -v mise >/dev/null 2>&1; then
+    echo "Error: mise is required to install wt-stack" >&2
+    return 1
+  fi
+
+  mise trust "$app_dir/mise.toml"
+  (
+    cd "$app_dir"
+    mise install
+    mise run install
+  )
+  ensure_bin_on_path "$HOME/.local/bin"
+  echo "Installed wt-stack -> $HOME/.local/bin/wt-stack"
+}

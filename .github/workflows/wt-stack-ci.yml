@@ -1,0 +1,54 @@
+name: wt-stack CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/wt-stack-ci.yml"
+      - "apps/wt-stack/**"
+      - "install.sh"
+      - "setup-common.sh"
+      - "setup_claude_code.sh"
+      - "setup_codex.sh"
+      - "setup_pi.sh"
+  pull_request:
+    paths:
+      - ".github/workflows/wt-stack-ci.yml"
+      - "apps/wt-stack/**"
+      - "install.sh"
+      - "setup-common.sh"
+      - "setup_claude_code.sh"
+      - "setup_codex.sh"
+      - "setup_pi.sh"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wt-stack-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/wt-stack
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install mise tools
+        uses: jdx/mise-action@v3
+        with:
+          cache: true
+          working_directory: apps/wt-stack
+
+      - name: Run validation
+        run: mise run ci
+
+      - name: Validate setup scripts
+        working-directory: .
+        run: bash -n install.sh setup-common.sh setup_claude_code.sh setup_codex.sh setup_pi.sh

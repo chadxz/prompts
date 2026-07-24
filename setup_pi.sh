@@ -13,6 +13,7 @@ mkdir -p "$PI_DIR"
 
 setup_global_gitignore "$PROMPTS_DIR/.gitignore_global"
 setup_git_clone_override "$PROMPTS_DIR/bin"
+install_wt_stack "$PROMPTS_DIR"
 
 for json_file in "$PROMPTS_DIR"/pi/*.json; do
     [[ -e "$json_file" ]] || continue

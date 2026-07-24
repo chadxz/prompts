@@ -1,207 +1,175 @@
-// Package github delegates remote Stack operations to the GitHub CLI and the
-// gh-stack extension.
+// Package github manages pull requests and Stacks through GitHub's APIs.
 package github
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
+	"net/http"
 	"os"
-	"os/exec"
-	"strconv"
 	"strings"
+	"sync"
+	"time"
 
-	"github.com/chadxz/prompts/apps/wt-stack/internal/state"
+	ghauth "github.com/cli/go-gh/v2/pkg/auth"
+	ghconfig "github.com/cli/go-gh/v2/pkg/config"
+	"github.com/zalando/go-keyring"
 )
 
-// Client executes GitHub CLI commands in a repository worktree.
+const defaultRequestTimeout = 30 * time.Second
+
+type tokenProvider func(context.Context, string) (string, error)
+
+// ClientOption configures a GitHub API client.
+type ClientOption func(*Client)
+
+// Client performs authenticated GitHub API operations.
 type Client struct {
-	dir   string
-	ghBin string
-	out   io.Writer
-	err   io.Writer
+	dir           string
+	gitBin        string
+	httpClient    *http.Client
+	tokenProvider tokenProvider
+	tokenMutex    sync.Mutex
+	tokens        map[string]string
 }
 
-type pullRequestWire struct {
-	Number      int     `json:"number"`
-	State       string  `json:"state"`
-	MergedAt    *string `json:"mergedAt"`
-	URL         string  `json:"url"`
-	BaseRefName string  `json:"baseRefName"`
-	HeadRefName string  `json:"headRefName"`
-}
-
-// NewClient creates a GitHub CLI client rooted in a repository worktree.
-func NewClient(dir string, out io.Writer, errOut io.Writer) *Client {
-	ghBin := os.Getenv("WT_STACK_GH_BIN")
-	if ghBin == "" {
-		ghBin = "gh"
+// NewClient creates a GitHub API client rooted in a repository worktree.
+func NewClient(dir string, options ...ClientOption) *Client {
+	gitBin := os.Getenv("WT_STACK_GIT_BIN")
+	if gitBin == "" {
+		gitBin = "git"
 	}
-	return &Client{dir: dir, ghBin: ghBin, out: out, err: errOut}
-}
-
-// Repository returns the owner/name identifier for the current repository.
-func (c *Client) Repository(ctx context.Context) (string, error) {
-	output, err := c.output(ctx,
-		"repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner")
-	if err != nil {
-		return "", fmt.Errorf("resolving GitHub repository: %w", err)
+	client := &Client{
+		dir:        dir,
+		gitBin:     gitBin,
+		httpClient: &http.Client{Timeout: defaultRequestTimeout},
+		tokens:     make(map[string]string),
 	}
-	return output, nil
-}
-
-// StackVersion returns the installed gh-stack extension version.
-func (c *Client) StackVersion(ctx context.Context) (string, error) {
-	output, err := c.output(ctx, "stack", "--version")
-	if err != nil {
-		return "", fmt.Errorf("checking gh-stack extension: %w", err)
+	client.tokenProvider = tokenFromGitHubCLI
+	for _, option := range options {
+		option(client)
 	}
-	return output, nil
+	return client
 }
 
-// StacksAvailable verifies that the repository has the Stacked PRs preview.
-func (c *Client) StacksAvailable(ctx context.Context, repository string) error {
-	if _, err := c.output(ctx, "api", "repos/"+repository+"/stacks"); err != nil {
-		return fmt.Errorf("checking Stacked PRs availability: %w", err)
+// WithHTTPClient replaces the default bounded HTTP client.
+func WithHTTPClient(httpClient *http.Client) ClientOption {
+	return func(client *Client) {
+		client.httpClient = httpClient
+	}
+}
+
+// WithTokenProvider replaces GitHub CLI authentication token discovery.
+func WithTokenProvider(provider func(context.Context, string) (string, error)) ClientOption {
+	return func(client *Client) {
+		client.tokenProvider = provider
+	}
+}
+
+// Authenticate verifies that authentication is available for a GitHub host.
+func (c *Client) Authenticate(ctx context.Context, host string) error {
+	if _, err := c.token(ctx, host); err != nil {
+		return fmt.Errorf("authenticating to %s: %w", host, err)
 	}
 	return nil
 }
 
-// PullRequest returns the preferred open or merged pull request for a branch.
-func (c *Client) PullRequest(
+func (c *Client) token(ctx context.Context, host string) (string, error) {
+	c.tokenMutex.Lock()
+	defer c.tokenMutex.Unlock()
+
+	if token := c.tokens[host]; token != "" {
+		return token, nil
+	}
+	token, err := c.tokenProvider(ctx, host)
+	if err != nil {
+		return "", err
+	}
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return "", errors.New("authentication returned an empty token")
+	}
+	c.tokens[host] = token
+	return token, nil
+}
+
+func (c *Client) invalidateToken(host string) {
+	c.tokenMutex.Lock()
+	defer c.tokenMutex.Unlock()
+	delete(c.tokens, host)
+}
+
+func tokenFromGitHubCLI(
 	ctx context.Context,
-	repository string,
-	branch string,
-) (*state.PullRequest, error) {
-	output, err := c.output(ctx,
-		"pr", "list",
-		"--repo", repository,
-		"--head", branch,
-		"--state", "all",
-		"--limit", "100",
-		"--json", "number,state,mergedAt,url,baseRefName,headRefName")
+	host string,
+) (string, error) {
+	normalizedHost := ghauth.NormalizeHostname(host)
+	if token, _ := ghauth.TokenFromEnvOrConfig(normalizedHost); token != "" {
+		return token, nil
+	}
+
+	config, err := ghconfig.Read(nil)
 	if err != nil {
-		return nil, fmt.Errorf("listing pull requests for %s: %w", branch, err)
+		return "", fmt.Errorf("reading GitHub CLI configuration: %w", err)
 	}
-
-	var pullRequests []pullRequestWire
-	if err := json.Unmarshal([]byte(output), &pullRequests); err != nil {
-		return nil, fmt.Errorf("parsing pull requests for %s: %w", branch, err)
-	}
-	var fallback *pullRequestWire
-	for index := range pullRequests {
-		pullRequest := &pullRequests[index]
-		if pullRequest.HeadRefName != branch {
-			continue
-		}
-		if strings.EqualFold(pullRequest.State, "OPEN") {
-			return pullRequestState(pullRequest), nil
-		}
-		if fallback == nil {
-			fallback = pullRequest
+	user, userErr := config.Get([]string{"hosts", normalizedHost, "user"})
+	var keyringErrors []error
+	if userErr == nil && user != "" {
+		if token, getErr := keyringToken(
+			ctx,
+			"gh:"+normalizedHost,
+			user,
+		); getErr == nil && strings.TrimSpace(token) != "" {
+			return token, nil
+		} else if getErr != nil && !errors.Is(getErr, keyring.ErrNotFound) {
+			keyringErrors = append(keyringErrors, getErr)
 		}
 	}
-	if fallback == nil {
-		return nil, nil
+	token, keyringErr := keyringToken(ctx, "gh:"+normalizedHost, "")
+	if keyringErr == nil && strings.TrimSpace(token) != "" {
+		return token, nil
 	}
-	return pullRequestState(fallback), nil
+	if keyringErr != nil && !errors.Is(keyringErr, keyring.ErrNotFound) {
+		keyringErrors = append(keyringErrors, keyringErr)
+	}
+	if len(keyringErrors) > 0 {
+		return "", fmt.Errorf(
+			"reading GitHub CLI keyring for %s: %w",
+			normalizedHost,
+			errors.Join(keyringErrors...),
+		)
+	}
+	if userErr != nil {
+		return "", fmt.Errorf(
+			"no active GitHub CLI account is configured for %s",
+			normalizedHost,
+		)
+	}
+	return "", fmt.Errorf(
+		"GitHub CLI has no usable credential for %s (active user %s)",
+		normalizedHost,
+		user,
+	)
 }
 
-// Link creates or updates the remote Stack through gh stack link.
-func (c *Client) Link(
+func keyringToken(
 	ctx context.Context,
-	repository string,
-	remote string,
-	trunk string,
-	branches []string,
-) error {
-	if len(branches) == 0 {
-		return errors.New("stack has no active branches")
+	service string,
+	user string,
+) (string, error) {
+	type result struct {
+		token string
+		err   error
 	}
-	if len(branches) == 1 {
-		pullRequest, err := c.PullRequest(ctx, repository, branches[0])
-		if err != nil {
-			return err
-		}
-		if pullRequest != nil && !pullRequest.Merged {
-			return nil
-		}
-		if err := c.interactive(ctx,
-			"pr", "create",
-			"--repo", repository,
-			"--base", trunk,
-			"--head", branches[0],
-			"--fill"); err != nil {
-			return fmt.Errorf("creating pull request for %s: %w", branches[0], err)
-		}
-		return nil
+	results := make(chan result, 1)
+	go func() {
+		token, err := keyring.Get(service, user)
+		results <- result{token: token, err: err}
+	}()
+	select {
+	case <-ctx.Done():
+		return "", fmt.Errorf("reading GitHub CLI keyring: %w", ctx.Err())
+	case found := <-results:
+		return found.token, found.err
 	}
-
-	args := []string{
-		"stack", "link",
-		"--base", trunk,
-		"--remote", remote,
-	}
-	args = append(args, branches...)
-	if err := c.interactive(ctx, args...); err != nil {
-		return fmt.Errorf("linking GitHub stack: %w", err)
-	}
-	return nil
-}
-
-// CommandString formats a GitHub CLI invocation for dry-run output.
-func CommandString(args ...string) string {
-	quoted := make([]string, 0, len(args)+1)
-	quoted = append(quoted, "gh")
-	for _, arg := range args {
-		quoted = append(quoted, strconv.Quote(arg))
-	}
-	return strings.Join(quoted, " ")
-}
-
-func pullRequestState(pullRequest *pullRequestWire) *state.PullRequest {
-	return &state.PullRequest{
-		Number: pullRequest.Number,
-		URL:    pullRequest.URL,
-		Base:   pullRequest.BaseRefName,
-		State:  strings.ToLower(pullRequest.State),
-		Merged: pullRequest.MergedAt != nil,
-	}
-}
-
-func (c *Client) output(ctx context.Context, args ...string) (string, error) {
-	command := exec.CommandContext(ctx, c.ghBin, args...)
-	command.Dir = c.dir
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	command.Stdout = &stdout
-	command.Stderr = &stderr
-	if err := command.Run(); err != nil {
-		message := strings.TrimSpace(stderr.String())
-		if message == "" {
-			message = err.Error()
-		}
-		return "", errors.New(message)
-	}
-	return strings.TrimSpace(stdout.String()), nil
-}
-
-func (c *Client) interactive(ctx context.Context, args ...string) error {
-	command := exec.CommandContext(ctx, c.ghBin, args...)
-	command.Dir = c.dir
-	command.Stdin = os.Stdin
-	command.Stdout = c.out
-	var stderr bytes.Buffer
-	command.Stderr = io.MultiWriter(c.err, &stderr)
-	if err := command.Run(); err != nil {
-		message := strings.TrimSpace(stderr.String())
-		if message == "" {
-			message = err.Error()
-		}
-		return fmt.Errorf("%s: %s", CommandString(args...), message)
-	}
-	return nil
 }

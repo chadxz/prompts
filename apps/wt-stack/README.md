@@ -3,23 +3,24 @@
 `wt-stack` manages stacked branches when a repository uses a bare Git directory
 with sibling worktrees. It keeps one stack definition in the repository's common
 Git directory, runs every rebase in the worktree that owns the affected branch,
-and delegates GitHub's remote Stack operations to
-[`github/gh-stack`](https://github.com/github/gh-stack).
+and manages GitHub pull requests and Stacks through GitHub's HTTP APIs.
 
-This fills the local coordination gap in `gh-stack`: branch ownership remains
-with Git worktrees, while GitHub remains the source of truth for pull requests
-and the Stack itself.
+Its Stack behavior follows
+[`github/gh-stack`](https://github.com/github/gh-stack), while branch ownership
+remains with Git worktrees and GitHub remains the source of truth for pull
+requests and the Stack itself. The `gh-stack` extension is not required.
 
 ## Requirements
 
 - Git
 - [mise](https://mise.jdx.dev/)
-- [GitHub CLI](https://cli.github.com/) authenticated for the repository
-- `gh-stack`, installed with `gh extension install github/gh-stack`
+- An account authenticated by [GitHub CLI](https://cli.github.com/)
 - Access to GitHub's Stacked Pull Requests preview for the target repository
 
-Run `wt-stack doctor --json` in a worktree to verify the local extension and
-repository preview access.
+`wt-stack` reads GitHub CLI's existing authentication state directly, including
+credentials in the system keychain. It does not execute the core `gh` binary or
+the `gh-stack` extension. Run `wt-stack doctor --json` in a worktree to verify
+authentication and repository preview access.
 
 ## Install
 

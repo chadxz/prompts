@@ -87,7 +87,7 @@ func NewManager(
 	repository.SetInteractiveWriters(out, errOut)
 	return &Manager{
 		Repository: repository,
-		GitHub:     github.NewClient(repository.StartDir, out, errOut),
+		GitHub:     github.NewClient(repository.StartDir),
 		Store:      state.NewStore(repository.CommonDir),
 	}
 }
@@ -477,7 +477,7 @@ func (m *Manager) Refresh(ctx context.Context, stackName string) error {
 	return m.refreshLocked(ctx, locked, file, stack)
 }
 
-// Submit pushes active branches and delegates remote Stack creation to gh-stack.
+// Submit pushes active branches and creates or updates their GitHub Stack.
 func (m *Manager) Submit(ctx context.Context, stackName string) error {
 	locked, file, stack, err := m.lockedStack(ctx, stackName)
 	if err != nil {
@@ -492,18 +492,20 @@ func (m *Manager) Submit(ctx context.Context, stackName string) error {
 	if err := m.pushLocked(ctx, locked, file, stack); err != nil {
 		return err
 	}
-	repository, err := m.GitHub.Repository(ctx)
+	repository, err := m.GitHub.Repository(ctx, stack.Remote)
 	if err != nil {
 		return err
 	}
-	branches := activeBranchNames(stack)
+	branches := make([]string, 0, len(stack.Branches))
+	for _, branch := range stack.Branches {
+		branches = append(branches, branch.Name)
+	}
 	if m.DryRun {
 		return nil
 	}
 	if err := m.GitHub.Link(
 		ctx,
 		repository,
-		stack.Remote,
 		stack.Trunk,
 		branches,
 	); err != nil {
@@ -512,14 +514,20 @@ func (m *Manager) Submit(ctx context.Context, stackName string) error {
 	return m.refreshLocked(ctx, locked, file, stack)
 }
 
-// Doctor verifies the local gh-stack installation and preview availability.
-func (m *Manager) Doctor(ctx context.Context) (map[string]string, error) {
-	version, err := m.GitHub.StackVersion(ctx)
+// Doctor verifies authentication and repository preview availability.
+func (m *Manager) Doctor(
+	ctx context.Context,
+	stackName string,
+) (map[string]string, error) {
+	remote, err := m.doctorRemote(ctx, stackName)
 	if err != nil {
 		return nil, err
 	}
-	repository, err := m.GitHub.Repository(ctx)
+	repository, err := m.GitHub.Repository(ctx, remote)
 	if err != nil {
+		return nil, err
+	}
+	if err := m.GitHub.Authenticate(ctx, repository.Host); err != nil {
 		return nil, err
 	}
 	if err := m.GitHub.StacksAvailable(ctx, repository); err != nil {
@@ -528,9 +536,44 @@ func (m *Manager) Doctor(ctx context.Context) (map[string]string, error) {
 	return map[string]string{
 		"commonDir":        m.Repository.CommonDir,
 		"container":        m.Repository.Container,
-		"githubRepository": repository,
-		"ghStackVersion":   version,
+		"githubHost":       repository.Host,
+		"githubRepository": repository.Slug(),
+		"githubAuth":       "available",
 	}, nil
+}
+
+func (m *Manager) doctorRemote(
+	ctx context.Context,
+	stackName string,
+) (string, error) {
+	locked, err := m.Store.Lock()
+	if err != nil {
+		return "", err
+	}
+	defer func() {
+		_ = locked.Close()
+	}()
+	file, err := locked.Load()
+	if err != nil {
+		return "", err
+	}
+	if stackName != "" {
+		stack, exists := file.FindStack(stackName)
+		if !exists {
+			return "", fmt.Errorf("stack %q not found", stackName)
+		}
+		return stack.Remote, nil
+	}
+	currentBranch, branchErr := m.Repository.CurrentBranch(ctx)
+	if branchErr == nil {
+		if stack, exists := file.FindStackForBranch(currentBranch); exists {
+			return stack.Remote, nil
+		}
+	}
+	if len(file.Stacks) == 1 {
+		return file.Stacks[0].Remote, nil
+	}
+	return "origin", nil
 }
 
 func (m *Manager) lockedStack(
@@ -732,7 +775,7 @@ func (m *Manager) refreshLocked(
 	file *state.File,
 	stack *state.Stack,
 ) error {
-	repository, err := m.GitHub.Repository(ctx)
+	repository, err := m.GitHub.Repository(ctx, stack.Remote)
 	if err != nil {
 		return err
 	}
@@ -761,16 +804,6 @@ func activeBranchIndices(stack *state.Stack) []int {
 		}
 	}
 	return indices
-}
-
-func activeBranchNames(stack *state.Stack) []string {
-	names := make([]string, 0, len(stack.Branches))
-	for _, branch := range stack.Branches {
-		if !branchMerged(branch) {
-			names = append(names, branch.Name)
-		}
-	}
-	return names
 }
 
 func branchMerged(branch state.Branch) bool {

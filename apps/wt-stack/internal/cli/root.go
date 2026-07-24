@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const version = "0.1.0"
+const version = "0.2.0"
 
 type options struct {
 	json      bool
@@ -360,13 +360,16 @@ func newSyncCommand(opts *options) *cobra.Command {
 func newDoctorCommand(opts *options) *cobra.Command {
 	return &cobra.Command{
 		Use:   "doctor",
-		Short: "Verify Git, gh-stack, and repository preview support",
+		Short: "Verify GitHub authentication and repository preview support",
 		RunE: func(command *cobra.Command, _ []string) error {
 			manager, err := opts.getManager(command.Context())
 			if err != nil {
 				return err
 			}
-			checks, err := manager.Doctor(command.Context())
+			checks, err := manager.Doctor(
+				command.Context(),
+				opts.stackName,
+			)
 			if err != nil {
 				return err
 			}

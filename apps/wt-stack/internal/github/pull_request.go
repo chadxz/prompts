@@ -108,11 +108,13 @@ func (c *Client) createPullRequest(
 	return pullRequestState(&created), nil
 }
 
-func (c *Client) commitMessage(
+func (c *Client) gitCommitMessage(
 	ctx context.Context,
 	branch string,
 ) (string, string, error) {
-	command := exec.CommandContext(
+	// The configured Git binary is executed directly without a shell, and every
+	// dynamic value is passed as a distinct argument.
+	command := exec.CommandContext( //nolint:gosec // Git runs without a shell.
 		ctx,
 		c.gitBin,
 		"-C",

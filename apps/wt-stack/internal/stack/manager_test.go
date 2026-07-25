@@ -1,3 +1,5 @@
+//go:build integration
+
 package stack
 
 import (
@@ -150,9 +152,9 @@ func TestManagerAbortRestoresAConflictedCascade(t *testing.T) {
 		StackName: "conflict",
 		Fetch:     true,
 	})
-	var conflict *RebaseConflict
+	var conflict *RebaseConflictError
 	if !errors.As(err, &conflict) {
-		t.Fatalf("rebase error = %v, want RebaseConflict", err)
+		t.Fatalf("rebase error = %v, want RebaseConflictError", err)
 	}
 	expectedWorktree, err := filepath.EvalSymlinks(fixture.bottomWorktree)
 	if err != nil {
@@ -218,9 +220,9 @@ func TestManagerContinuesAConflictedCascade(t *testing.T) {
 		StackName: "conflict",
 		Fetch:     true,
 	})
-	var conflict *RebaseConflict
+	var conflict *RebaseConflictError
 	if !errors.As(err, &conflict) {
-		t.Fatalf("rebase error = %v, want RebaseConflict", err)
+		t.Fatalf("rebase error = %v, want RebaseConflictError", err)
 	}
 
 	if err := os.WriteFile(
@@ -274,6 +276,7 @@ func newRepositoryFixture(t *testing.T) *repositoryFixture {
 	fixture.git(root, "init", "--initial-branch=main", fixture.seed)
 	fixture.git(fixture.seed, "config", "user.name", "Test User")
 	fixture.git(fixture.seed, "config", "user.email", "test@example.com")
+	fixture.git(fixture.seed, "config", "commit.gpgsign", "false")
 	fixture.writeAndCommit(fixture.seed, "base.txt", "base\n", "initial commit")
 	fixture.git(fixture.seed, "remote", "add", "origin", fixture.remote)
 	fixture.git(fixture.seed, "push", "--set-upstream", "origin", "main")

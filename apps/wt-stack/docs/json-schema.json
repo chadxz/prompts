@@ -1,0 +1,250 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/chadxz/prompts/apps/wt-stack/docs/json-schema.json",
+  "title": "wt-stack JSON result",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/success"
+    },
+    {
+      "$ref": "#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "success": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "status",
+        "command"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "status": {
+          "enum": [
+            "ok",
+            "planned"
+          ]
+        },
+        "command": {
+          "enum": [
+            "init",
+            "add",
+            "status",
+            "rebase",
+            "continue",
+            "abort",
+            "push",
+            "refresh",
+            "submit",
+            "sync",
+            "doctor"
+          ]
+        },
+        "stack": {
+          "$ref": "#/$defs/stack"
+        },
+        "branch": {
+          "$ref": "#/$defs/branch"
+        },
+        "stacks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/status"
+          }
+        },
+        "checks": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "message": {
+          "type": "string"
+        },
+        "worktree": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "failure": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "status",
+        "error"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "status": {
+          "enum": [
+            "error",
+            "conflict"
+          ]
+        },
+        "error": {
+          "type": "string"
+        },
+        "branch": {
+          "type": "string"
+        },
+        "stack": {
+          "type": "string"
+        },
+        "worktree": {
+          "type": "string"
+        },
+        "continue": {
+          "type": "string"
+        },
+        "abort": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "stack": {
+      "type": "object",
+      "required": [
+        "name",
+        "remote",
+        "trunk",
+        "branches"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "remote": {
+          "type": "string"
+        },
+        "trunk": {
+          "type": "string"
+        },
+        "branches": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/branch"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "branch": {
+      "type": "object",
+      "required": [
+        "name",
+        "base",
+        "head"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "base": {
+          "type": "string"
+        },
+        "head": {
+          "type": "string"
+        },
+        "pullRequest": {
+          "$ref": "#/$defs/pullRequest"
+        }
+      },
+      "additionalProperties": true
+    },
+    "pullRequest": {
+      "type": "object",
+      "required": [
+        "number",
+        "url",
+        "base",
+        "state",
+        "merged"
+      ],
+      "properties": {
+        "number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "base": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "merged": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": true
+    },
+    "status": {
+      "type": "object",
+      "required": [
+        "name",
+        "remote",
+        "trunk",
+        "branches"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "remote": {
+          "type": "string"
+        },
+        "trunk": {
+          "type": "string"
+        },
+        "branches": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "clean",
+              "head",
+              "base",
+              "drifted"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "worktree": {
+                "type": "string"
+              },
+              "clean": {
+                "type": "boolean"
+              },
+              "head": {
+                "type": "string"
+              },
+              "base": {
+                "type": "string"
+              },
+              "drifted": {
+                "type": "boolean"
+              },
+              "pullRequest": {
+                "$ref": "#/$defs/pullRequest"
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

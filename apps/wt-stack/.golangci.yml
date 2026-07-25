@@ -1,0 +1,47 @@
+version: "2"
+
+linters:
+  enable:
+    - bodyclose
+    - contextcheck
+    - errcheck
+    - errname
+    - errorlint
+    - gocritic
+    - godoclint
+    - gosec
+    - govet
+    - ineffassign
+    - misspell
+    - nilerr
+    - nilnesserr
+    - noctx
+    - nolintlint
+    - revive
+    - staticcheck
+    - thelper
+    - unconvert
+    - unparam
+    - unused
+  settings:
+    revive:
+      rules:
+        - name: exported
+        - name: package-comments
+  exclusions:
+    rules:
+      # Test fixtures intentionally create ordinary repository files and invoke
+      # Git with fully separated arguments.
+      - path: _test\.go
+        linters:
+          - gosec
+          - noctx
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+run:
+  tests: true
+  timeout: 5m

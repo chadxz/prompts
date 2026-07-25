@@ -1,4 +1,3 @@
-// Package github manages pull requests and Stacks through GitHub's APIs.
 package github
 
 import (
@@ -19,9 +18,10 @@ import (
 const defaultRequestTimeout = 30 * time.Second
 
 type tokenProvider func(context.Context, string) (string, error)
+type commitMessageProvider func(context.Context, string) (string, string, error)
 
-// ClientOption configures a GitHub API client.
-type ClientOption func(*Client)
+// Option configures a GitHub API client.
+type Option func(*Client)
 
 // Client performs authenticated GitHub API operations.
 type Client struct {
@@ -29,12 +29,13 @@ type Client struct {
 	gitBin        string
 	httpClient    *http.Client
 	tokenProvider tokenProvider
+	commitMessage commitMessageProvider
 	tokenMutex    sync.Mutex
 	tokens        map[string]string
 }
 
 // NewClient creates a GitHub API client rooted in a repository worktree.
-func NewClient(dir string, options ...ClientOption) *Client {
+func NewClient(dir string, options ...Option) *Client {
 	gitBin := os.Getenv("WT_STACK_GIT_BIN")
 	if gitBin == "" {
 		gitBin = "git"
@@ -46,21 +47,28 @@ func NewClient(dir string, options ...ClientOption) *Client {
 		tokens:     make(map[string]string),
 	}
 	client.tokenProvider = tokenFromGitHubCLI
+	client.commitMessage = client.gitCommitMessage
 	for _, option := range options {
 		option(client)
 	}
 	return client
 }
 
+func withCommitMessageProvider(provider commitMessageProvider) Option {
+	return func(client *Client) {
+		client.commitMessage = provider
+	}
+}
+
 // WithHTTPClient replaces the default bounded HTTP client.
-func WithHTTPClient(httpClient *http.Client) ClientOption {
+func WithHTTPClient(httpClient *http.Client) Option {
 	return func(client *Client) {
 		client.httpClient = httpClient
 	}
 }
 
 // WithTokenProvider replaces GitHub CLI authentication token discovery.
-func WithTokenProvider(provider func(context.Context, string) (string, error)) ClientOption {
+func WithTokenProvider(provider func(context.Context, string) (string, error)) Option {
 	return func(client *Client) {
 		client.tokenProvider = provider
 	}

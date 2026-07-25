@@ -1,4 +1,3 @@
-// Package gitrepo performs Git operations without switching sibling worktrees.
 package gitrepo
 
 import (
@@ -10,8 +9,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
+)
+
+var credentialPattern = regexp.MustCompile(
+	`(?i)([a-z][a-z0-9+.-]*://)[^/@\s]+@`,
 )
 
 // Worktree describes one entry from git worktree list.
@@ -42,11 +46,11 @@ type CommandError struct {
 
 // Error describes the failed Git command.
 func (e *CommandError) Error() string {
-	command := "git " + strings.Join(e.Args, " ")
+	command := redactCredentials("git " + strings.Join(e.Args, " "))
 	if e.Stderr == "" {
 		return fmt.Sprintf("%s failed with exit code %d", command, e.ExitCode)
 	}
-	return fmt.Sprintf("%s: %s", command, e.Stderr)
+	return fmt.Sprintf("%s: %s", command, redactCredentials(e.Stderr))
 }
 
 // Discover resolves the repository's common Git directory from any worktree or
@@ -93,8 +97,12 @@ func (r *Repository) Worktrees(ctx context.Context) ([]Worktree, error) {
 	if err != nil {
 		return nil, fmt.Errorf("listing worktrees: %w", err)
 	}
+	return parseWorktrees(output), nil
+}
+
+func parseWorktrees(output string) []Worktree {
 	if output == "" {
-		return []Worktree{}, nil
+		return []Worktree{}
 	}
 
 	blocks := strings.Split(output, "\n\n")
@@ -121,7 +129,7 @@ func (r *Repository) Worktrees(ctx context.Context) ([]Worktree, error) {
 	sort.Slice(worktrees, func(i, j int) bool {
 		return worktrees[i].Path < worktrees[j].Path
 	})
-	return worktrees, nil
+	return worktrees
 }
 
 // WorktreeForBranch returns the worktree that owns a local branch.
@@ -282,13 +290,26 @@ func (r *Repository) ResetHard(ctx context.Context, path string, sha string) err
 	return nil
 }
 
+// ResetBranch restores a branch without requiring an owning worktree.
+func (r *Repository) ResetBranch(
+	ctx context.Context,
+	branch string,
+	sha string,
+) error {
+	ref := "refs/heads/" + branch
+	if err := r.Run(ctx, r.Container, "update-ref", ref, sha); err != nil {
+		return fmt.Errorf("restoring %s to %s: %w", ref, sha, err)
+	}
+	return nil
+}
+
 // PushStack pushes branch refs atomically with explicit force-with-lease values.
 func (r *Repository) PushStack(
 	ctx context.Context,
 	remote string,
 	branches []string,
 ) error {
-	args := []string{"push", remote, "--atomic"}
+	remoteSHAs := make(map[string]string, len(branches))
 	for _, branch := range branches {
 		remoteRef := fmt.Sprintf("refs/remotes/%s/%s", remote, branch)
 		remoteSHA, err := r.Output(ctx, r.Container,
@@ -300,17 +321,36 @@ func (r *Repository) PushStack(
 			}
 			remoteSHA = ""
 		}
-		args = append(args,
-			fmt.Sprintf("--force-with-lease=refs/heads/%s:%s", branch, remoteSHA))
+		remoteSHAs[branch] = remoteSHA
 	}
-	for _, branch := range branches {
-		args = append(args,
-			fmt.Sprintf("refs/heads/%s:refs/heads/%s", branch, branch))
-	}
+	args := pushArguments(remote, branches, remoteSHAs)
 	if err := r.RunInteractive(ctx, r.Container, nil, args...); err != nil {
 		return fmt.Errorf("pushing stack to %s: %w", remote, err)
 	}
 	return nil
+}
+
+func pushArguments(
+	remote string,
+	branches []string,
+	remoteSHAs map[string]string,
+) []string {
+	args := []string{"push", remote, "--atomic"}
+	for _, branch := range branches {
+		args = append(args, fmt.Sprintf(
+			"--force-with-lease=refs/heads/%s:%s",
+			branch,
+			remoteSHAs[branch],
+		))
+	}
+	for _, branch := range branches {
+		args = append(args, fmt.Sprintf(
+			"refs/heads/%s:refs/heads/%s",
+			branch,
+			branch,
+		))
+	}
+	return args
 }
 
 // RemoteRef returns the fully qualified remote-tracking ref for a branch.
@@ -351,7 +391,12 @@ func (r *Repository) run(
 	interactive bool,
 	args ...string,
 ) (string, error) {
-	command := exec.CommandContext(ctx, r.gitBin, append([]string{"-C", dir}, args...)...)
+	// The configured Git binary is executed directly without a shell.
+	command := exec.CommandContext( //nolint:gosec // Git runs without a shell.
+		ctx,
+		r.gitBin,
+		append([]string{"-C", dir}, args...)...,
+	)
 	if environment != nil {
 		command.Env = environment
 	}
@@ -388,10 +433,19 @@ func commandOutput(
 	dir string,
 	args ...string,
 ) (string, error) {
-	command := exec.CommandContext(ctx, gitBin, append([]string{"-C", dir}, args...)...)
+	// The configured Git binary is executed directly without a shell.
+	command := exec.CommandContext( //nolint:gosec // Git runs without a shell.
+		ctx,
+		gitBin,
+		append([]string{"-C", dir}, args...)...,
+	)
 	output, err := command.CombinedOutput()
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", strings.TrimSpace(string(output)), err)
 	}
 	return strings.TrimSpace(string(output)), nil
+}
+
+func redactCredentials(value string) string {
+	return credentialPattern.ReplaceAllString(value, `${1}***@`)
 }

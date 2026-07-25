@@ -1,0 +1,58 @@
+version: 2
+
+project_name: wt-stack
+
+builds:
+  - id: wt-stack
+    main: ./cmd/wt-stack
+    binary: wt-stack
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -buildvcs=false
+      - -trimpath
+    ldflags:
+      - >-
+        -s -w
+        -X github.com/chadxz/prompts/apps/wt-stack/internal/cli.version={{.Version}}
+
+archives:
+  - formats:
+      - tar.gz
+    files:
+      - README.md
+      - LICENSE
+      - CHANGELOG.md
+
+checksum:
+  name_template: checksums.txt
+
+sboms:
+  - artifacts: archive
+
+signs:
+  - cmd: cosign
+    artifacts: checksum
+    signature: "${artifact}.sig"
+    certificate: "${artifact}.pem"
+    args:
+      - sign-blob
+      - --yes
+      - "--output-signature=${signature}"
+      - "--output-certificate=${certificate}"
+      - "${artifact}"
+
+changelog:
+  use: git
+  filters:
+    include:
+      - "(?i)wt-stack"
+    exclude:
+      - "^docs:"
+      - "^test:"

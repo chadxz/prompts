@@ -1,4 +1,3 @@
-// Package state persists worktree stack metadata in Git's common directory.
 package state
 
 import (
@@ -84,9 +83,13 @@ func (s *Store) Path() string {
 
 // Lock acquires the repository-wide state lock.
 func (s *Store) Lock() (*LockedStore, error) {
-	lock, err := os.OpenFile(s.lockPath, os.O_CREATE|os.O_RDWR, 0o644)
+	lock, err := os.OpenFile(s.lockPath, os.O_CREATE|os.O_RDWR, 0o600)
 	if err != nil {
 		return nil, fmt.Errorf("opening state lock: %w", err)
+	}
+	if err := lock.Chmod(0o600); err != nil {
+		_ = lock.Close()
+		return nil, fmt.Errorf("setting state lock permissions: %w", err)
 	}
 	if err := syscall.Flock(int(lock.Fd()), syscall.LOCK_EX); err != nil {
 		_ = lock.Close()
@@ -159,7 +162,7 @@ func (s *LockedStore) Save(file *File) error {
 		_ = os.Remove(tempPath)
 	}()
 
-	if err := temp.Chmod(0o644); err != nil {
+	if err := temp.Chmod(0o600); err != nil {
 		_ = temp.Close()
 		return fmt.Errorf("setting temporary state permissions: %w", err)
 	}

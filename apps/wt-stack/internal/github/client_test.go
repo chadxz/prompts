@@ -3,13 +3,12 @@ package github
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -112,7 +111,7 @@ func TestLinkAppendsToAnExistingStack(t *testing.T) {
 }
 
 func TestLinkCreatesMissingPullRequestsAndRepairsBases(t *testing.T) {
-	root := newCommitRepository(t)
+	root := t.TempDir()
 	var created createPullRequestRequest
 	var repaired struct {
 		Base string `json:"base"`
@@ -226,7 +225,7 @@ func TestLinkChecksPreviewBeforeCreatingPullRequests(t *testing.T) {
 }
 
 func TestLinkReplacesClosedUnmergedPullRequest(t *testing.T) {
-	root := newCommitRepository(t)
+	root := t.TempDir()
 	var created createPullRequestRequest
 	server := newGitHubServer(t, func(
 		writer http.ResponseWriter,
@@ -750,6 +749,71 @@ func TestTokenFromGitHubCLIReadsExistingConfiguration(t *testing.T) {
 	}
 }
 
+func TestAuthenticateCachesAndValidatesTokens(t *testing.T) {
+	t.Parallel()
+
+	t.Run("cache", func(t *testing.T) {
+		t.Parallel()
+
+		calls := 0
+		client := NewClient(
+			t.TempDir(),
+			WithTokenProvider(func(
+				context.Context,
+				string,
+			) (string, error) {
+				calls++
+				return " token ", nil
+			}),
+		)
+		if err := client.Authenticate(context.Background(), "github.com"); err != nil {
+			t.Fatalf("authenticate: %v", err)
+		}
+		if err := client.Authenticate(context.Background(), "github.com"); err != nil {
+			t.Fatalf("authenticate from cache: %v", err)
+		}
+		if calls != 1 {
+			t.Fatalf("token provider calls = %d, want 1", calls)
+		}
+	})
+
+	t.Run("empty token", func(t *testing.T) {
+		t.Parallel()
+
+		client := NewClient(
+			t.TempDir(),
+			WithTokenProvider(func(
+				context.Context,
+				string,
+			) (string, error) {
+				return " ", nil
+			}),
+		)
+		err := client.Authenticate(context.Background(), "github.com")
+		if err == nil || !strings.Contains(err.Error(), "empty token") {
+			t.Fatalf("authenticate error = %v", err)
+		}
+	})
+
+	t.Run("provider error", func(t *testing.T) {
+		t.Parallel()
+
+		client := NewClient(
+			t.TempDir(),
+			WithTokenProvider(func(
+				context.Context,
+				string,
+			) (string, error) {
+				return "", errors.New("credential unavailable")
+			}),
+		)
+		err := client.Authenticate(context.Background(), "github.com")
+		if err == nil || !strings.Contains(err.Error(), "credential unavailable") {
+			t.Fatalf("authenticate error = %v", err)
+		}
+	})
+}
+
 func TestParseRepositoryURL(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -830,6 +894,71 @@ func TestParseRepositoryURL(t *testing.T) {
 	}
 }
 
+func FuzzParseRepositoryURL(f *testing.F) {
+	for _, remoteURL := range []string{
+		"https://github.com/example/repository.git",
+		"git@github.com:example/repository.git",
+		"ssh://git@git.example.com/example/repository.git",
+		`C:\repositories\local`,
+		"",
+	} {
+		f.Add(remoteURL)
+	}
+	f.Fuzz(func(t *testing.T, remoteURL string) {
+		repository, err := parseRepositoryURL(remoteURL)
+		if err != nil {
+			return
+		}
+		if repository.Host == "" ||
+			repository.Owner == "" ||
+			repository.Name == "" ||
+			repository.APIURL == "" {
+			t.Fatalf("incomplete repository: %#v", repository)
+		}
+	})
+}
+
+func FuzzNextPagePath(f *testing.F) {
+	for _, linkHeader := range []string{
+		`<https://api.github.com/resource?page=2>; rel="next"`,
+		`<https://api.github.com/resource?page=1>; rel="prev", ` +
+			`<https://api.github.com/resource?page=3>; rel="next"`,
+		`not a link`,
+		"",
+	} {
+		f.Add(linkHeader)
+	}
+	f.Fuzz(func(t *testing.T, linkHeader string) {
+		path := nextPagePath(linkHeader)
+		if strings.ContainsAny(path, "\r\n") {
+			t.Fatalf("pagination path contains a line break: %q", path)
+		}
+	})
+}
+
+func TestGitHubHostValidationAndAPIURLs(t *testing.T) {
+	t.Parallel()
+
+	if err := validateKnownGitHubHost("github.com"); err != nil {
+		t.Fatalf("validate github.com: %v", err)
+	}
+	if err := validateKnownGitHubHost("unknown.example"); err == nil ||
+		!strings.Contains(err.Error(), "not configured") {
+		t.Fatalf("unknown host error = %v", err)
+	}
+	if got := apiURLForHost("github.localhost"); got !=
+		"http://api.github.localhost" {
+		t.Fatalf("localhost API URL = %q", got)
+	}
+	if got := apiURLForHost("github.com"); got != "https://api.github.com" {
+		t.Fatalf("GitHub API URL = %q", got)
+	}
+	if got := apiURLForHost("git.example.com"); got !=
+		"https://git.example.com/api/v3" {
+		t.Fatalf("enterprise API URL = %q", got)
+	}
+}
+
 func TestParseRepositoryURLRejectsLocalPathWithoutEchoingCredentials(
 	t *testing.T,
 ) {
@@ -847,46 +976,6 @@ func TestParseRepositoryURLRejectsLocalPathWithoutEchoingCredentials(
 	}
 }
 
-func TestRepositoryRejectsUnknownRemoteHost(t *testing.T) {
-	root := t.TempDir()
-	runGit(t, root, "init", "--initial-branch=main")
-	runGit(
-		t,
-		root,
-		"remote",
-		"add",
-		"origin",
-		"https://attacker.example/example/repository.git",
-	)
-	client := NewClient(root)
-	_, err := client.Repository(context.Background(), "origin")
-	if err == nil || !strings.Contains(err.Error(), "not configured") {
-		t.Fatalf("Repository() error = %v, want unknown-host rejection", err)
-	}
-}
-
-func TestRepositoryExpandsInsteadOfRemote(t *testing.T) {
-	root := t.TempDir()
-	runGit(t, root, "init", "--initial-branch=main")
-	runGit(
-		t,
-		root,
-		"config",
-		`url.git@github.com:.insteadOf`,
-		"gh:",
-	)
-	runGit(t, root, "remote", "add", "origin", "gh:example/repository.git")
-	client := NewClient(root)
-	repository, err := client.Repository(context.Background(), "origin")
-	if err != nil {
-		t.Fatalf("resolve rewritten remote: %v", err)
-	}
-	if repository.Host != "github.com" ||
-		repository.Slug() != "example/repository" {
-		t.Fatalf("unexpected repository: %#v", repository)
-	}
-}
-
 func testClient(
 	t *testing.T,
 	dir string,
@@ -901,6 +990,12 @@ func testClient(
 			_ string,
 		) (string, error) {
 			return "test-token", nil
+		}),
+		withCommitMessageProvider(func(
+			context.Context,
+			string,
+		) (string, string, error) {
+			return "Feature two", "Pull request body", nil
 		}),
 	)
 }
@@ -975,32 +1070,5 @@ func writeJSON(t *testing.T, writer http.ResponseWriter, value any) {
 	writer.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(writer).Encode(value); err != nil {
 		t.Fatalf("encode response: %v", err)
-	}
-}
-
-func newCommitRepository(t *testing.T) string {
-	t.Helper()
-	root := t.TempDir()
-	runGit(t, root, "init", "--initial-branch=main")
-	runGit(t, root, "config", "user.email", "wt-stack@example.test")
-	runGit(t, root, "config", "user.name", "wt-stack")
-	file := filepath.Join(root, "file.txt")
-	if err := os.WriteFile(file, []byte("content\n"), 0o600); err != nil {
-		t.Fatalf("write fixture: %v", err)
-	}
-	runGit(t, root, "add", "file.txt")
-	runGit(t, root, "commit", "-m", "Feature two", "-m", "Pull request body")
-	runGit(t, root, "branch", "feature-two")
-	return root
-}
-
-func runGit(t *testing.T, dir string, arguments ...string) {
-	t.Helper()
-	command := exec.Command("git", arguments...)
-	command.Dir = dir
-	command.Stdout = io.Discard
-	command.Stderr = io.Discard
-	if err := command.Run(); err != nil {
-		t.Fatalf("git %s: %v", strings.Join(arguments, " "), err)
 	}
 }

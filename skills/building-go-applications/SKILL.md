@@ -18,7 +18,10 @@ Start every non-trivial Go app with:
 - `mise.toml` pinning Go, `golangci-lint`, and task-specific tools.
 - App-owned mise tasks for `format`, `format-check`, `lint`, `test`, `tidy`,
   `build`, and `ci`.
-- Race-enabled unit tests with coverage artifacts under `dist/`.
+- A canonical `.golangci.yml` that enforces correctness, security, and
+  documentation checks.
+- Race-enabled unit tests with a coverage minimum and artifacts under `dist/`.
+- A `doc.go` file in every package and comments on every exported symbol.
 - A Dockerfile and `docker` task for deployable workloads.
 - Validation tasks for app-owned manifests, Terraform, shell scripts, and
   generated schemas.
@@ -35,6 +38,16 @@ terms. Avoid grab-bag packages and files such as `utils`, `helpers`, and
 Keep `main` boring. It should parse flags, load validated configuration, set up
 logging and telemetry, wire clients and stores, start the service, and handle
 graceful shutdown. Put behavior in testable internal packages.
+
+Choose the quality profile before adding project-specific tooling:
+
+- Services emphasize configuration, telemetry, health, graceful shutdown, and
+  deployment validation.
+- CLIs emphasize command help, exit codes, dry-run guarantees, stable
+  machine-readable output, subprocess boundaries, and release archives.
+- Published libraries emphasize minimal public APIs, runnable examples,
+  compatibility across supported Go versions, Semantic Versioning, changelogs,
+  licenses, security policy, and API stability.
 
 ## Mise Tasks
 
@@ -67,19 +80,105 @@ run = "golangci-lint run"
 
 [tasks.test]
 run = """
+#!/usr/bin/env bash
+set -euo pipefail
 mkdir -p dist
-go test -v -race -coverprofile=dist/coverage.out -covermode=atomic ./...
-go run github.com/boumenot/gocover-cobertura@latest \
-  < dist/coverage.out > dist/coverage.xml
+go test -race -coverpkg=./... \
+  -coverprofile=dist/coverage.out -covermode=atomic ./...
+go tool cover -html=dist/coverage.out -o dist/coverage.html
 """
+
+[tasks.test-integration]
+run = "go test -v -race -tags=integration ./..."
 
 [tasks.tidy]
 run = "go mod tidy"
+
+[tasks.tidy-check]
+run = "go mod tidy -diff"
+
+[tasks.verify]
+run = "go mod verify"
+
+[tasks.vuln]
+run = "go tool govulncheck ./..."
 ```
+
+Record build-time Go commands with `go get -tool <package>@<version>` so
+`go.mod` and `go.sum` pin both the version and checksum. Keep report conversion
+outside the coverage gate so a reporting-tool failure cannot disguise the unit
+test result.
 
 The `build` task writes binaries to `dist/`. The `docker` task uses
 `docker buildx build`. The `ci` task composes `format-check`, `lint`, `test`,
-`build`, deployable Docker checks, and app-owned validation.
+`tidy-check`, `verify`, `vuln`, `build`, deployable Docker checks, and app-owned
+validation.
+
+Gate deterministic unit coverage, not tests that require live services, real
+cloud accounts, Docker, or external subprocess behavior. Put those tests behind
+an `integration` build tag and expose them through `test-integration`. Use
+`-coverpkg=./...` so unit tests count packages exercised through another
+package. If an operating-system adapter cannot be unit tested without becoming
+an integration test, exclude it from the unit coverage package list and explain
+that decision in contributor documentation.
+
+Keep the native profile as a CI artifact and generate HTML for local diagnosis.
+Add another report format only when a CI consumer requires it, and fail if the
+converter skips packages. Start the coverage minimum at the current meaningful
+unit baseline, then ratchet it upward as behavior is added. Do not lower it to
+merge a change.
+
+## Linting
+
+Check in a version 2 `.golangci.yml` for every module. Start with:
+
+```yaml
+version: "2"
+
+linters:
+  enable:
+    - bodyclose
+    - contextcheck
+    - errcheck
+    - errname
+    - errorlint
+    - gocritic
+    - godoclint
+    - gosec
+    - govet
+    - ineffassign
+    - misspell
+    - nilerr
+    - nilnesserr
+    - noctx
+    - nolintlint
+    - revive
+    - staticcheck
+    - thelper
+    - unconvert
+    - unparam
+    - unused
+  settings:
+    revive:
+      rules:
+        - name: exported
+        - name: package-comments
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+run:
+  tests: true
+  timeout: 5m
+```
+
+Add domain linters such as `rowserrcheck`, `sqlclosecheck`, `sloglint`,
+`spancheck`, `testifylint`, or `promlinter` when their packages are present.
+Avoid enabling cosmetic or complexity linters without a concrete maintenance
+problem. Keep exclusions path-specific, name the linter, and explain why the
+code is safe. Never use a broad `nolint`.
 
 ## Coding Conventions
 
@@ -98,7 +197,7 @@ Preserve these Convergint preferences:
 - Preserve common initialisms: `ID`, `URL`, `HTTP`, `JSON`, `OTLP`.
 - Use short receiver names that match the type.
 - Use `make([]T, 0, n)` when capacity is known.
-- Add package comments and comments on exported symbols.
+- Put each package contract in `doc.go` and comment every exported symbol.
 - Use comments for intent, operational rationale, and non-obvious gotchas.
 - Keep security, path, and secret-handling suppressions narrow and explained.
 
@@ -138,9 +237,11 @@ Use retry logic for APIs that need it. Existing exporters use
 as 429, 502, 503, and 504. Preserve context cancellation in retry policies.
 
 For token-based APIs, cache tokens behind a mutex, refresh before expiry with a
-small buffer, retry once after 401/403 responses, wrap request and decoding
-errors with context, bound large response reads, and classify permanent status
-codes with sentinel errors.
+small buffer, and retry once after a 401 response. Classify 403 responses before
+retrying because they may represent permanent permissions, preview access, or
+rate limiting. Honor `Retry-After` and vendor rate-limit reset headers, wrap
+request and decoding errors with context, bound large response reads, and
+classify permanent status codes with typed or sentinel errors.
 
 ## Telemetry And Logging
 
@@ -239,9 +340,57 @@ Cover the app's operational edges:
 - Temporal workflows and activities with SDK test suites.
 - Error classification, context cancellation, rate limits, pagination, malformed
   input, and graceful fallback behavior.
+- CLI argument validation, exit codes, human output, machine-readable schemas,
+  and dry-run no-mutation guarantees.
+- State versioning, corrupt state, atomic persistence, locking, and recovery.
+
+Use consumer-owned interfaces around Git, filesystems, clocks, HTTP adapters,
+and remote APIs so orchestration can be unit tested with narrow fakes. Keep real
+subprocess, worktree, container, and live-service scenarios in integration
+tests. Add fuzz tests for parsers, decoders, pagination links, remote URLs, and
+other untrusted structured input.
 
 When exported metric metadata changes, update metric tests and checked-in
 example metric output.
+
+## Documentation
+
+Use `doc.go` for every package, including `main`. Package documentation explains
+the contract, ownership, concurrency model, security boundaries, and important
+side effects. Exported-symbol comments explain behavior, error semantics,
+ownership, mutability, and concurrency when those details affect callers. Avoid
+comments that only restate the identifier.
+
+Keep end-user and contributor documentation separate:
+
+- `README.md` is user-facing. Include purpose, prerequisites, installation, a
+  complete quick start, every command or public API, options, compatibility,
+  operational guarantees, recovery, and troubleshooting.
+- `CONTRIBUTING.md` is terse and development-facing. Include the mise workflow,
+  package boundaries, unit and integration policy, lint and documentation
+  expectations, coverage minimum, schema compatibility, and release checks.
+- Published libraries and distributable CLIs also include `LICENSE`,
+  `SECURITY.md`, and `CHANGELOG.md`.
+
+Treat command help and machine-readable output as APIs. Test them, version
+schemas explicitly, document exit codes, and require consumers to ignore unknown
+fields within a supported schema version.
+
+## Published Libraries And Distributable CLIs
+
+Keep public APIs smaller than internal APIs. Prefer `internal/` until another
+module has a real import requirement. For published packages, provide runnable
+examples for primary entry points and test the oldest supported Go version plus
+the current version.
+
+Use Semantic Versioning and automate releases from immutable tags. Release
+archives for supported operating systems and architectures with embedded
+versions, checksums, SBOMs, signatures or build-provenance attestations, and
+reproducible `-trimpath` builds. Document unsupported platforms rather than
+shipping an untested binary.
+
+Run `go mod verify`, a pinned `govulncheck`, and release-configuration
+validation in CI. Update `CHANGELOG.md` before tagging a release.
 
 ## App-Owned Infrastructure And Repository Integration
 

@@ -1,6 +1,7 @@
 [tools]
 go = "1.26.5"
 golangci-lint = "2.12.2"
+goreleaser = "2.17.0"
 
 [tasks.format]
 run = "gofmt -w ."
@@ -21,12 +22,34 @@ fi
 run = "golangci-lint run"
 
 [tasks.test]
+description = "Run deterministic unit tests and enforce unit coverage"
 run = """
+#!/usr/bin/env bash
+set -euo pipefail
 mkdir -p dist
-go test -v -race -coverprofile=dist/coverage.out -covermode=atomic ./...
-go run github.com/boumenot/gocover-cobertura@v1.5.0 \
-  < dist/coverage.out > dist/coverage.xml
+go test -race \
+  -coverpkg=./internal/cli,./internal/github,./internal/stack,./internal/state \
+  -coverprofile=dist/coverage.out \
+  -covermode=atomic \
+  ./...
+coverage="$(go tool cover -func=dist/coverage.out | awk '/^total:/ {
+  gsub("%", "", $3)
+  print $3
+}')"
+minimum=75
+awk -v coverage="$coverage" -v minimum="$minimum" 'BEGIN {
+  if ((coverage + 0) < minimum) {
+    printf "unit coverage %.1f%% is below %.1f%%\\n", coverage, minimum
+    exit 1
+  }
+  printf "unit coverage %.1f%% meets %.1f%% minimum\\n", coverage, minimum
+}'
+go tool cover -html=dist/coverage.out -o dist/coverage.html
 """
+
+[tasks.test-integration]
+description = "Run optional real Git and worktree integration tests"
+run = "go test -v -race -tags=integration ./..."
 
 [tasks.vet]
 run = "go vet ./..."
@@ -34,18 +57,53 @@ run = "go vet ./..."
 [tasks.tidy]
 run = "go mod tidy"
 
+[tasks.tidy-check]
+run = "go mod tidy -diff"
+
+[tasks.verify]
+run = "go mod verify"
+
+[tasks.vuln]
+run = "go run golang.org/x/vuln/cmd/govulncheck@v1.6.0 ./..."
+
+[tasks.release-check]
+run = "goreleaser check"
+
 [tasks.build]
 run = """
+#!/usr/bin/env bash
+set -euo pipefail
 mkdir -p dist
-go build -buildvcs=false -trimpath -o dist/wt-stack ./cmd/wt-stack
+version="${WT_STACK_VERSION:-$(git describe \
+  --tags --match 'v*' --always --dirty 2>/dev/null || printf dev)}"
+go build -buildvcs=false -trimpath \
+  -ldflags "-X github.com/chadxz/prompts/apps/wt-stack/internal/cli.version=$version" \
+  -o dist/wt-stack \
+  ./cmd/wt-stack
 """
 
 [tasks.install]
 run = """
+#!/usr/bin/env bash
+set -euo pipefail
 mkdir -p "$HOME/.local/bin"
-go build -buildvcs=false -trimpath -o "$HOME/.local/bin/wt-stack" \
+version="${WT_STACK_VERSION:-$(git describe \
+  --tags --match 'v*' --always --dirty 2>/dev/null || printf dev)}"
+go build -buildvcs=false -trimpath \
+  -ldflags "-X github.com/chadxz/prompts/apps/wt-stack/internal/cli.version=$version" \
+  -o "$HOME/.local/bin/wt-stack" \
   ./cmd/wt-stack
 """
 
 [tasks.ci]
-depends = ["format-check", "lint", "test", "vet", "build"]
+depends = [
+  "format-check",
+  "lint",
+  "test",
+  "vet",
+  "tidy-check",
+  "verify",
+  "vuln",
+  "release-check",
+  "build",
+]

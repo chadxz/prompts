@@ -1,4 +1,3 @@
-// Package cli defines the wt-stack command-line interface.
 package cli
 
 import (
@@ -16,29 +15,51 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const version = "0.2.0"
+const schemaVersion = 1
+
+var version = "dev"
+
+type commandManager interface {
+	SetDryRun(bool)
+	Init(context.Context, stackmanager.InitOptions) (*state.Stack, error)
+	Add(context.Context, stackmanager.AddOptions) (*state.Branch, error)
+	WorktreeForBranch(
+		context.Context,
+		string,
+	) (gitrepo.Worktree, bool, error)
+	Status(context.Context, string) ([]stackmanager.Status, error)
+	Rebase(context.Context, stackmanager.RebaseOptions) error
+	Continue(context.Context) error
+	Abort(context.Context) error
+	Push(context.Context, string) error
+	Refresh(context.Context, string) error
+	Submit(context.Context, string) error
+	Doctor(context.Context, string) (map[string]string, error)
+}
 
 type options struct {
 	json      bool
 	dryRun    bool
 	stackName string
-	out       *os.File
-	err       *os.File
-	manager   *stackmanager.Manager
+	out       io.Writer
+	err       io.Writer
+	manager   commandManager
 }
 
 type commandResult struct {
-	Status   string                     `json:"status"`
-	Command  string                     `json:"command"`
-	Stack    *state.Stack               `json:"stack,omitempty"`
-	Branch   *state.Branch              `json:"branch,omitempty"`
-	Stacks   []stackmanager.StackStatus `json:"stacks,omitempty"`
-	Checks   map[string]string          `json:"checks,omitempty"`
-	Message  string                     `json:"message,omitempty"`
-	Worktree string                     `json:"worktree,omitempty"`
+	Schema   int                    `json:"schemaVersion"`
+	Status   string                 `json:"status"`
+	Command  string                 `json:"command"`
+	Stack    *state.Stack           `json:"stack,omitempty"`
+	Branch   *state.Branch          `json:"branch,omitempty"`
+	Stacks   *[]stackmanager.Status `json:"stacks,omitempty"`
+	Checks   map[string]string      `json:"checks,omitempty"`
+	Message  string                 `json:"message,omitempty"`
+	Worktree string                 `json:"worktree,omitempty"`
 }
 
 type errorResult struct {
+	Schema   int    `json:"schemaVersion"`
 	Status   string `json:"status"`
 	Error    string `json:"error"`
 	Branch   string `json:"branch,omitempty"`
@@ -50,8 +71,18 @@ type errorResult struct {
 
 // Execute runs the CLI and returns its process exit code.
 func Execute() int {
-	opts := &options{out: os.Stdout, err: os.Stderr}
+	return execute(os.Args[1:], os.Stdout, os.Stderr, nil)
+}
+
+func execute(
+	args []string,
+	out io.Writer,
+	errOut io.Writer,
+	manager commandManager,
+) int {
+	opts := &options{out: out, err: errOut, manager: manager}
 	root := newRootCommand(opts)
+	root.SetArgs(args)
 	if err := root.Execute(); err != nil {
 		return opts.printError(err)
 	}
@@ -147,7 +178,7 @@ func newAddCommand(opts *options) *cobra.Command {
 			}
 			worktree := ""
 			if !opts.dryRun {
-				if found, exists, findErr := manager.Repository.WorktreeForBranch(
+				if found, exists, findErr := manager.WorktreeForBranch(
 					command.Context(),
 					branch.Name,
 				); findErr == nil && exists {
@@ -172,6 +203,7 @@ func newStatusCommand(opts *options) *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
 		Short: "Show stacks, branches, worktrees, and pull requests",
+		Args:  cobra.NoArgs,
 		RunE: func(command *cobra.Command, _ []string) error {
 			manager, err := opts.getManager(command.Context())
 			if err != nil {
@@ -185,7 +217,7 @@ func newStatusCommand(opts *options) *cobra.Command {
 				return opts.print(commandResult{
 					Status:  "ok",
 					Command: "status",
-					Stacks:  stacks,
+					Stacks:  &stacks,
 				})
 			}
 			printHumanStatus(opts.out, stacks)
@@ -199,6 +231,7 @@ func newRebaseCommand(opts *options) *cobra.Command {
 	command := &cobra.Command{
 		Use:   "rebase",
 		Short: "Cascade a rebase through branch-owning worktrees",
+		Args:  cobra.NoArgs,
 		RunE: func(command *cobra.Command, _ []string) error {
 			manager, err := opts.getManager(command.Context())
 			if err != nil {
@@ -226,6 +259,7 @@ func newContinueCommand(opts *options) *cobra.Command {
 	return &cobra.Command{
 		Use:   "continue",
 		Short: "Continue a paused cascading rebase",
+		Args:  cobra.NoArgs,
 		RunE: func(command *cobra.Command, _ []string) error {
 			manager, err := opts.getManager(command.Context())
 			if err != nil {
@@ -235,7 +269,7 @@ func newContinueCommand(opts *options) *cobra.Command {
 				return err
 			}
 			return opts.print(commandResult{
-				Status:  "ok",
+				Status:  opts.successStatus(),
 				Command: "continue",
 				Message: "Continued rebase",
 			})
@@ -247,6 +281,7 @@ func newAbortCommand(opts *options) *cobra.Command {
 	return &cobra.Command{
 		Use:   "abort",
 		Short: "Abort a cascade and restore every original branch",
+		Args:  cobra.NoArgs,
 		RunE: func(command *cobra.Command, _ []string) error {
 			manager, err := opts.getManager(command.Context())
 			if err != nil {
@@ -256,7 +291,7 @@ func newAbortCommand(opts *options) *cobra.Command {
 				return err
 			}
 			return opts.print(commandResult{
-				Status:  "ok",
+				Status:  opts.successStatus(),
 				Command: "abort",
 				Message: "Aborted rebase and restored branches",
 			})
@@ -268,6 +303,7 @@ func newPushCommand(opts *options) *cobra.Command {
 	return &cobra.Command{
 		Use:   "push",
 		Short: "Push active branches atomically with force-with-lease",
+		Args:  cobra.NoArgs,
 		RunE: func(command *cobra.Command, _ []string) error {
 			manager, err := opts.getManager(command.Context())
 			if err != nil {
@@ -289,6 +325,7 @@ func newRefreshCommand(opts *options) *cobra.Command {
 	return &cobra.Command{
 		Use:   "refresh",
 		Short: "Refresh pull request metadata from GitHub",
+		Args:  cobra.NoArgs,
 		RunE: func(command *cobra.Command, _ []string) error {
 			manager, err := opts.getManager(command.Context())
 			if err != nil {
@@ -310,6 +347,7 @@ func newSubmitCommand(opts *options) *cobra.Command {
 	return &cobra.Command{
 		Use:   "submit",
 		Short: "Push branches and create or update the GitHub Stack",
+		Args:  cobra.NoArgs,
 		RunE: func(command *cobra.Command, _ []string) error {
 			manager, err := opts.getManager(command.Context())
 			if err != nil {
@@ -331,6 +369,7 @@ func newSyncCommand(opts *options) *cobra.Command {
 	return &cobra.Command{
 		Use:   "sync",
 		Short: "Refresh, rebase, push, and submit the selected stack",
+		Args:  cobra.NoArgs,
 		RunE: func(command *cobra.Command, _ []string) error {
 			manager, err := opts.getManager(command.Context())
 			if err != nil {
@@ -361,6 +400,7 @@ func newDoctorCommand(opts *options) *cobra.Command {
 	return &cobra.Command{
 		Use:   "doctor",
 		Short: "Verify GitHub authentication and repository preview support",
+		Args:  cobra.NoArgs,
 		RunE: func(command *cobra.Command, _ []string) error {
 			manager, err := opts.getManager(command.Context())
 			if err != nil {
@@ -383,8 +423,9 @@ func newDoctorCommand(opts *options) *cobra.Command {
 	}
 }
 
-func (o *options) getManager(ctx context.Context) (*stackmanager.Manager, error) {
+func (o *options) getManager(ctx context.Context) (commandManager, error) {
 	if o.manager != nil {
+		o.manager.SetDryRun(o.dryRun)
 		return o.manager, nil
 	}
 	workingDirectory, err := os.Getwd()
@@ -395,24 +436,34 @@ func (o *options) getManager(ctx context.Context) (*stackmanager.Manager, error)
 	if err != nil {
 		return nil, err
 	}
-	interactiveOut := io.Writer(o.out)
-	interactiveErr := io.Writer(o.err)
+	interactiveOut := o.out
+	interactiveErr := o.err
 	if o.json {
 		interactiveOut = io.Discard
 		interactiveErr = io.Discard
 	}
-	o.manager = stackmanager.NewManager(repository, interactiveOut, interactiveErr)
-	o.manager.DryRun = o.dryRun
-	return o.manager, nil
+	manager := stackmanager.NewManager(repository, interactiveOut, interactiveErr)
+	manager.SetDryRun(o.dryRun)
+	o.manager = manager
+	return manager, nil
 }
 
 func (o *options) print(result commandResult) error {
+	result.Schema = schemaVersion
 	if o.json {
 		encoder := json.NewEncoder(o.out)
 		encoder.SetEscapeHTML(false)
 		return encoder.Encode(result)
 	}
 	if result.Message != "" {
+		if o.dryRun {
+			_, err := fmt.Fprintf(
+				o.out,
+				"Planned without changes: %s\n",
+				result.Command,
+			)
+			return err
+		}
 		_, err := fmt.Fprintln(o.out, result.Message)
 		return err
 	}
@@ -421,8 +472,12 @@ func (o *options) print(result commandResult) error {
 
 func (o *options) printError(err error) int {
 	exitCode := 1
-	result := errorResult{Status: "error", Error: err.Error()}
-	var conflict *stackmanager.RebaseConflict
+	result := errorResult{
+		Schema: schemaVersion,
+		Status: "error",
+		Error:  err.Error(),
+	}
+	var conflict *stackmanager.RebaseConflictError
 	if errors.As(err, &conflict) {
 		exitCode = 3
 		result.Status = "conflict"
@@ -457,7 +512,7 @@ func (o *options) successStatus() string {
 	return "ok"
 }
 
-func printHumanStatus(writer io.Writer, stacks []stackmanager.StackStatus) {
+func printHumanStatus(writer io.Writer, stacks []stackmanager.Status) {
 	for stackIndex, stack := range stacks {
 		if stackIndex > 0 {
 			_, _ = fmt.Fprintln(writer)

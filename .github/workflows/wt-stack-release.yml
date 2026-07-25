@@ -1,0 +1,71 @@
+name: wt-stack release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  attestations: write
+  contents: write
+  id-token: write
+
+jobs:
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/wt-stack
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install pinned tools
+        uses: jdx/mise-action@v4
+        with:
+          cache: true
+          working_directory: apps/wt-stack
+
+      - name: Run validation
+        run: mise run ci
+
+  release:
+    name: Release
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install pinned tools
+        uses: jdx/mise-action@v4
+        with:
+          cache: true
+          working_directory: apps/wt-stack
+
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@v0.24.0
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v4.1.2
+
+      - name: Release archives
+        uses: goreleaser/goreleaser-action@v7.2.3
+        with:
+          distribution: goreleaser
+          version: "2.17.0"
+          args: release --clean
+          workdir: apps/wt-stack
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Attest release artifacts
+        uses: actions/attest-build-provenance@v4.1.1
+        with:
+          subject-path: |
+            apps/wt-stack/dist/*.tar.gz
+            apps/wt-stack/dist/checksums.txt
+            apps/wt-stack/dist/*.sbom.json

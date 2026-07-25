@@ -1,4 +1,3 @@
-// Package stack coordinates worktree-safe stacked branch operations.
 package stack
 
 import (
@@ -18,12 +17,62 @@ import (
 
 var unsafePathCharacters = regexp.MustCompile(`[^A-Za-z0-9._-]+`)
 
+type gitRepository interface {
+	CurrentBranch(context.Context) (string, error)
+	WorktreeForBranch(context.Context, string) (gitrepo.Worktree, bool, error)
+	Head(context.Context, string) (string, error)
+	IsAncestor(context.Context, string, string) (bool, error)
+	IsClean(context.Context, string) (bool, error)
+	CreateWorktree(context.Context, string, string, string) error
+	Fetch(context.Context, string) error
+	ConfigureRerere(context.Context) error
+	RebaseOnto(context.Context, string, string, string) error
+	ContinueRebase(context.Context, string) error
+	AbortRebase(context.Context, string) error
+	RebaseInProgress(context.Context, string) bool
+	ResetHard(context.Context, string, string) error
+	ResetBranch(context.Context, string, string) error
+	PushStack(context.Context, string, []string) error
+}
+
+type githubClient interface {
+	Repository(context.Context, string) (github.Repository, error)
+	Authenticate(context.Context, string) error
+	StacksAvailable(context.Context, github.Repository) error
+	PullRequest(
+		context.Context,
+		github.Repository,
+		string,
+	) (*state.PullRequest, error)
+	Link(context.Context, github.Repository, string, []string) error
+}
+
+type lockedState interface {
+	Load() (*state.File, error)
+	Save(*state.File) error
+	Close() error
+}
+
+type stateStore interface {
+	Lock() (lockedState, error)
+}
+
+type fileStateStore struct {
+	store *state.Store
+}
+
+func (s fileStateStore) Lock() (lockedState, error) {
+	return s.store.Lock()
+}
+
 // Manager coordinates Git, local state, and GitHub operations.
 type Manager struct {
-	Repository *gitrepo.Repository
-	GitHub     *github.Client
-	Store      *state.Store
-	DryRun     bool
+	repository gitRepository
+	github     githubClient
+	store      stateStore
+	commonDir  string
+	container  string
+	dryRun     bool
 }
 
 // InitOptions configures stack adoption.
@@ -47,8 +96,8 @@ type RebaseOptions struct {
 	Fetch     bool
 }
 
-// StackStatus is a live view of one locally tracked stack.
-type StackStatus struct {
+// Status is a live view of one locally tracked stack.
+type Status struct {
 	Name     string         `json:"name"`
 	Remote   string         `json:"remote"`
 	Trunk    string         `json:"trunk"`
@@ -66,15 +115,15 @@ type BranchStatus struct {
 	PullRequest *state.PullRequest `json:"pullRequest,omitempty"`
 }
 
-// RebaseConflict reports the worktree that needs agent attention.
-type RebaseConflict struct {
+// RebaseConflictError reports the worktree that needs agent attention.
+type RebaseConflictError struct {
 	StackName string
 	Branch    string
 	Worktree  string
 }
 
 // Error describes a paused cascading rebase.
-func (e *RebaseConflict) Error() string {
+func (e *RebaseConflictError) Error() string {
 	return fmt.Sprintf("rebase paused for %s in %s", e.Branch, e.Worktree)
 }
 
@@ -86,16 +135,31 @@ func NewManager(
 ) *Manager {
 	repository.SetInteractiveWriters(out, errOut)
 	return &Manager{
-		Repository: repository,
-		GitHub:     github.NewClient(repository.StartDir),
-		Store:      state.NewStore(repository.CommonDir),
+		repository: repository,
+		github:     github.NewClient(repository.StartDir),
+		store:      fileStateStore{store: state.NewStore(repository.CommonDir)},
+		commonDir:  repository.CommonDir,
+		container:  repository.Container,
 	}
+}
+
+// SetDryRun controls whether mutating operations only validate their plans.
+func (m *Manager) SetDryRun(enabled bool) {
+	m.dryRun = enabled
+}
+
+// WorktreeForBranch returns the worktree that owns a local branch.
+func (m *Manager) WorktreeForBranch(
+	ctx context.Context,
+	branch string,
+) (gitrepo.Worktree, bool, error) {
+	return m.repository.WorktreeForBranch(ctx, branch)
 }
 
 // Init adopts an existing linear branch chain into repository-wide state.
 func (m *Manager) Init(ctx context.Context, options InitOptions) (*state.Stack, error) {
 	if len(options.Branches) == 0 {
-		currentBranch, err := m.Repository.CurrentBranch(ctx)
+		currentBranch, err := m.repository.CurrentBranch(ctx)
 		if err != nil {
 			return nil, errors.New("specify at least one branch from the bare repository container")
 		}
@@ -111,7 +175,7 @@ func (m *Manager) Init(ctx context.Context, options InitOptions) (*state.Stack, 
 		options.Name = options.Branches[0]
 	}
 
-	locked, err := m.Store.Lock()
+	locked, err := m.store.Lock()
 	if err != nil {
 		return nil, err
 	}
@@ -135,27 +199,29 @@ func (m *Manager) Init(ctx context.Context, options InitOptions) (*state.Stack, 
 		}
 	}
 
-	if err := m.Repository.Fetch(ctx, options.Remote); err != nil {
-		return nil, err
+	if !m.dryRun {
+		if err := m.repository.Fetch(ctx, options.Remote); err != nil {
+			return nil, err
+		}
 	}
 	parentRef := gitrepo.RemoteRef(options.Remote, options.Trunk)
 	branches := make([]state.Branch, 0, len(options.Branches))
 	for _, branchName := range options.Branches {
-		if _, exists, worktreeErr := m.Repository.WorktreeForBranch(ctx, branchName); worktreeErr != nil {
+		if _, exists, worktreeErr := m.repository.WorktreeForBranch(ctx, branchName); worktreeErr != nil {
 			return nil, worktreeErr
 		} else if !exists {
 			return nil, fmt.Errorf("branch %q is not checked out in a worktree", branchName)
 		}
 
-		parentSHA, err := m.Repository.Head(ctx, parentRef)
+		parentSHA, err := m.repository.Head(ctx, parentRef)
 		if err != nil {
 			return nil, err
 		}
-		headSHA, err := m.Repository.Head(ctx, "refs/heads/"+branchName)
+		headSHA, err := m.repository.Head(ctx, "refs/heads/"+branchName)
 		if err != nil {
 			return nil, err
 		}
-		ancestor, err := m.Repository.IsAncestor(ctx, parentSHA, headSHA)
+		ancestor, err := m.repository.IsAncestor(ctx, parentSHA, headSHA)
 		if err != nil {
 			return nil, err
 		}
@@ -180,10 +246,10 @@ func (m *Manager) Init(ctx context.Context, options InitOptions) (*state.Stack, 
 		Trunk:    options.Trunk,
 		Branches: branches,
 	}
-	if m.DryRun {
+	if m.dryRun {
 		return &stack, nil
 	}
-	if err := m.Repository.ConfigureRerere(ctx); err != nil {
+	if err := m.repository.ConfigureRerere(ctx); err != nil {
 		return nil, err
 	}
 	file.Stacks = append(file.Stacks, stack)
@@ -215,9 +281,9 @@ func (m *Manager) Add(ctx context.Context, options AddOptions) (*state.Branch, e
 		return nil, fmt.Errorf("stack %q has no branches", stack.Name)
 	}
 	if options.Path == "" {
-		options.Path = filepath.Join(m.Repository.Container, worktreeSlug(options.Branch))
+		options.Path = filepath.Join(m.container, worktreeSlug(options.Branch))
 	} else if !filepath.IsAbs(options.Path) {
-		options.Path = filepath.Join(m.Repository.Container, options.Path)
+		options.Path = filepath.Join(m.container, options.Path)
 	}
 	if _, statErr := os.Stat(options.Path); statErr == nil {
 		return nil, fmt.Errorf("worktree path already exists: %s", options.Path)
@@ -226,15 +292,15 @@ func (m *Manager) Add(ctx context.Context, options AddOptions) (*state.Branch, e
 	}
 
 	top := &stack.Branches[len(stack.Branches)-1]
-	topHead, err := m.Repository.Head(ctx, "refs/heads/"+top.Name)
+	topHead, err := m.repository.Head(ctx, "refs/heads/"+top.Name)
 	if err != nil {
 		return nil, err
 	}
 	branch := state.Branch{Name: options.Branch, Base: topHead, Head: topHead}
-	if m.DryRun {
+	if m.dryRun {
 		return &branch, nil
 	}
-	if err := m.Repository.CreateWorktree(
+	if err := m.repository.CreateWorktree(
 		ctx,
 		options.Branch,
 		options.Path,
@@ -253,8 +319,8 @@ func (m *Manager) Add(ctx context.Context, options AddOptions) (*state.Branch, e
 func (m *Manager) Status(
 	ctx context.Context,
 	stackName string,
-) ([]StackStatus, error) {
-	locked, err := m.Store.Lock()
+) ([]Status, error) {
+	locked, err := m.store.Lock()
 	if err != nil {
 		return nil, err
 	}
@@ -274,26 +340,26 @@ func (m *Manager) Status(
 		}
 		candidates = []state.Stack{*stack}
 	}
-	statuses := make([]StackStatus, 0, len(candidates))
+	statuses := make([]Status, 0, len(candidates))
 	for _, stack := range candidates {
-		stackStatus := StackStatus{
+		stackStatus := Status{
 			Name:     stack.Name,
 			Remote:   stack.Remote,
 			Trunk:    stack.Trunk,
 			Branches: make([]BranchStatus, 0, len(stack.Branches)),
 		}
 		for _, branch := range stack.Branches {
-			head, headErr := m.Repository.Head(ctx, "refs/heads/"+branch.Name)
+			head, headErr := m.repository.Head(ctx, "refs/heads/"+branch.Name)
 			if headErr != nil {
 				head = ""
 			}
-			worktree, exists, worktreeErr := m.Repository.WorktreeForBranch(ctx, branch.Name)
+			worktree, exists, worktreeErr := m.repository.WorktreeForBranch(ctx, branch.Name)
 			if worktreeErr != nil {
 				return nil, worktreeErr
 			}
 			clean := false
 			if exists {
-				clean, err = m.Repository.IsClean(ctx, worktree.Path)
+				clean, err = m.repository.IsClean(ctx, worktree.Path)
 				if err != nil {
 					return nil, err
 				}
@@ -325,8 +391,8 @@ func (m *Manager) Rebase(ctx context.Context, options RebaseOptions) error {
 	if file.Rebase != nil {
 		return fmt.Errorf("rebase for stack %s must be continued or aborted", file.Rebase.StackName)
 	}
-	if options.Fetch {
-		if err := m.Repository.Fetch(ctx, stack.Remote); err != nil {
+	if options.Fetch && !m.dryRun {
+		if err := m.repository.Fetch(ctx, stack.Remote); err != nil {
 			return err
 		}
 	}
@@ -337,13 +403,14 @@ func (m *Manager) Rebase(ctx context.Context, options RebaseOptions) error {
 	if err := m.validateCleanWorktrees(ctx, stack, active); err != nil {
 		return err
 	}
-	if m.DryRun {
+	if m.dryRun {
 		return nil
 	}
 
-	originalBranches := make(map[string]string, len(stack.Branches))
-	for _, branch := range stack.Branches {
-		head, err := m.Repository.Head(ctx, "refs/heads/"+branch.Name)
+	originalBranches := make(map[string]string, len(active))
+	for _, index := range active {
+		branch := stack.Branches[index]
+		head, err := m.repository.Head(ctx, "refs/heads/"+branch.Name)
 		if err != nil {
 			return err
 		}
@@ -363,7 +430,7 @@ func (m *Manager) Rebase(ctx context.Context, options RebaseOptions) error {
 
 // Continue resumes a paused cascading rebase.
 func (m *Manager) Continue(ctx context.Context) error {
-	locked, err := m.Store.Lock()
+	locked, err := m.store.Lock()
 	if err != nil {
 		return err
 	}
@@ -381,6 +448,17 @@ func (m *Manager) Continue(ctx context.Context) error {
 	if !exists {
 		return fmt.Errorf("stack %q from rebase state no longer exists", file.Rebase.StackName)
 	}
+	if file.Rebase.CurrentIndex < 0 ||
+		file.Rebase.CurrentIndex >= len(stack.Branches) {
+		return fmt.Errorf(
+			"rebase state index %d is invalid for stack %q",
+			file.Rebase.CurrentIndex,
+			stack.Name,
+		)
+	}
+	if m.dryRun {
+		return nil
+	}
 	return m.runCascade(
 		ctx,
 		locked,
@@ -393,7 +471,7 @@ func (m *Manager) Continue(ctx context.Context) error {
 
 // Abort stops a paused rebase and restores every branch to its original SHA.
 func (m *Manager) Abort(ctx context.Context) error {
-	locked, err := m.Store.Lock()
+	locked, err := m.store.Lock()
 	if err != nil {
 		return err
 	}
@@ -412,11 +490,21 @@ func (m *Manager) Abort(ctx context.Context) error {
 	if !exists {
 		return fmt.Errorf("stack %q from rebase state no longer exists", session.StackName)
 	}
+	if m.dryRun {
+		return nil
+	}
+	if session.CurrentIndex < 0 || session.CurrentIndex >= len(stack.Branches) {
+		return fmt.Errorf(
+			"rebase state index %d is invalid for stack %q",
+			session.CurrentIndex,
+			stack.Name,
+		)
+	}
 
 	currentBranch := stack.Branches[session.CurrentIndex]
 	currentWorktreePath := session.CurrentWorktree
 	if currentWorktreePath == "" {
-		currentWorktree, exists, err := m.Repository.WorktreeForBranch(
+		currentWorktree, exists, err := m.repository.WorktreeForBranch(
 			ctx,
 			currentBranch.Name,
 		)
@@ -428,20 +516,30 @@ func (m *Manager) Abort(ctx context.Context) error {
 		}
 	}
 	if currentWorktreePath != "" &&
-		m.Repository.RebaseInProgress(ctx, currentWorktreePath) {
-		if err := m.Repository.AbortRebase(ctx, currentWorktreePath); err != nil {
+		m.repository.RebaseInProgress(ctx, currentWorktreePath) {
+		if err := m.repository.AbortRebase(ctx, currentWorktreePath); err != nil {
 			return err
 		}
 	}
-	for branchName, sha := range session.OriginalBranches {
-		worktree, branchExists, worktreeErr := m.Repository.WorktreeForBranch(ctx, branchName)
+	for _, branch := range stack.Branches {
+		sha, restore := session.OriginalBranches[branch.Name]
+		if !restore {
+			continue
+		}
+		worktree, branchExists, worktreeErr := m.repository.WorktreeForBranch(
+			ctx,
+			branch.Name,
+		)
 		if worktreeErr != nil {
 			return worktreeErr
 		}
-		if !branchExists {
-			return fmt.Errorf("branch %q no longer has a worktree", branchName)
+		if branchExists {
+			if err := m.repository.ResetHard(ctx, worktree.Path, sha); err != nil {
+				return err
+			}
+			continue
 		}
-		if err := m.Repository.ResetHard(ctx, worktree.Path, sha); err != nil {
+		if err := m.repository.ResetBranch(ctx, branch.Name, sha); err != nil {
 			return err
 		}
 	}
@@ -474,6 +572,12 @@ func (m *Manager) Refresh(ctx context.Context, stackName string) error {
 	defer func() {
 		_ = locked.Close()
 	}()
+	if file.Rebase != nil {
+		return fmt.Errorf(
+			"rebase for stack %s must be continued or aborted",
+			file.Rebase.StackName,
+		)
+	}
 	return m.refreshLocked(ctx, locked, file, stack)
 }
 
@@ -492,7 +596,7 @@ func (m *Manager) Submit(ctx context.Context, stackName string) error {
 	if err := m.pushLocked(ctx, locked, file, stack); err != nil {
 		return err
 	}
-	repository, err := m.GitHub.Repository(ctx, stack.Remote)
+	repository, err := m.github.Repository(ctx, stack.Remote)
 	if err != nil {
 		return err
 	}
@@ -500,10 +604,10 @@ func (m *Manager) Submit(ctx context.Context, stackName string) error {
 	for _, branch := range stack.Branches {
 		branches = append(branches, branch.Name)
 	}
-	if m.DryRun {
+	if m.dryRun {
 		return nil
 	}
-	if err := m.GitHub.Link(
+	if err := m.github.Link(
 		ctx,
 		repository,
 		stack.Trunk,
@@ -523,19 +627,19 @@ func (m *Manager) Doctor(
 	if err != nil {
 		return nil, err
 	}
-	repository, err := m.GitHub.Repository(ctx, remote)
+	repository, err := m.github.Repository(ctx, remote)
 	if err != nil {
 		return nil, err
 	}
-	if err := m.GitHub.Authenticate(ctx, repository.Host); err != nil {
+	if err := m.github.Authenticate(ctx, repository.Host); err != nil {
 		return nil, err
 	}
-	if err := m.GitHub.StacksAvailable(ctx, repository); err != nil {
+	if err := m.github.StacksAvailable(ctx, repository); err != nil {
 		return nil, err
 	}
 	return map[string]string{
-		"commonDir":        m.Repository.CommonDir,
-		"container":        m.Repository.Container,
+		"commonDir":        m.commonDir,
+		"container":        m.container,
 		"githubHost":       repository.Host,
 		"githubRepository": repository.Slug(),
 		"githubAuth":       "available",
@@ -546,7 +650,7 @@ func (m *Manager) doctorRemote(
 	ctx context.Context,
 	stackName string,
 ) (string, error) {
-	locked, err := m.Store.Lock()
+	locked, err := m.store.Lock()
 	if err != nil {
 		return "", err
 	}
@@ -564,7 +668,7 @@ func (m *Manager) doctorRemote(
 		}
 		return stack.Remote, nil
 	}
-	currentBranch, branchErr := m.Repository.CurrentBranch(ctx)
+	currentBranch, branchErr := m.repository.CurrentBranch(ctx)
 	if branchErr == nil {
 		if stack, exists := file.FindStackForBranch(currentBranch); exists {
 			return stack.Remote, nil
@@ -579,8 +683,8 @@ func (m *Manager) doctorRemote(
 func (m *Manager) lockedStack(
 	ctx context.Context,
 	stackName string,
-) (*state.LockedStore, *state.File, *state.Stack, error) {
-	locked, err := m.Store.Lock()
+) (lockedState, *state.File, *state.Stack, error) {
+	locked, err := m.store.Lock()
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -609,7 +713,7 @@ func (m *Manager) selectStack(
 		}
 		return stack, nil
 	}
-	currentBranch, err := m.Repository.CurrentBranch(ctx)
+	currentBranch, err := m.repository.CurrentBranch(ctx)
 	if err == nil {
 		if stack, exists := file.FindStackForBranch(currentBranch); exists {
 			return stack, nil
@@ -626,7 +730,7 @@ func (m *Manager) selectStack(
 
 func (m *Manager) runCascade(
 	ctx context.Context,
-	locked *state.LockedStore,
+	locked lockedState,
 	file *state.File,
 	stack *state.Stack,
 	startIndex int,
@@ -642,7 +746,7 @@ func (m *Manager) runCascade(
 		if branchIndex == startIndex && file.Rebase.CurrentWorktree != "" {
 			worktreePath = file.Rebase.CurrentWorktree
 		} else {
-			worktree, exists, err := m.Repository.WorktreeForBranch(ctx, branch.Name)
+			worktree, exists, err := m.repository.WorktreeForBranch(ctx, branch.Name)
 			if err != nil {
 				return err
 			}
@@ -658,15 +762,15 @@ func (m *Manager) runCascade(
 		}
 
 		newBaseRef := m.activeBaseRef(stack, branchIndex)
-		newBaseSHA, err := m.Repository.Head(ctx, newBaseRef)
+		newBaseSHA, err := m.repository.Head(ctx, newBaseRef)
 		if err != nil {
 			return err
 		}
 		if continueCurrent && branchIndex == startIndex &&
-			m.Repository.RebaseInProgress(ctx, worktreePath) {
-			err = m.Repository.ContinueRebase(ctx, worktreePath)
+			m.repository.RebaseInProgress(ctx, worktreePath) {
+			err = m.repository.ContinueRebase(ctx, worktreePath)
 		} else {
-			err = m.Repository.RebaseOnto(
+			err = m.repository.RebaseOnto(
 				ctx,
 				worktreePath,
 				newBaseSHA,
@@ -677,14 +781,14 @@ func (m *Manager) runCascade(
 			if saveErr := locked.Save(file); saveErr != nil {
 				return errors.Join(err, saveErr)
 			}
-			return &RebaseConflict{
+			return &RebaseConflictError{
 				StackName: stack.Name,
 				Branch:    branch.Name,
 				Worktree:  worktreePath,
 			}
 		}
 
-		head, err := m.Repository.Head(ctx, "refs/heads/"+branch.Name)
+		head, err := m.repository.Head(ctx, "refs/heads/"+branch.Name)
 		if err != nil {
 			return err
 		}
@@ -715,14 +819,14 @@ func (m *Manager) validateCleanWorktrees(
 ) error {
 	for _, index := range indices {
 		branch := stack.Branches[index]
-		worktree, exists, err := m.Repository.WorktreeForBranch(ctx, branch.Name)
+		worktree, exists, err := m.repository.WorktreeForBranch(ctx, branch.Name)
 		if err != nil {
 			return err
 		}
 		if !exists {
 			return fmt.Errorf("branch %q is not checked out in a worktree", branch.Name)
 		}
-		clean, err := m.Repository.IsClean(ctx, worktree.Path)
+		clean, err := m.repository.IsClean(ctx, worktree.Path)
 		if err != nil {
 			return err
 		}
@@ -736,7 +840,7 @@ func (m *Manager) validateCleanWorktrees(
 
 func (m *Manager) pushLocked(
 	ctx context.Context,
-	locked *state.LockedStore,
+	locked lockedState,
 	file *state.File,
 	stack *state.Stack,
 ) error {
@@ -747,23 +851,25 @@ func (m *Manager) pushLocked(
 	if err := m.validateCleanWorktrees(ctx, stack, active); err != nil {
 		return err
 	}
-	if err := m.Repository.Fetch(ctx, stack.Remote); err != nil {
-		return err
+	if !m.dryRun {
+		if err := m.repository.Fetch(ctx, stack.Remote); err != nil {
+			return err
+		}
 	}
 	branches := make([]string, 0, len(active))
 	for _, index := range active {
 		branch := &stack.Branches[index]
-		head, err := m.Repository.Head(ctx, "refs/heads/"+branch.Name)
+		head, err := m.repository.Head(ctx, "refs/heads/"+branch.Name)
 		if err != nil {
 			return err
 		}
 		branch.Head = head
 		branches = append(branches, branch.Name)
 	}
-	if m.DryRun {
+	if m.dryRun {
 		return nil
 	}
-	if err := m.Repository.PushStack(ctx, stack.Remote, branches); err != nil {
+	if err := m.repository.PushStack(ctx, stack.Remote, branches); err != nil {
 		return err
 	}
 	return locked.Save(file)
@@ -771,16 +877,16 @@ func (m *Manager) pushLocked(
 
 func (m *Manager) refreshLocked(
 	ctx context.Context,
-	locked *state.LockedStore,
+	locked lockedState,
 	file *state.File,
 	stack *state.Stack,
 ) error {
-	repository, err := m.GitHub.Repository(ctx, stack.Remote)
+	repository, err := m.github.Repository(ctx, stack.Remote)
 	if err != nil {
 		return err
 	}
 	for index := range stack.Branches {
-		pullRequest, err := m.GitHub.PullRequest(
+		pullRequest, err := m.github.PullRequest(
 			ctx,
 			repository,
 			stack.Branches[index].Name,
@@ -790,7 +896,7 @@ func (m *Manager) refreshLocked(
 		}
 		stack.Branches[index].PullRequest = pullRequest
 	}
-	if m.DryRun {
+	if m.dryRun {
 		return nil
 	}
 	return locked.Save(file)

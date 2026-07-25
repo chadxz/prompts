@@ -1,4 +1,3 @@
-// Package main exposes the wt-stack command.
 package main
 
 import (

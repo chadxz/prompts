@@ -31,8 +31,14 @@ concurrency:
 
 jobs:
   validate:
-    name: Validate
-    runs-on: ubuntu-latest
+    name: Validate (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
     defaults:
       run:
         working-directory: apps/wt-stack
@@ -48,6 +54,15 @@ jobs:
 
       - name: Run validation
         run: mise run ci
+
+      - name: Upload unit coverage
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: wt-stack-coverage-${{ matrix.os }}
+          path: |
+            apps/wt-stack/dist/coverage.html
+            apps/wt-stack/dist/coverage.out
 
       - name: Validate setup scripts
         working-directory: .

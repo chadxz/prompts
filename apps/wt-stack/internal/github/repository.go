@@ -33,7 +33,8 @@ func (c *Client) Repository(
 	if remote == "" {
 		remote = "origin"
 	}
-	command := exec.CommandContext(
+	// The configured Git binary is executed directly without a shell.
+	command := exec.CommandContext( //nolint:gosec // Git runs without a shell.
 		ctx,
 		c.gitBin,
 		"-C",

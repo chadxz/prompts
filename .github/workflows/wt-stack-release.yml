@@ -3,7 +3,7 @@ name: wt-stack release
 on:
   push:
     tags:
-      - "v*"
+      - "wt-stack/v*"
 
 permissions:
   attestations: write
@@ -52,15 +52,74 @@ jobs:
       - name: Install Cosign
         uses: sigstore/cosign-installer@v4.1.2
 
+      - name: Prepare release metadata
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          semver_tag="${GITHUB_REF_NAME#wt-stack/}"
+          if [[ "$semver_tag" == "$GITHUB_REF_NAME" ]]; then
+            echo "Tag must start with wt-stack/" >&2
+            exit 1
+          fi
+          if [[ "$GITHUB_REF" != "refs/tags/$GITHUB_REF_NAME" ]]; then
+            echo "Release must run from a tag ref" >&2
+            exit 1
+          fi
+          tag_commit="$(git rev-parse "$GITHUB_REF_NAME^{}")"
+          head_commit="$(git rev-parse HEAD)"
+          if [[ "$tag_commit" != "$head_commit" ]]; then
+            echo "Release tag does not identify the checked-out commit" >&2
+            exit 1
+          fi
+          version="${semver_tag#v}"
+          notes="$RUNNER_TEMP/wt-stack-release-notes.md"
+          awk -v version="$version" '
+            $0 == "## " version ||
+              index($0, "## " version " - ") == 1 {
+              found = 1
+              next
+            }
+            found && /^## / { exit }
+            found { print }
+            END { if (!found) exit 1 }
+          ' apps/wt-stack/CHANGELOG.md > "$notes"
+          test -s "$notes"
+          {
+            echo "semver_tag=$semver_tag"
+            echo "version=$version"
+            echo "notes=$notes"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Release archives
         uses: goreleaser/goreleaser-action@v7.2.3
         with:
           distribution: goreleaser
           version: "2.17.0"
-          args: release --clean
+          args: release --clean --skip=publish,validate
           workdir: apps/wt-stack
         env:
+          GORELEASER_CURRENT_TAG: ${{ steps.release.outputs.semver_tag }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WT_STACK_SKIP_CHANGELOG: "true"
+
+      - name: Publish GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NOTES_FILE: ${{ steps.release.outputs.notes }}
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          set -euo pipefail
+          gh release create "$GITHUB_REF_NAME" \
+            apps/wt-stack/dist/*.tar.gz \
+            apps/wt-stack/dist/*.sbom.json \
+            apps/wt-stack/dist/checksums.txt \
+            apps/wt-stack/dist/checksums.txt.sig \
+            apps/wt-stack/dist/checksums.txt.pem \
+            --verify-tag \
+            --title "wt-stack v$RELEASE_VERSION" \
+            --notes-file "$NOTES_FILE"
 
       - name: Attest release artifacts
         uses: actions/attest-build-provenance@v4.1.1

@@ -5,11 +5,13 @@ Versioning.
 
 ## Unreleased
 
+## 0.3.0 - 2026-07-24
+
 ### Added
 
 - Versioned JSON output schema.
 - Unit-only coverage gate and optional real Git integration suite.
-- User, contributor, security, compatibility, and release documentation.
+- User, contributor, release, security, and compatibility documentation.
 
 ### Changed
 

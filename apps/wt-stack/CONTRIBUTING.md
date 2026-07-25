@@ -47,10 +47,11 @@ the optional integration suite.
   `docs/json-schema.json` when output changes.
 - Preserve dry-run's no-mutation guarantee and explicit force-with-lease
   behavior.
-- Pin build and validation tools. Run tidy, module verification, vulnerability
-  checks, race tests, and both formatters before release.
+- Pin build and validation tools.
 - Keep user guidance in `README.md`. Keep this file limited to development and
   maintenance expectations.
 
-Release tags use `v<major>.<minor>.<patch>` and must include an updated
-`CHANGELOG.md`.
+## Releases
+
+[`RELEASING.md`](RELEASING.md) is the required checklist for preparing,
+publishing, verifying, and recovering a release.

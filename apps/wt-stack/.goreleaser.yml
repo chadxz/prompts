@@ -49,6 +49,7 @@ signs:
       - "${artifact}"
 
 changelog:
+  disable: "{{ .Env.WT_STACK_SKIP_CHANGELOG }}"
   use: git
   filters:
     include:

@@ -5,6 +5,8 @@ Versioning.
 
 ## Unreleased
 
+## 0.4.0 - 2026-07-24
+
 ### Added
 
 - Direct GitHub and local Stack removal with `unstack` and `delete`.

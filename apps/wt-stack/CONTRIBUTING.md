@@ -48,10 +48,12 @@ the optional integration suite.
 - Preserve dry-run's no-mutation guarantee and explicit force-with-lease
   behavior.
 - Pin build and validation tools.
+- Record every user-visible or release-process change under `Unreleased` in
+  `CHANGELOG.md`; those sections select the next automatic release version.
 - Keep user guidance in `README.md`. Keep this file limited to development and
   maintenance expectations.
 
 ## Releases
 
-[`RELEASING.md`](RELEASING.md) is the required checklist for preparing,
-publishing, verifying, and recovering a release.
+[`RELEASING.md`](RELEASING.md) explains automatic versioning, publication,
+verification, and recovery.

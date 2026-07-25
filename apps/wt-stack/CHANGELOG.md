@@ -5,6 +5,20 @@ Versioning.
 
 ## Unreleased
 
+### Added
+
+- Direct GitHub and local Stack removal with `unstack` and `delete`.
+- Automatic version selection, changelog promotion, tag creation, and release
+  publication after `main` passes CI.
+
+### Changed
+
+- Local builds derive versions from app-qualified `wt-stack/v*` tags.
+- Stack submission starts a new GitHub Stack after every member of the previous
+  Stack has merged.
+- User documentation links to GitHub's official Stacked Pull Requests guide and
+  covers the complete Stack lifecycle and shell completion command.
+
 ## 0.3.1 - 2026-07-24
 
 ### Added

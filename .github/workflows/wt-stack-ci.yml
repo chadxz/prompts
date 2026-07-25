@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - ".github/workflows/wt-stack-ci.yml"
+      - ".github/workflows/wt-stack-release.yml"
       - "apps/wt-stack/**"
       - "install.sh"
       - "setup-common.sh"
@@ -15,6 +16,7 @@ on:
   pull_request:
     paths:
       - ".github/workflows/wt-stack-ci.yml"
+      - ".github/workflows/wt-stack-release.yml"
       - "apps/wt-stack/**"
       - "install.sh"
       - "setup-common.sh"

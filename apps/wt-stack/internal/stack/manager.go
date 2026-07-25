@@ -45,6 +45,7 @@ type githubClient interface {
 		string,
 	) (*state.PullRequest, error)
 	Link(context.Context, github.Repository, string, []string) error
+	Unstack(context.Context, github.Repository, []int) (bool, error)
 }
 
 type lockedState interface {
@@ -616,6 +617,81 @@ func (m *Manager) Submit(ctx context.Context, stackName string) error {
 		return err
 	}
 	return m.refreshLocked(ctx, locked, file, stack)
+}
+
+// Unstack removes a Stack from GitHub and then removes its local tracking.
+func (m *Manager) Unstack(
+	ctx context.Context,
+	stackName string,
+	localOnly bool,
+) (bool, error) {
+	locked, file, stack, err := m.lockedStack(ctx, stackName)
+	if err != nil {
+		return false, err
+	}
+	defer func() {
+		_ = locked.Close()
+	}()
+	if file.Rebase != nil {
+		return false, fmt.Errorf(
+			"rebase for stack %s must be continued or aborted",
+			file.Rebase.StackName,
+		)
+	}
+	if m.dryRun {
+		return true, nil
+	}
+
+	if !localOnly {
+		repository, repositoryErr := m.github.Repository(ctx, stack.Remote)
+		if repositoryErr != nil {
+			return false, repositoryErr
+		}
+		pullRequestNumbers := make([]int, 0, len(stack.Branches))
+		for index := range stack.Branches {
+			pullRequest, pullRequestErr := m.github.PullRequest(
+				ctx,
+				repository,
+				stack.Branches[index].Name,
+			)
+			if pullRequestErr != nil {
+				return false, pullRequestErr
+			}
+			stack.Branches[index].PullRequest = pullRequest
+			if pullRequest != nil {
+				pullRequestNumbers = append(
+					pullRequestNumbers,
+					pullRequest.Number,
+				)
+			}
+		}
+		dissolved, unstackErr := m.github.Unstack(
+			ctx,
+			repository,
+			pullRequestNumbers,
+		)
+		if unstackErr != nil {
+			return false, unstackErr
+		}
+		if !dissolved {
+			if saveErr := locked.Save(file); saveErr != nil {
+				return false, saveErr
+			}
+			return false, nil
+		}
+	}
+
+	for index := range file.Stacks {
+		if &file.Stacks[index] != stack {
+			continue
+		}
+		file.Stacks = append(file.Stacks[:index], file.Stacks[index+1:]...)
+		break
+	}
+	if err := locked.Save(file); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // Doctor verifies authentication and repository preview availability.

@@ -34,6 +34,7 @@ type commandManager interface {
 	Push(context.Context, string) error
 	Refresh(context.Context, string) error
 	Submit(context.Context, string) error
+	Unstack(context.Context, string, bool) (bool, error)
 	Doctor(context.Context, string) (map[string]string, error)
 }
 
@@ -47,15 +48,17 @@ type options struct {
 }
 
 type commandResult struct {
-	Schema   int                    `json:"schemaVersion"`
-	Status   string                 `json:"status"`
-	Command  string                 `json:"command"`
-	Stack    *state.Stack           `json:"stack,omitempty"`
-	Branch   *state.Branch          `json:"branch,omitempty"`
-	Stacks   *[]stackmanager.Status `json:"stacks,omitempty"`
-	Checks   map[string]string      `json:"checks,omitempty"`
-	Message  string                 `json:"message,omitempty"`
-	Worktree string                 `json:"worktree,omitempty"`
+	Schema        int                    `json:"schemaVersion"`
+	Status        string                 `json:"status"`
+	Command       string                 `json:"command"`
+	Stack         *state.Stack           `json:"stack,omitempty"`
+	Branch        *state.Branch          `json:"branch,omitempty"`
+	Stacks        *[]stackmanager.Status `json:"stacks,omitempty"`
+	Checks        map[string]string      `json:"checks,omitempty"`
+	Message       string                 `json:"message,omitempty"`
+	Worktree      string                 `json:"worktree,omitempty"`
+	LocalRemoved  *bool                  `json:"localRemoved,omitempty"`
+	RemoteRemoved *bool                  `json:"remoteRemoved,omitempty"`
 }
 
 type errorResult struct {
@@ -117,6 +120,7 @@ func newRootCommand(opts *options) *cobra.Command {
 		newRefreshCommand(opts),
 		newSubmitCommand(opts),
 		newSyncCommand(opts),
+		newUnstackCommand(opts),
 		newDoctorCommand(opts),
 	)
 	return root
@@ -394,6 +398,55 @@ func newSyncCommand(opts *options) *cobra.Command {
 			})
 		},
 	}
+}
+
+func newUnstackCommand(opts *options) *cobra.Command {
+	var localOnly bool
+	command := &cobra.Command{
+		Use:     "unstack",
+		Aliases: []string{"delete"},
+		Short:   "Remove a Stack from GitHub and local tracking",
+		Args:    cobra.NoArgs,
+		RunE: func(command *cobra.Command, _ []string) error {
+			manager, err := opts.getManager(command.Context())
+			if err != nil {
+				return err
+			}
+			dissolved, err := manager.Unstack(
+				command.Context(),
+				opts.stackName,
+				localOnly,
+			)
+			if err != nil {
+				return err
+			}
+			message := "Unstacked Stack and removed local tracking"
+			if localOnly {
+				message = "Removed Stack from local tracking"
+			} else if !dissolved {
+				message = "Stack remains on GitHub; local tracking retained"
+			}
+			var localRemoved *bool
+			var remoteRemoved *bool
+			if !opts.dryRun {
+				removedLocally := localOnly || dissolved
+				localRemoved = &removedLocally
+				if !localOnly {
+					remoteRemoved = &dissolved
+				}
+			}
+			return opts.print(commandResult{
+				Status:        opts.successStatus(),
+				Command:       "unstack",
+				Message:       message,
+				LocalRemoved:  localRemoved,
+				RemoteRemoved: remoteRemoved,
+			})
+		},
+	}
+	command.Flags().BoolVar(&localOnly, "local", false,
+		"remove only local tracking and leave the GitHub Stack unchanged")
+	return command
 }
 
 func newDoctorCommand(opts *options) *cobra.Command {

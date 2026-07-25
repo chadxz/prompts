@@ -48,7 +48,7 @@ func (c *Client) Link(
 			if !pullRequest.Merged &&
 				!strings.EqualFold(pullRequest.State, "open") {
 				pullRequest = nil
-			} else {
+			} else if !pullRequest.Merged {
 				knownNumbers = append(knownNumbers, pullRequest.Number)
 			}
 		}
@@ -92,6 +92,60 @@ func (c *Client) Link(
 	}
 	desired := desiredStackPullRequests(matched, resolved)
 	return c.upsertStack(ctx, repository, matched, desired)
+}
+
+// Unstack removes a matching Stack from GitHub.
+//
+// The returned boolean is false when GitHub preserves pull requests that are
+// queued for merge or have auto-merge enabled.
+func (c *Client) Unstack(
+	ctx context.Context,
+	repository Repository,
+	pullRequestNumbers []int,
+) (bool, error) {
+	if len(pullRequestNumbers) == 0 {
+		return true, nil
+	}
+	stacks, err := c.listStacks(ctx, repository)
+	if err != nil {
+		return false, fmt.Errorf("listing GitHub Stacks: %w", err)
+	}
+	matched := stacksContainingPullRequests(stacks, pullRequestNumbers)
+	if len(matched) == 0 {
+		return true, nil
+	}
+
+	dissolved := true
+	for _, stack := range matched {
+		var remaining remoteStack
+		path := fmt.Sprintf(
+			"repos/%s/stacks/%d/unstack",
+			repository.Slug(),
+			stack.Number,
+		)
+		if _, err := c.request(
+			ctx,
+			repository,
+			http.MethodPost,
+			path,
+			nil,
+			&remaining,
+		); err != nil {
+			var apiErr *APIError
+			if errors.As(err, &apiErr) &&
+				apiErr.StatusCode == http.StatusNotFound {
+				continue
+			}
+			return false, fmt.Errorf("unstacking GitHub Stack #%d: %w",
+				stack.Number, err)
+		}
+		if remaining.Number != 0 ||
+			remaining.ID != 0 ||
+			len(remaining.PullRequests) != 0 {
+			dissolved = false
+		}
+	}
+	return dissolved, nil
 }
 
 // StacksAvailable verifies that the repository has the Stacked PRs preview.
@@ -280,6 +334,27 @@ func matchingStack(
 		}
 	}
 	return matched, nil
+}
+
+func stacksContainingPullRequests(
+	stacks []remoteStack,
+	pullRequestNumbers []int,
+) []remoteStack {
+	wanted := make(map[int]struct{}, len(pullRequestNumbers))
+	for _, number := range pullRequestNumbers {
+		wanted[number] = struct{}{}
+	}
+	matched := make([]remoteStack, 0)
+	for _, stack := range stacks {
+		for _, number := range stack.numbers() {
+			if _, exists := wanted[number]; !exists {
+				continue
+			}
+			matched = append(matched, stack)
+			break
+		}
+	}
+	return matched
 }
 
 func validateAdditiveUpdate(

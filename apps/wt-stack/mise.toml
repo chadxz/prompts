@@ -1,4 +1,5 @@
 [tools]
+actionlint = "1.7.12"
 go = "1.26.5"
 golangci-lint = "2.12.2"
 goreleaser = "2.17.0"
@@ -28,7 +29,7 @@ run = """
 set -euo pipefail
 mkdir -p dist
 go test -race \
-  -coverpkg=./internal/cli,./internal/github,./internal/stack,./internal/state \
+  -coverpkg=./internal/cli,./internal/github,./internal/release,./internal/stack,./internal/state \
   -coverprofile=dist/coverage.out \
   -covermode=atomic \
   ./...
@@ -69,13 +70,17 @@ run = "go run golang.org/x/vuln/cmd/govulncheck@v1.6.0 ./..."
 [tasks.release-check]
 run = "goreleaser check"
 
+[tasks.workflows]
+run = "actionlint ../../.github/workflows/wt-stack-ci.yml ../../.github/workflows/wt-stack-release.yml"
+
 [tasks.build]
 run = """
 #!/usr/bin/env bash
 set -euo pipefail
 mkdir -p dist
 version="${WT_STACK_VERSION:-$(git describe \
-  --tags --match 'v*' --always --dirty 2>/dev/null || printf dev)}"
+  --tags --match 'wt-stack/v*' --always --dirty 2>/dev/null || printf dev)}"
+version="${version#wt-stack/}"
 go build -buildvcs=false -trimpath \
   -ldflags "-X github.com/chadxz/prompts/apps/wt-stack/internal/cli.version=$version" \
   -o dist/wt-stack \
@@ -88,7 +93,8 @@ run = """
 set -euo pipefail
 mkdir -p "$HOME/.local/bin"
 version="${WT_STACK_VERSION:-$(git describe \
-  --tags --match 'v*' --always --dirty 2>/dev/null || printf dev)}"
+  --tags --match 'wt-stack/v*' --always --dirty 2>/dev/null || printf dev)}"
+version="${version#wt-stack/}"
 go build -buildvcs=false -trimpath \
   -ldflags "-X github.com/chadxz/prompts/apps/wt-stack/internal/cli.version=$version" \
   -o "$HOME/.local/bin/wt-stack" \
@@ -105,5 +111,6 @@ depends = [
   "verify",
   "vuln",
   "release-check",
+  "workflows",
   "build",
 ]

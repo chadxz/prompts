@@ -1,7 +1,7 @@
 # Releasing wt-stack
 
-This is the required process for publishing `wt-stack`. Follow it in order.
-Don't move or reuse a tag after pushing it.
+`wt-stack` releases automatically after its required CI succeeds on `main`.
+Don't create or push release tags manually.
 
 ## Expected outcome
 
@@ -19,123 +19,87 @@ contains:
 - GitHub build-provenance attestations for every archive, the checksum file, and
   every SBOM.
 
-The binary must print the released version with `wt-stack --version`. GitHub
-must mark both release jobs successful before we consider the release complete.
+The binary must print the released version with `wt-stack --version`. The
+preparation workflow waits for the tagged workflow, so both runs must succeed
+before GitHub considers the automatic release complete.
 
-Only `wt-stack/v*` tags start this app's release workflow.
+## Release trigger
 
-## 1. Choose the version
+Every change intended for release must have an entry under `Unreleased` in
+`CHANGELOG.md`. Use the standard headings:
 
-Use Semantic Versioning:
+- `Breaking changes` or `Removed` for an incompatible change.
+- `Added` for backward-compatible functionality.
+- `Changed`, `Fixed`, or `Security` for backward-compatible corrections.
 
-- Increment the major version for an incompatible CLI, state, or JSON contract
-  change.
-- Increment the minor version for backward-compatible commands or behavior.
-- Increment the patch version for backward-compatible fixes.
+After `wt-stack CI` succeeds for a push to `main`, `wt-stack release` examines
+the `Unreleased` section. An empty section ends the workflow without creating a
+release.
 
-Use the version once. If any pushed tag or published release uses it, choose a
-newer version for the next attempt.
+The version is selected without input:
 
-## 2. Prepare the changelog
+- `Breaking changes` or `Removed` increments the major version.
+- `Added` increments the minor version.
+- Every other non-empty release increments the patch version.
 
-Start from a clean worktree whose `HEAD` matches `origin/main`:
+The workflow uses the latest `wt-stack/v*` tag as the current version. It dates
+the release in the `America/Chicago` timezone.
 
-```console
-git fetch origin main --tags
-git status --short
-git rev-parse HEAD
-git rev-parse origin/main
-```
+## Automated process
 
-Stop if the status output isn't empty or the two commit IDs differ.
+The preparation job performs these steps in order:
 
-Move every completed entry under `Unreleased` into a dated version section:
+1. Confirm the successful CI commit still matches `origin/main`. A newer main
+   commit ends the stale run because that commit's CI will trigger another one.
+2. Promote `Unreleased` into a dated version section.
+3. Run the complete `mise //apps/wt-stack:ci` gate against the prepared
+   changelog.
+4. Commit the changelog with the GitHub Actions bot and create the annotated
+   app-qualified tag.
+5. Push the commit and tag atomically. Neither ref moves if the remote rejects
+   either update.
+6. Dispatch this workflow again at the immutable tag.
+7. Wait for the tagged validation, packaging, signing, publication, and
+   provenance jobs to finish.
 
-```markdown
-## Unreleased
+The tagged workflow independently verifies that the tag identifies its checked
+out commit before it builds anything.
 
-## 1.2.3 - 2026-07-24
-```
+## Manual recovery trigger
 
-Use the release version and current local date. Leave `Unreleased` in place for
-the next change. Commit the changelog and any release documentation before
-tagging.
-
-## 3. Validate the release commit
-
-Install the pinned tools and run the deterministic local checks:
-
-```console
-mise -C apps/wt-stack install
-mise run //apps/wt-stack:format-check ::: \
-  //apps/wt-stack:lint ::: \
-  //apps/wt-stack:test ::: \
-  //apps/wt-stack:vet ::: \
-  //apps/wt-stack:tidy-check ::: \
-  //apps/wt-stack:verify ::: \
-  //apps/wt-stack:release-check ::: \
-  //apps/wt-stack:build
-mise run //apps/wt-stack:test-integration
-GORELEASER_CURRENT_TAG=v1.2.3 WT_STACK_SKIP_CHANGELOG=true \
-  mise -C apps/wt-stack exec -- \
-  goreleaser release --clean --skip=publish,sign,sbom,validate
-```
-
-The unit suite must meet the coverage minimum without the integration build tag.
-The integration suite must pass separately. The local package check must build
-all four target archives with the intended version. Replace `v1.2.3` with the
-chosen version.
-
-GoReleaser validation is skipped only because its OSS release path requires an
-unprefixed Git tag. The release workflow separately requires a
-`wt-stack/v<version>` tag and verifies that it identifies the checked-out commit
-before building.
-
-Push the release-preparation commit to `main`, then wait for `wt-stack CI` on
-that exact commit:
+Normal releases require no maintainer action. Use a manual dispatch from `main`
+only when an automatic preparation run was skipped or interrupted before its
+atomic push:
 
 ```console
-git push origin HEAD:main
-gh run list --workflow wt-stack-ci.yml --branch main --limit 1
-gh run watch <run-id> --exit-status
+gh workflow run wt-stack-release.yml --ref main
 ```
 
-GitHub CI is the authoritative release gate. It reruns the local checks and the
-pinned vulnerability scan on Linux and macOS. Stop if either job doesn't
-succeed. Fix the problem in a new commit, push it, and repeat this section.
+The same version selection and validation rules apply. The workflow exits
+without changes when `Unreleased` is empty.
 
-## 4. Create and push the tag
-
-Confirm `HEAD` still matches `origin/main`. Replace `1.2.3` in these commands
-with the chosen version:
+If the preparation job pushed a tag and failed before the tagged workflow
+started, dispatch the immutable tag directly:
 
 ```console
-git fetch origin main
-git rev-parse HEAD
-git rev-parse origin/main
-git tag -a wt-stack/v1.2.3 -m "wt-stack v1.2.3"
-git push origin wt-stack/v1.2.3
+gh workflow run wt-stack-release.yml --ref wt-stack/v1.2.3
 ```
 
-Stop before tagging if the commit IDs differ. Don't force a tag push.
+Retry the same tag only for an interruption or transient infrastructure error.
+Source, configuration, or artifact defects require a fix on `main` and a new
+version. Never move, delete, recreate, or force-push a release tag.
 
-The tag starts `wt-stack release`. Its validation job reruns the full required
-suite. The release job runs only after validation succeeds:
+## Verify a release
 
-```console
-gh run list --workflow wt-stack-release.yml --limit 1
-gh run watch <run-id> --exit-status
-```
-
-## 5. Verify the published release
-
-Inspect the release and download its assets into a new temporary directory:
+The workflow performs publication checks. For an independent consumer-side
+verification, inspect the release and download its assets into a new temporary
+directory:
 
 ```console
 gh release view wt-stack/v1.2.3
-mkdir /tmp/wt-stack-v1.2.3
-gh release download wt-stack/v1.2.3 --dir /tmp/wt-stack-v1.2.3
-cd /tmp/wt-stack-v1.2.3
+release_dir="$(mktemp -d /tmp/wt-stack-v1.2.3.XXXXXX)"
+gh release download wt-stack/v1.2.3 --dir "$release_dir"
+cd "$release_dir"
 ```
 
 Confirm that all four archives, four SBOMs, the checksum, and signature bundle
@@ -180,16 +144,15 @@ tar -xzf wt-stack_1.2.3_darwin_arm64.tar.gz
 The command must print `wt-stack version 1.2.3`. Use the archive matching the
 verification machine.
 
-## 6. Handle a failed release
+## Failed or incorrect releases
 
-If failure occurs before the tag is pushed, fix the release commit and repeat
-validation.
+If failure occurs before the atomic commit and tag push, fix `main` or manually
+rerun the preparation workflow. No version has been consumed.
 
-If failure occurs after the tag is pushed, treat that version as consumed. Don't
-move the tag, delete and recreate it, or overwrite its release assets. Fix the
-problem on `main`, move the changelog entries to the next patch version, and
-repeat this process with the new version.
+If failure occurs after the tag is pushed, preserve that tag. Retry its workflow
+only when the tagged source is correct and publication was interrupted. Any fix
+to source or release configuration requires a newer version.
 
-If verification finds a bad artifact after publication, preserve the release for
-traceability and publish a corrected patch release. Record the correction in
-`CHANGELOG.md`.
+If verification finds a bad artifact after publication, preserve the release
+for traceability. Record the correction under `Unreleased` and let the
+automation publish the next version.

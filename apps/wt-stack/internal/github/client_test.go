@@ -430,6 +430,78 @@ func TestLinkAcceptsExistingStackAfterBottomPullRequestMerged(t *testing.T) {
 	}
 }
 
+func TestLinkStartsNewStackAfterPreviousGenerationMerged(t *testing.T) {
+	t.Parallel()
+
+	var linked stackRequest
+	server := newGitHubServer(t, func(
+		writer http.ResponseWriter,
+		request *http.Request,
+	) {
+		switch {
+		case request.Method == http.MethodGet &&
+			request.URL.Path == "/repos/example/repository/pulls":
+			branch := strings.TrimPrefix(
+				request.URL.Query().Get("head"),
+				"example:",
+			)
+			if branch == "active-feature" {
+				writeJSON(t, writer, []any{})
+				return
+			}
+			response := pullRequestResponse(
+				map[string]int{
+					"merged-one": 9,
+					"merged-two": 10,
+				}[branch],
+				branch,
+				"main",
+			)
+			response["state"] = "closed"
+			response["merged_at"] = "2026-07-24T12:00:00Z"
+			writeJSON(t, writer, []any{response})
+		case request.Method == http.MethodGet &&
+			request.URL.Path == "/repos/example/repository/stacks":
+			writeJSON(t, writer, []any{map[string]any{
+				"id":     100,
+				"number": 11,
+				"pull_requests": []any{
+					map[string]any{"number": 9},
+					map[string]any{"number": 10},
+				},
+			}})
+		case request.Method == http.MethodPost &&
+			request.URL.Path == "/repos/example/repository/pulls":
+			writer.WriteHeader(http.StatusCreated)
+			writeJSON(t, writer, pullRequestResponse(
+				12,
+				"active-feature",
+				"main",
+			))
+		case request.Method == http.MethodPost &&
+			request.URL.Path == "/repos/example/repository/stacks":
+			readJSON(t, request, &linked)
+			writer.WriteHeader(http.StatusCreated)
+		default:
+			t.Fatalf("unexpected request: %s %s", request.Method, request.URL)
+		}
+	})
+	defer server.Close()
+
+	client := testClient(t, t.TempDir(), server)
+	if err := client.Link(
+		context.Background(),
+		testRepository(server),
+		"main",
+		[]string{"merged-one", "merged-two", "active-feature"},
+	); err != nil {
+		t.Fatalf("link next stack generation: %v", err)
+	}
+	if got, want := fmt.Sprint(linked.PullRequests), "[12]"; got != want {
+		t.Fatalf("linked pull requests = %s, want %s", got, want)
+	}
+}
+
 func TestLinkFindsExistingStackOnLaterPage(t *testing.T) {
 	var added stackRequest
 	server := newGitHubServer(t, func(
@@ -484,6 +556,209 @@ func TestLinkFindsExistingStackOnLaterPage(t *testing.T) {
 	}
 	if got, want := fmt.Sprint(added.PullRequests), "[12]"; got != want {
 		t.Fatalf("added pull requests = %s, want %s", got, want)
+	}
+}
+
+func TestUnstackDissolvesMatchingStack(t *testing.T) {
+	t.Parallel()
+
+	var unstackCalls int
+	server := newGitHubServer(t, func(
+		writer http.ResponseWriter,
+		request *http.Request,
+	) {
+		switch {
+		case request.Method == http.MethodGet &&
+			request.URL.Path == "/repos/example/repository/stacks":
+			writeJSON(t, writer, []any{map[string]any{
+				"id":            100,
+				"number":        13,
+				"pull_requests": []any{map[string]any{"number": 11}},
+			}})
+		case request.Method == http.MethodPost &&
+			request.URL.Path == "/repos/example/repository/stacks/13/unstack":
+			unstackCalls++
+			writer.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected request: %s %s", request.Method, request.URL)
+		}
+	})
+	defer server.Close()
+
+	client := testClient(t, t.TempDir(), server)
+	dissolved, err := client.Unstack(
+		context.Background(),
+		testRepository(server),
+		[]int{11, 12},
+	)
+	if err != nil {
+		t.Fatalf("unstack: %v", err)
+	}
+	if !dissolved || unstackCalls != 1 {
+		t.Fatalf(
+			"dissolved = %t, unstack calls = %d",
+			dissolved,
+			unstackCalls,
+		)
+	}
+}
+
+func TestUnstackRetainsPartiallyDissolvedStack(t *testing.T) {
+	t.Parallel()
+
+	server := newGitHubServer(t, func(
+		writer http.ResponseWriter,
+		request *http.Request,
+	) {
+		switch {
+		case request.Method == http.MethodGet &&
+			request.URL.Path == "/repos/example/repository/stacks":
+			writeJSON(t, writer, []any{map[string]any{
+				"id":            100,
+				"number":        13,
+				"pull_requests": []any{map[string]any{"number": 11}},
+			}})
+		case request.Method == http.MethodPost &&
+			request.URL.Path == "/repos/example/repository/stacks/13/unstack":
+			writeJSON(t, writer, map[string]any{
+				"id":            100,
+				"number":        13,
+				"pull_requests": []any{map[string]any{"number": 11}},
+			})
+		default:
+			t.Fatalf("unexpected request: %s %s", request.Method, request.URL)
+		}
+	})
+	defer server.Close()
+
+	client := testClient(t, t.TempDir(), server)
+	dissolved, err := client.Unstack(
+		context.Background(),
+		testRepository(server),
+		[]int{11},
+	)
+	if err != nil {
+		t.Fatalf("unstack: %v", err)
+	}
+	if dissolved {
+		t.Fatal("partially dissolved Stack reported as removed")
+	}
+}
+
+func TestUnstackDissolvesEveryMatchingStackGeneration(t *testing.T) {
+	t.Parallel()
+
+	var unstacked []string
+	server := newGitHubServer(t, func(
+		writer http.ResponseWriter,
+		request *http.Request,
+	) {
+		switch {
+		case request.Method == http.MethodGet &&
+			request.URL.Path == "/repos/example/repository/stacks":
+			writeJSON(t, writer, []any{
+				map[string]any{
+					"id":            100,
+					"number":        13,
+					"pull_requests": []any{map[string]any{"number": 11}},
+				},
+				map[string]any{
+					"id":            101,
+					"number":        14,
+					"pull_requests": []any{map[string]any{"number": 12}},
+				},
+			})
+		case request.Method == http.MethodPost &&
+			strings.HasSuffix(request.URL.Path, "/unstack"):
+			unstacked = append(unstacked, request.URL.Path)
+			writer.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected request: %s %s", request.Method, request.URL)
+		}
+	})
+	defer server.Close()
+
+	client := testClient(t, t.TempDir(), server)
+	dissolved, err := client.Unstack(
+		context.Background(),
+		testRepository(server),
+		[]int{11, 12},
+	)
+	if err != nil {
+		t.Fatalf("unstack: %v", err)
+	}
+	if !dissolved || len(unstacked) != 2 {
+		t.Fatalf(
+			"dissolved = %t, unstacked = %v",
+			dissolved,
+			unstacked,
+		)
+	}
+}
+
+func TestUnstackTreatsMissingStackAsDissolved(t *testing.T) {
+	t.Parallel()
+
+	server := newGitHubServer(t, func(
+		writer http.ResponseWriter,
+		request *http.Request,
+	) {
+		if request.Method != http.MethodGet ||
+			request.URL.Path != "/repos/example/repository/stacks" {
+			t.Fatalf("unexpected request: %s %s", request.Method, request.URL)
+		}
+		writeJSON(t, writer, []any{})
+	})
+	defer server.Close()
+
+	client := testClient(t, t.TempDir(), server)
+	dissolved, err := client.Unstack(
+		context.Background(),
+		testRepository(server),
+		[]int{11},
+	)
+	if err != nil {
+		t.Fatalf("unstack: %v", err)
+	}
+	if !dissolved {
+		t.Fatal("missing Stack was not treated as dissolved")
+	}
+}
+
+func TestUnstackTreatsConcurrentRemovalAsDissolved(t *testing.T) {
+	t.Parallel()
+
+	server := newGitHubServer(t, func(
+		writer http.ResponseWriter,
+		request *http.Request,
+	) {
+		switch request.Method {
+		case http.MethodGet:
+			writeJSON(t, writer, []any{map[string]any{
+				"id":            100,
+				"number":        13,
+				"pull_requests": []any{map[string]any{"number": 11}},
+			}})
+		case http.MethodPost:
+			writer.WriteHeader(http.StatusNotFound)
+			writeJSON(t, writer, map[string]any{"message": "Not Found"})
+		default:
+			t.Fatalf("unexpected request: %s %s", request.Method, request.URL)
+		}
+	})
+	defer server.Close()
+
+	client := testClient(t, t.TempDir(), server)
+	dissolved, err := client.Unstack(
+		context.Background(),
+		testRepository(server),
+		[]int{11},
+	)
+	if err != nil {
+		t.Fatalf("unstack: %v", err)
+	}
+	if !dissolved {
+		t.Fatal("concurrently removed Stack was not treated as dissolved")
 	}
 }
 

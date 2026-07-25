@@ -85,6 +85,18 @@ func TestExecuteDispatchesJSONCommands(t *testing.T) {
 			wantCalls:   []string{"refresh", "rebase", "submit"},
 		},
 		{
+			name:        "unstack",
+			args:        []string{"--json", "unstack"},
+			wantCommand: "unstack",
+			wantCalls:   []string{"unstack"},
+		},
+		{
+			name:        "delete alias",
+			args:        []string{"--json", "delete"},
+			wantCommand: "unstack",
+			wantCalls:   []string{"unstack"},
+		},
+		{
 			name:        "doctor",
 			args:        []string{"--json", "doctor"},
 			wantCommand: "doctor",
@@ -122,7 +134,14 @@ func TestExecuteDispatchesJSONCommands(t *testing.T) {
 func TestExecuteDryRunUsesPlannedStatus(t *testing.T) {
 	t.Parallel()
 
-	for _, command := range []string{"continue", "abort", "push", "submit", "sync"} {
+	for _, command := range []string{
+		"continue",
+		"abort",
+		"push",
+		"submit",
+		"sync",
+		"unstack",
+	} {
 		t.Run(command, func(t *testing.T) {
 			t.Parallel()
 
@@ -169,6 +188,35 @@ func TestExecuteDryRunHumanOutputDescribesAPlan(t *testing.T) {
 	}
 }
 
+func TestExecuteUnstackLocalLeavesGitHubUntouched(t *testing.T) {
+	t.Parallel()
+
+	manager := &fakeCommandManager{}
+	var out bytes.Buffer
+	var errOut bytes.Buffer
+	code := execute(
+		[]string{"--json", "unstack", "--local"},
+		&out,
+		&errOut,
+		manager,
+	)
+	if code != 0 {
+		t.Fatalf("exit code = %d, stderr = %s", code, errOut.String())
+	}
+	if !manager.unstackLocal {
+		t.Fatal("unstack did not preserve the local-only option")
+	}
+	var result commandResult
+	if err := json.Unmarshal(out.Bytes(), &result); err != nil {
+		t.Fatalf("decode output: %v", err)
+	}
+	if result.LocalRemoved == nil ||
+		!*result.LocalRemoved ||
+		result.RemoteRemoved != nil {
+		t.Fatalf("unexpected removal result: %#v", result)
+	}
+}
+
 func TestExecuteStatusJSONIncludesEmptyStacks(t *testing.T) {
 	t.Parallel()
 
@@ -203,6 +251,7 @@ func TestExecuteRejectsUnexpectedArguments(t *testing.T) {
 		"refresh",
 		"submit",
 		"sync",
+		"unstack",
 		"doctor",
 	} {
 		t.Run(command, func(t *testing.T) {
@@ -278,6 +327,7 @@ func TestExecutePropagatesManagerErrors(t *testing.T) {
 		{name: "refresh", args: []string{"refresh"}},
 		{name: "submit", args: []string{"submit"}},
 		{name: "sync", args: []string{"sync"}},
+		{name: "unstack", args: []string{"unstack"}},
 		{name: "doctor", args: []string{"doctor"}},
 	}
 	for _, test := range tests {
@@ -404,7 +454,8 @@ func TestJSONSchemaIsCurrentAndValidJSON(t *testing.T) {
 		t.Fatalf("parse JSON schema: %v", err)
 	}
 	if len(schema.Definitions) == 0 ||
-		!bytes.Contains(data, []byte(`"const": 1`)) {
+		!bytes.Contains(data, []byte(`"const": 1`)) ||
+		!bytes.Contains(data, []byte(`"unstack"`)) {
 		t.Fatalf("JSON schema does not describe version %d", schemaVersion)
 	}
 
@@ -434,6 +485,8 @@ func TestJSONSchemaIsCurrentAndValidJSON(t *testing.T) {
 			PullRequest: pullRequest,
 		}},
 	}}
+	localRemoved := true
+	remoteRemoved := false
 	assertJSONKeysInSchema(t, data, commandResult{
 		Schema:  schemaVersion,
 		Status:  "ok",
@@ -444,11 +497,13 @@ func TestJSONSchemaIsCurrentAndValidJSON(t *testing.T) {
 			Trunk:    "main",
 			Branches: []state.Branch{branch},
 		},
-		Branch:   &branch,
-		Stacks:   &statuses,
-		Checks:   map[string]string{"githubAuth": "available"},
-		Message:  "ok",
-		Worktree: "/worktrees/feature",
+		Branch:        &branch,
+		Stacks:        &statuses,
+		Checks:        map[string]string{"githubAuth": "available"},
+		Message:       "ok",
+		Worktree:      "/worktrees/feature",
+		LocalRemoved:  &localRemoved,
+		RemoteRemoved: &remoteRemoved,
 	})
 	assertJSONKeysInSchema(t, data, errorResult{
 		Schema:   schemaVersion,
@@ -496,10 +551,11 @@ func assertJSONKeysInSchema(t *testing.T, schema []byte, value any) {
 }
 
 type fakeCommandManager struct {
-	calls      []string
-	dryRun     bool
-	rebaseErr  error
-	commandErr error
+	calls        []string
+	dryRun       bool
+	rebaseErr    error
+	commandErr   error
+	unstackLocal bool
 }
 
 func (m *fakeCommandManager) SetDryRun(enabled bool) {
@@ -581,6 +637,16 @@ func (m *fakeCommandManager) Refresh(context.Context, string) error {
 func (m *fakeCommandManager) Submit(context.Context, string) error {
 	m.calls = append(m.calls, "submit")
 	return m.commandErr
+}
+
+func (m *fakeCommandManager) Unstack(
+	_ context.Context,
+	_ string,
+	localOnly bool,
+) (bool, error) {
+	m.calls = append(m.calls, "unstack")
+	m.unstackLocal = localOnly
+	return true, m.commandErr
 }
 
 func (m *fakeCommandManager) Doctor(

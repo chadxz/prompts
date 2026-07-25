@@ -4,16 +4,182 @@ on:
   push:
     tags:
       - "wt-stack/v*"
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - "wt-stack CI"
+    types:
+      - completed
+    branches:
+      - main
 
-permissions:
-  attestations: write
-  contents: write
-  id-token: write
+permissions: {}
+
+concurrency:
+  group: wt-stack-release-${{ github.event.workflow_run.head_sha || github.ref }}
+  cancel-in-progress: false
 
 jobs:
+  prepare:
+    name: Prepare release
+    if: >-
+      (github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main') ||
+      (github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      actions: write
+      contents: write
+    defaults:
+      run:
+        working-directory: apps/wt-stack
+    steps:
+      - name: Check out release candidate
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Confirm candidate is current main
+        id: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --tags
+          candidate_commit="$(git rev-parse HEAD)"
+          main_commit="$(git rev-parse origin/main)"
+          if [[ "$candidate_commit" != "$main_commit" ]]; then
+            echo "Current main moved after this CI run; a newer run will release it."
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "current=true" >> "$GITHUB_OUTPUT"
+
+      - name: Install pinned tools
+        if: steps.candidate.outputs.current == 'true'
+        uses: jdx/mise-action@v4
+        with:
+          cache: true
+          working_directory: apps/wt-stack
+
+      - name: Prepare changelog and version
+        if: steps.candidate.outputs.current == 'true'
+        id: version
+        shell: bash
+        env:
+          TZ: America/Chicago
+        run: |
+          set -euo pipefail
+          latest_tag="$(
+            git for-each-ref \
+              --sort=-version:refname \
+              --count=1 \
+              --format='%(refname:short)' \
+              'refs/tags/wt-stack/v*'
+          )"
+          if [[ -z "$latest_tag" ]]; then
+            echo "No wt-stack release tag exists." >&2
+            exit 1
+          fi
+          current_version="${latest_tag#wt-stack/v}"
+          go run ./cmd/wt-stack-release \
+            --current-version "$current_version" \
+            --date "$(date +%F)" >> "$GITHUB_OUTPUT"
+
+      - name: Validate prepared release
+        if: steps.version.outputs.release == 'true'
+        run: mise run ci
+
+      - name: Commit and tag release
+        if: steps.version.outputs.release == 'true'
+        id: tag
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          tag="wt-stack/v$VERSION"
+          if git rev-parse --verify --quiet "refs/tags/$tag"; then
+            echo "Tag $tag already exists." >&2
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git diff --cached --check
+          git commit \
+            -m "Release wt-stack v$VERSION" \
+            -m "Why?
+
+          Prepare the changelog and immutable tag for the next wt-stack
+          release.
+
+          How?
+
+          - Promote Unreleased using the version selected from its sections.
+          - Let the tag workflow validate, package, sign, and attest it."
+          git tag -a "$tag" -m "wt-stack v$VERSION"
+          git push --atomic origin HEAD:main "refs/tags/$tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Start tagged release
+        if: steps.version.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.tag.outputs.tag }}
+        working-directory: .
+        run: |
+          set -euo pipefail
+          gh workflow run wt-stack-release.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref "$RELEASE_TAG"
+
+      - name: Wait for tagged release
+        if: steps.version.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.tag.outputs.tag }}
+        working-directory: .
+        run: |
+          set -euo pipefail
+          run_id=""
+          for _ in {1..30}; do
+            run_id="$(
+              gh run list \
+                --repo "$GITHUB_REPOSITORY" \
+                --workflow wt-stack-release.yml \
+                --branch "$RELEASE_TAG" \
+                --event workflow_dispatch \
+                --limit 1 \
+                --json databaseId \
+                --jq '.[0].databaseId'
+            )"
+            if [[ -n "$run_id" ]]; then
+              break
+            fi
+            sleep 2
+          done
+          if [[ -z "$run_id" ]]; then
+            echo "Tagged release workflow did not start." >&2
+            exit 1
+          fi
+          gh run watch "$run_id" \
+            --repo "$GITHUB_REPOSITORY" \
+            --exit-status
+
   validate:
     name: Validate
+    if: >-
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' &&
+      github.ref_type == 'tag')
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: apps/wt-stack
@@ -34,6 +200,10 @@ jobs:
     name: Release
     needs: validate
     runs-on: ubuntu-latest
+    permissions:
+      attestations: write
+      contents: write
+      id-token: write
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -48,9 +218,13 @@ jobs:
 
       - name: Install Syft
         uses: anchore/sbom-action/download-syft@v0.24.0
+        with:
+          syft-version: "v1.42.3"
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@v4.1.2
+        with:
+          cosign-release: "v3.0.6"
 
       - name: Prepare release metadata
         id: release

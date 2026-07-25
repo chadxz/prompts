@@ -97,6 +97,84 @@ func TestManagerRunsStackLifecycleWithFakes(t *testing.T) {
 	}
 }
 
+func TestManagerUnstacksLocallyAndRemotely(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		localOnly     bool
+		dissolved     bool
+		wantStacks    int
+		wantUnstacks  int
+		wantDissolved bool
+	}{
+		{
+			name:          "remote stack dissolved",
+			dissolved:     true,
+			wantStacks:    0,
+			wantUnstacks:  1,
+			wantDissolved: true,
+		},
+		{
+			name:          "remote stack partially retained",
+			dissolved:     false,
+			wantStacks:    1,
+			wantUnstacks:  1,
+			wantDissolved: false,
+		},
+		{
+			name:          "local tracking only",
+			localOnly:     true,
+			dissolved:     true,
+			wantStacks:    0,
+			wantUnstacks:  0,
+			wantDissolved: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			manager, _, githubClient, store := newUnitManager(
+				t,
+				unitStateFile(),
+			)
+			githubClient.dissolved = test.dissolved
+
+			dissolved, err := manager.Unstack(
+				context.Background(),
+				"delivery",
+				test.localOnly,
+			)
+			if err != nil {
+				t.Fatalf("unstack: %v", err)
+			}
+			if dissolved != test.wantDissolved {
+				t.Fatalf(
+					"dissolved = %t, want %t",
+					dissolved,
+					test.wantDissolved,
+				)
+			}
+			if len(store.file.Stacks) != test.wantStacks {
+				t.Fatalf(
+					"stacks = %d, want %d",
+					len(store.file.Stacks),
+					test.wantStacks,
+				)
+			}
+			if githubClient.unstacks != test.wantUnstacks {
+				t.Fatalf(
+					"GitHub unstack calls = %d, want %d",
+					githubClient.unstacks,
+					test.wantUnstacks,
+				)
+			}
+		})
+	}
+}
+
 func TestManagerContinuesAndAbortsStoredRebases(t *testing.T) {
 	t.Parallel()
 
@@ -202,6 +280,17 @@ func TestManagerDryRunDoesNotMutateRepositoryOrState(t *testing.T) {
 			},
 		},
 		{
+			name: "unstack",
+			run: func(manager *Manager) error {
+				_, err := manager.Unstack(
+					context.Background(),
+					"delivery",
+					false,
+				)
+				return err
+			},
+		},
+		{
 			name: "continue",
 			prepare: func(file *state.File) {
 				file.Rebase = unitRebaseSession(file.Stacks[0])
@@ -245,6 +334,12 @@ func TestManagerDryRunDoesNotMutateRepositoryOrState(t *testing.T) {
 			}
 			if githubClient.links != 0 {
 				t.Fatalf("GitHub links = %d, want 0", githubClient.links)
+			}
+			if githubClient.unstacks != 0 {
+				t.Fatalf(
+					"GitHub unstack calls = %d, want 0",
+					githubClient.unstacks,
+				)
 			}
 		})
 	}
@@ -332,19 +427,39 @@ func TestManagerRejectsInvalidRebaseState(t *testing.T) {
 	}
 }
 
-func TestManagerRefreshRejectsPausedRebase(t *testing.T) {
+func TestManagerRemoteMutationsRejectPausedRebase(t *testing.T) {
 	t.Parallel()
 
-	file := unitStateFile()
-	file.Rebase = unitRebaseSession(file.Stacks[0])
-	manager, _, _, store := newUnitManager(t, file)
+	for _, operation := range []string{"refresh", "unstack"} {
+		t.Run(operation, func(t *testing.T) {
+			t.Parallel()
 
-	err := manager.Refresh(context.Background(), "delivery")
-	if err == nil || !strings.Contains(err.Error(), "continued or aborted") {
-		t.Fatalf("refresh error = %v", err)
-	}
-	if store.saves != 0 {
-		t.Fatalf("state saves = %d, want 0", store.saves)
+			file := unitStateFile()
+			file.Rebase = unitRebaseSession(file.Stacks[0])
+			manager, _, githubClient, store := newUnitManager(t, file)
+
+			var err error
+			if operation == "refresh" {
+				err = manager.Refresh(context.Background(), "delivery")
+			} else {
+				_, err = manager.Unstack(
+					context.Background(),
+					"delivery",
+					false,
+				)
+			}
+			if err == nil ||
+				!strings.Contains(err.Error(), "continued or aborted") {
+				t.Fatalf("%s error = %v", operation, err)
+			}
+			if store.saves != 0 || githubClient.unstacks != 0 {
+				t.Fatalf(
+					"state saves = %d, unstack calls = %d",
+					store.saves,
+					githubClient.unstacks,
+				)
+			}
+		})
 	}
 }
 
@@ -565,6 +680,8 @@ func (r *fakeRepository) PushStack(
 type fakeGitHubClient struct {
 	pullRequests    map[string]*state.PullRequest
 	links           int
+	unstacks        int
+	dissolved       bool
 	authentications int
 	previewChecks   int
 }
@@ -603,13 +720,25 @@ func (c *fakeGitHubClient) PullRequest(
 }
 
 func (c *fakeGitHubClient) Link(
-	context.Context,
-	github.Repository,
-	string,
-	[]string,
+	_ context.Context,
+	_ github.Repository,
+	_ string,
+	_ []string,
 ) error {
 	c.links++
 	return nil
+}
+
+func (c *fakeGitHubClient) Unstack(
+	_ context.Context,
+	_ github.Repository,
+	pullRequestNumbers []int,
+) (bool, error) {
+	c.unstacks++
+	if !slices.Equal(pullRequestNumbers, []int{42}) {
+		return false, errors.New("unexpected pull request numbers")
+	}
+	return c.dissolved, nil
 }
 
 type memoryStore struct {

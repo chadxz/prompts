@@ -5,7 +5,7 @@ Versioning.
 
 ## Unreleased
 
-## 0.3.0 - 2026-07-24
+## 0.3.1 - 2026-07-24
 
 ### Added
 
@@ -17,6 +17,7 @@ Versioning.
 
 - Dry runs no longer fetch, continue, abort, push, or persist remote state.
 - Commands reject unexpected positional arguments.
+- Release checksums use the current Cosign bundle format.
 - State and lock files are readable only by the current user.
 
 ## 0.2.0

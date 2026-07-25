@@ -115,8 +115,7 @@ jobs:
             apps/wt-stack/dist/*.tar.gz \
             apps/wt-stack/dist/*.sbom.json \
             apps/wt-stack/dist/checksums.txt \
-            apps/wt-stack/dist/checksums.txt.sig \
-            apps/wt-stack/dist/checksums.txt.pem \
+            apps/wt-stack/dist/checksums.txt.sigstore.json \
             --verify-tag \
             --title "wt-stack v$RELEASE_VERSION" \
             --notes-file "$NOTES_FILE"

@@ -14,7 +14,7 @@ contains:
   Linux on amd64 and arm64.
 - `README.md`, `LICENSE`, `CHANGELOG.md`, and the `wt-stack` binary in each
   archive.
-- `checksums.txt`, its keyless Cosign signature, and its signing certificate.
+- `checksums.txt` and its keyless Cosign signature bundle.
 - One SPDX JSON SBOM for each archive.
 - GitHub build-provenance attestations for every archive, the checksum file, and
   every SBOM.
@@ -54,7 +54,7 @@ Move every completed entry under `Unreleased` into a dated version section:
 ```markdown
 ## Unreleased
 
-## 0.3.0 - 2026-07-24
+## 1.2.3 - 2026-07-24
 ```
 
 Use the release version and current local date. Leave `Unreleased` in place for
@@ -76,14 +76,14 @@ mise run //apps/wt-stack:format-check ::: \
   //apps/wt-stack:release-check ::: \
   //apps/wt-stack:build
 mise run //apps/wt-stack:test-integration
-GORELEASER_CURRENT_TAG=v0.3.0 WT_STACK_SKIP_CHANGELOG=true \
+GORELEASER_CURRENT_TAG=v1.2.3 WT_STACK_SKIP_CHANGELOG=true \
   mise -C apps/wt-stack exec -- \
   goreleaser release --clean --skip=publish,sign,sbom,validate
 ```
 
 The unit suite must meet the coverage minimum without the integration build tag.
 The integration suite must pass separately. The local package check must build
-all four target archives with the intended version. Replace `v0.3.0` with the
+all four target archives with the intended version. Replace `v1.2.3` with the
 chosen version.
 
 GoReleaser validation is skipped only because its OSS release path requires an
@@ -106,15 +106,15 @@ succeed. Fix the problem in a new commit, push it, and repeat this section.
 
 ## 4. Create and push the tag
 
-Confirm `HEAD` still matches `origin/main`. Replace `0.3.0` in these commands
+Confirm `HEAD` still matches `origin/main`. Replace `1.2.3` in these commands
 with the chosen version:
 
 ```console
 git fetch origin main
 git rev-parse HEAD
 git rev-parse origin/main
-git tag -a wt-stack/v0.3.0 -m "wt-stack v0.3.0"
-git push origin wt-stack/v0.3.0
+git tag -a wt-stack/v1.2.3 -m "wt-stack v1.2.3"
+git push origin wt-stack/v1.2.3
 ```
 
 Stop before tagging if the commit IDs differ. Don't force a tag push.
@@ -132,14 +132,14 @@ gh run watch <run-id> --exit-status
 Inspect the release and download its assets into a new temporary directory:
 
 ```console
-gh release view wt-stack/v0.3.0
-mkdir /tmp/wt-stack-v0.3.0
-gh release download wt-stack/v0.3.0 --dir /tmp/wt-stack-v0.3.0
-cd /tmp/wt-stack-v0.3.0
+gh release view wt-stack/v1.2.3
+mkdir /tmp/wt-stack-v1.2.3
+gh release download wt-stack/v1.2.3 --dir /tmp/wt-stack-v1.2.3
+cd /tmp/wt-stack-v1.2.3
 ```
 
-Confirm that all four archives, four SBOMs, the checksum, signature, and
-certificate exist. Verify the archive checksums:
+Confirm that all four archives, four SBOMs, the checksum, and signature bundle
+exist. Verify the archive checksums:
 
 ```console
 shasum -a 256 -c checksums.txt
@@ -150,10 +150,9 @@ workflow at the release tag:
 
 ```console
 certificate_identity="https://github.com/chadxz/prompts/.github/workflows/\
-wt-stack-release.yml@refs/tags/wt-stack/v0.3.0"
+wt-stack-release.yml@refs/tags/wt-stack/v1.2.3"
 cosign verify-blob \
-  --certificate checksums.txt.pem \
-  --signature checksums.txt.sig \
+  --bundle checksums.txt.sigstore.json \
   --certificate-identity "$certificate_identity" \
   --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
   checksums.txt
@@ -174,11 +173,11 @@ jq -e '.spdxVersion' *.sbom.json
 Extract the archive for the current machine and confirm the embedded version:
 
 ```console
-tar -xzf wt-stack_0.3.0_darwin_arm64.tar.gz
+tar -xzf wt-stack_1.2.3_darwin_arm64.tar.gz
 ./wt-stack --version
 ```
 
-The command must print `wt-stack version 0.3.0`. Use the archive matching the
+The command must print `wt-stack version 1.2.3`. Use the archive matching the
 verification machine.
 
 ## 6. Handle a failed release

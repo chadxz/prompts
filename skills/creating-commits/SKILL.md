@@ -1,9 +1,10 @@
 ---
 name: creating-commits
 description:
-  Creates Git commits using Chad's commit template and writing voice. Use when
-  the user asks to commit changes, create a commit, or draft a commit message
-  formatted to Chad's standards.
+  Creates Git commits using Chad's commit template and writing voice, including
+  PR-ready commits for wt-stack branches. Use when the user asks to commit
+  changes, create a commit, or draft a commit message formatted to Chad's
+  standards.
 user-invocable: true
 ---
 
@@ -23,6 +24,28 @@ Create a commit using Chad's personal commit template.
 4. Apply the `writing-in-my-voice` skill to all prose sections.
 5. Stage only the files that belong in this commit.
 6. Create the commit with the generated message.
+
+## Stack-aware commits
+
+When `wt-stack` is available, run `wt-stack --json status` before staging to
+determine whether the current branch belongs to a Stack. A repository without
+local Stack state continues through the normal workflow.
+
+For a Stack-owned branch:
+
+- Preserve the branch and review-unit boundaries from
+  `managing-stacked-changes`.
+- Keep the commit scoped to the review unit owned by the current branch and
+  worktree.
+- Before the first `wt-stack sync`, make the branch tip's commit title and body
+  suitable for the pull request. `wt-stack` uses that commit when it creates a
+  missing pull request.
+- Leave rebasing and pushing to `wt-stack sync`. Do not push a Stack branch
+  independently as part of a combined commit-and-publish request.
+
+Once the pull request exists, later commits can describe their incremental
+change. `wt-stack` does not replace existing pull request metadata from those
+commit messages.
 
 ## Defaults
 

@@ -1,5 +1,6 @@
 interface:
   display_name: "Using Git Worktrees"
-  short_description: "Use task-specific git worktrees for repository edits."
+  short_description: "Choose single-branch or stacked worktrees for edits."
   default_prompt: >-
-    Use $using-git-worktrees before changing files in a Git repository.
+    Use $using-git-worktrees to choose the review topology and an isolated
+    worktree before changing files in a Git repository.

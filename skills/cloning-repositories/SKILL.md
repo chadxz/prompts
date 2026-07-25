@@ -108,7 +108,10 @@ pass the branch name explicitly:
 git -C my-repo worktree add main trunk
 ```
 
-For task branches, use the worktree convention from `$using-git-worktrees`.
+For task branches, use the worktree convention from `$using-git-worktrees`. That
+skill routes work with multiple ordered review units to
+`$managing-stacked-changes`. The bare repository and sibling-worktree layout
+created here is the native layout for `wt-stack`.
 
 ## Bypassing The Override
 

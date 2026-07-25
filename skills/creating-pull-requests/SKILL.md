@@ -1,16 +1,16 @@
 ---
 name: creating-pull-requests
 description:
-  Creates Git commits and opens pull requests using Chad's commit template,
-  PR body template, PR conventions, and writing voice. Use when the user asks
-  to create a pull request, open a PR, write a PR body, or commit changes and
-  create a PR together.
+  Creates single pull requests or publishes existing wt-stack Stacks using
+  Chad's commit template, PR conventions, and writing voice. Use when the user
+  asks to create, open, write, or publish a pull request, stacked pull requests,
+  or a commit and PR together.
 user-invocable: true
 ---
 
 # Creating Pull Requests
 
-Create a commit, push the branch, and open a pull request.
+Create and publish either a single pull request or an existing Stack.
 
 The `creating-commits` skill owns the commit mechanics: reading the commit
 template, message constraints, staging, voice, and the `linctl` ticket commands.
@@ -18,12 +18,33 @@ Read it before committing and apply the PR overrides below.
 
 ## Workflow
 
-1. If currently on `main`, create a new branch before committing. Choose a
+1. When `wt-stack` is available, run `wt-stack --json status`.
+2. If the current branch belongs to a Stack, use the stacked pull request
+   workflow below and stop the single pull request workflow.
+3. If currently on `main`, create a new branch before committing. Choose a
    sensible branch name based on the work.
-2. Create the commit using the `creating-commits` workflow with the PR overrides
+4. Create the commit using the `creating-commits` workflow with the PR overrides
    below.
-3. Push the branch.
-4. Open the PR with `gh pr create --title` and `--body`.
+5. Push the branch.
+6. Open the PR with `gh pr create --title` and `--body`.
+
+## Stacked pull request workflow
+
+Read and follow `managing-stacked-changes` before publishing a Stack.
+
+1. Use `creating-commits` for any uncommitted review unit.
+2. Run `wt-stack --stack <name> sync`.
+3. Run `wt-stack --json --stack <name> status` and collect every pull request
+   URL.
+4. Apply the PR body rules below to each newly created pull request. Use
+   `gh pr edit <url> --body <body>` when the body needs unwrapped prose. Apply
+   requested labels and reviewers through the corresponding `gh pr edit`
+   options.
+5. Report the Stack name, branch order, and every pull request URL.
+
+Do not run `gh pr create`, push branches individually, or set pull request bases
+manually for Stack-owned branches. `wt-stack` owns those operations and keeps
+the remote Stack consistent.
 
 ## PR Overrides
 
@@ -38,7 +59,8 @@ request:
   body is wrapped at 72 characters. Preserve all intentional Markdown structure
   and let Linear wrap prose in the UI.
 - Use the ticket identifier in both the commit message and the PR body.
-- Use `main` as the PR base branch unless the user says otherwise.
+- Use `main` as the base for a single pull request unless the user says
+  otherwise. `wt-stack` owns the bases within a Stack.
 
 ## Pull Request Body
 

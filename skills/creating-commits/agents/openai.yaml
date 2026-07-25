@@ -1,4 +1,6 @@
 interface:
   display_name: "Creating Commits"
-  short_description: "Create a commit using Chad's commit template."
-  default_prompt: "Use $creating-commits to create a commit from the current changes."
+  short_description: "Create normal or stack-aware commits in Chad's format."
+  default_prompt: >-
+    Use $creating-commits to create a normal or wt-stack-aware commit from the
+    current changes.

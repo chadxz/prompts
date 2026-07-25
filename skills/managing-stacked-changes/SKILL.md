@@ -32,21 +32,31 @@ independent changes separate branches based on the trunk branch.
 
 ## Verify prerequisites
 
-Start from a task-specific worktree selected through `using-git-worktrees`.
-Inspect the repository before changing Stack state:
+Start from a task-specific worktree selected through the `using-git-worktrees`
+skill. Inspect the repository before changing Stack state:
 
 ```console
 git status --short --branch
 git worktree list
-command -v wt-stack
 wt-stack --version
 wt-stack doctor
 ```
 
-Stop Stack setup when `wt-stack` is missing, authentication is unavailable, or
-GitHub Stacks support is disabled for the repository. Continue with the normal
-single-branch workflow and report the missing capability as a consideration.
-Require `wt-stack` v0.4.0 or newer for the complete lifecycle documented here.
+Treat `wt-stack` as installed and use v0.4.0 or newer. If the shell reports
+`command not found`, or the installed version is older, install it from the
+prompts repository:
+
+```console
+mise trust ~/src/personal/prompts/main/apps/wt-stack/mise.toml
+mise -C ~/src/personal/prompts/main/apps/wt-stack install
+mise run -C ~/src/personal/prompts/main/apps/wt-stack :install
+wt-stack --version
+```
+
+Resume the prerequisite checks after installation. If authentication is
+unavailable or GitHub Stacks support is disabled for the repository, continue
+with the normal single-branch workflow and report that capability as a
+consideration.
 
 Treat existing dirty work in any worktree as user-owned. Stack mutations that
 rebase require every active worktree to be clean.
@@ -68,8 +78,8 @@ against the branch directly below it.
 
 ## Start a new Stack
 
-Create the bottom branch and task worktree with `using-git-worktrees`. From that
-worktree, verify prerequisites and adopt the branch:
+Create the bottom branch and task worktree with the `using-git-worktrees` skill.
+From that worktree, verify prerequisites and adopt the branch:
 
 ```console
 wt-stack init --name <stack>
@@ -84,7 +94,8 @@ wt-stack --json --stack <stack> status
 ```
 
 Change into the worktree reported by `status`, implement the next review unit,
-and commit it through `creating-commits`. Repeat `add` from bottom to top.
+and commit it through the `creating-commits` skill. Repeat `add` from bottom to
+top.
 
 To adopt an existing linear chain, ensure each branch is checked out in a
 sibling worktree and list the branches from bottom to top:
@@ -116,8 +127,9 @@ repairs their bases, and creates or updates the GitHub Stack.
 
 Do not manually rebase Stack branches, push them individually, or create their
 pull requests with `gh pr create`. After `sync`, apply the PR body rules from
-`creating-pull-requests` without restarting its workflow. Use `gh pr edit` for
-unwrapped PR bodies, labels, or reviewers that `wt-stack` does not manage.
+the `creating-pull-requests` skill without restarting its workflow. Use
+`gh pr edit` for unwrapped PR bodies, labels, or reviewers that `wt-stack` does
+not manage.
 
 ## Continue working
 

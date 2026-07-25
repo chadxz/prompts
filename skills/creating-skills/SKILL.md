@@ -25,8 +25,9 @@ invocation, permissions, or user experience.
 4. Choose resources before writing: `scripts/` for deterministic or fragile
    work, `references/` for details loaded on demand, and `assets/` for templates
    or files used in outputs.
-5. Scaffold or edit the skill folder. Use tools such as Codex `$skill-creator`
-   or Zed `create-skill` when helpful, then verify their output.
+5. Scaffold or edit the skill folder. Use tools such as the Codex
+   `$skill-creator` skill or Zed `create-skill` when helpful, then verify their
+   output.
 6. Write metadata, instructions, and optional resources. Add platform-specific
    files only when they add value.
 7. Validate and forward-test when the skill controls a workflow, external
@@ -75,6 +76,9 @@ invocation, permissions, or user experience.
 - Write imperative steps with explicit inputs and outputs for workflows and
   scripts.
 - Keep examples short and realistic. Use templates when output format matters.
+- Qualify every cross-skill reference with the word "skill", as in
+  "`creating-commits` skill", so readers can distinguish skills from commands,
+  packages, and files.
 - When updating a skill, preserve the user's existing structure unless it harms
   discovery, portability, or validation.
 
@@ -98,7 +102,7 @@ for another capable agent to use the skill if this metadata is ignored.
 - Run any validator available in the current environment.
 - Verify the folder name, frontmatter `name`, `agents/openai.yaml`
   `$skill-name`, and validation paths all match before calling the skill done.
-- For skills created with the Codex system `skill-creator`, run:
+- For skills created with the Codex system `skill-creator` skill, run:
 
   ```bash
   validator="${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-creator"

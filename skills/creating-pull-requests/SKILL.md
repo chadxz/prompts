@@ -23,16 +23,16 @@ Read it before committing and apply the PR overrides below.
    workflow below and stop the single pull request workflow.
 3. If currently on `main`, create a new branch before committing. Choose a
    sensible branch name based on the work.
-4. Create the commit using the `creating-commits` workflow with the PR overrides
+4. Create the commit using the `creating-commits` skill with the PR overrides
    below.
 5. Push the branch.
 6. Open the PR with `gh pr create --title` and `--body`.
 
 ## Stacked pull request workflow
 
-Read and follow `managing-stacked-changes` before publishing a Stack.
+Read and follow the `managing-stacked-changes` skill before publishing a Stack.
 
-1. Use `creating-commits` for any uncommitted review unit.
+1. Use the `creating-commits` skill for any uncommitted review unit.
 2. Run `wt-stack --stack <name> sync`.
 3. Run `wt-stack --json --stack <name> status` and collect every pull request
    URL.
@@ -48,13 +48,13 @@ the remote Stack consistent.
 
 ## PR Overrides
 
-These override the `creating-commits` defaults when the commit is part of a pull
-request:
+These override the `creating-commits` skill's defaults when the commit is part
+of a pull request:
 
 - Do not commit directly to `main`. Branch first.
 - If no ticket number was provided, create a Linear ticket by default using the
-  ticket creation steps in `creating-commits`, unless the repository is a
-  personal repository under `github.com/chadxz/` or hosted on Tangled.
+  ticket creation steps in the `creating-commits` skill, unless the repository
+  is a personal repository under `github.com/chadxz/` or hosted on Tangled.
 - Keep the Linear ticket description unwrapped even though the commit message
   body is wrapped at 72 characters. Preserve all intentional Markdown structure
   and let Linear wrap prose in the UI.
@@ -71,7 +71,7 @@ changes:
 
 1. Remove hard line breaks so GitHub's markdown renderer can wrap text
    naturally.
-2. Apply `writing-in-my-voice` to all prose.
+2. Apply the `writing-in-my-voice` skill to all prose.
 
 If another instruction suggests a generic `Summary` / `Test plan` PR body,
 prefer this template and report that decision in the final response.

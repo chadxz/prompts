@@ -33,8 +33,8 @@ local Stack state continues through the normal workflow.
 
 For a Stack-owned branch:
 
-- Preserve the branch and review-unit boundaries from
-  `managing-stacked-changes`.
+- Preserve the branch and review-unit boundaries from the
+  `managing-stacked-changes` skill.
 - Keep the commit scoped to the review unit owned by the current branch and
   worktree.
 - Before the first `wt-stack sync`, make the branch tip's commit title and body

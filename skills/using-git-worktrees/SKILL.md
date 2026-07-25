@@ -61,17 +61,16 @@ Keep one branch when the result is one coherent review unit, even when it
 touches many files. Use separate non-stacked branches when the changes are
 independent and neither branch should be based on the other.
 
-When a Stack applies, read and follow `$managing-stacked-changes`. Let that
-skill create or adopt the task branches and sibling worktrees. If
-`wt-stack
-doctor` reports that the repository lacks GitHub Stacks support, use
+When a Stack applies, read and follow the `$managing-stacked-changes` skill. Let
+that skill create or adopt the task branches and sibling worktrees. If
+`wt-stack doctor` reports that the repository lacks GitHub Stacks support, use
 the normal single-branch workflow and report the unavailable capability as a
 consideration.
 
 If a single-branch task grows into multiple ordered review units before
 publication, adopt the current branch as the bottom of a Stack and add later
-units through `$managing-stacked-changes`. Do not rewrite published history
-solely to manufacture a Stack.
+units through the `$managing-stacked-changes` skill. Do not rewrite published
+history solely to manufacture a Stack.
 
 ## Choose a single-branch worktree
 

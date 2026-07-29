@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review Agent Sessions"
+  short_description: "Audit a month of agent interactions"
+  default_prompt: "Use $reviewing-agent-sessions to review the previous calendar month of Codex sessions and recommend concrete improvements."

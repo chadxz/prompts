@@ -1,8 +1,6 @@
 .jj
 .DS_Store
 *.log
-**/__pycache__/
-*.py[cod]
 **/node_modules/
 **/coverage/
 **/reports/

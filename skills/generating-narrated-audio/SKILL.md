@@ -2,11 +2,11 @@
 name: generating-narrated-audio
 description:
   Generates narrated MP3 audio from text or Markdown files by first
-  producing a TTS-friendly intermediate version, then using Gemini or
-  ElevenLabs text-to-speech, paragraph chunking, and cached audio.
-  Use when the user wants a document, transcript, notes, or draft turned
-  into listenable narration with smoother pronunciation and provider-specific
-  delivery controls.
+  producing a TTS-friendly intermediate version, then using Gemini
+  text-to-speech, paragraph chunking, and cached intermediate WAVs.
+  Use when the user wants a document, transcript, notes, or draft
+  turned into listenable narration with smoother pronunciation and an
+  optional custom speaking style.
 user-invocable: true
 ---
 
@@ -33,8 +33,8 @@ resolved absolute path. In Claude-style skill runners, `<skill-dir>` can be
 `${CLAUDE_SKILL_DIR}`.
 
 Use `--output` when the filename must be deterministic. Use `--style-file`
-instead of an inline style prompt when Gemini narration instructions are more
-than a sentence or two.
+instead of an inline style prompt when the narration instructions are more than
+a sentence or two.
 
 ## Workflow
 
@@ -61,14 +61,10 @@ than a sentence or two.
      replace it.
    - If the user provides text inline instead of via a file, write the rewritten
      version to a temporary text file and narrate that.
-4. Choose a provider and delivery:
-   - Use Gemini by default for backward-compatible narration.
-   - Use `--style "<prompt>"` for a short Gemini style override.
-   - Use `--style-file <file>` for longer Gemini style prompts.
-   - Use `--provider elevenlabs` for ElevenLabs with the configured default
-     voice and stable long-form model.
-   - Tune ElevenLabs with `--stability`, `--similarity-boost`,
-     `--style-exaggeration`, `--speed`, and `--no-speaker-boost`.
+4. Choose a narration style:
+   - Use the built-in default for internal docs and RFC-style content.
+   - Use `--style "<prompt>"` for a short override.
+   - Use `--style-file <file>` for longer or reusable prompts.
 5. Run the script against the TTS-friendly file.
 6. Verify that the MP3 exists and that the script printed a non-zero duration.
 
@@ -97,29 +93,9 @@ bash <skill-dir>/scripts/narrate.sh \
   --style-file narration-style.txt
 ```
 
-ElevenLabs with the configured default voice:
-
-```bash
-bash <skill-dir>/scripts/narrate.sh \
-  --provider elevenlabs \
-  --input rfc-tts.txt \
-  --output rfc-elevenlabs.mp3
-```
-
-Preview the request count and input size without generating audio:
-
-```bash
-bash <skill-dir>/scripts/narrate.sh \
-  --provider elevenlabs \
-  --input rfc-tts.txt \
-  --dry-run
-```
-
 ## Gotchas
 
 - The script expects a text-like source file. Do not point it at binary formats.
-- The script requires `uv`, `ffmpeg`, and `ffprobe`. Resolving an `op://`
-  credential also requires the 1Password CLI.
 - Always narrate the TTS-friendly intermediate text, not the raw source, unless
   the user explicitly asks for a literal read.
 - When the source is Chad-authored prose, voice fidelity beats generic narration
@@ -130,24 +106,16 @@ bash <skill-dir>/scripts/narrate.sh \
 - If `GEMINI_API_KEY` is unset, the script falls back to Chad's 1Password item
   at `op://Employee/Personal Gemini API Key/General/API Key`. If `op` is
   unavailable, set `GEMINI_API_KEY` before running it.
-- `ELEVENLABS_API_KEY` may contain either a literal key or an `op://` reference.
-  The configured ElevenLabs default voice is `yj30vwTGJxSHezdAGsv9`, and the
-  default model is `eleven_multilingual_v2`.
-- Gemini accepts free-form style prompts. ElevenLabs uses the selected voice and
-  numeric voice settings, so `--style` and `--style-file` are rejected with
-  `--provider elevenlabs`.
 - Output defaults to `<input-stem>-<timestamp>.mp3` beside the input file. Use
   `--output` when the filename should be stable.
-- Gemini WAV chunks remain under
-  `${XDG_CACHE_HOME:-$HOME/.cache}/gemini-tts-audio`. ElevenLabs MP3 chunks live
-  under `${XDG_CACHE_HOME:-$HOME/.cache}/elevenlabs-tts-audio`. Re-running with
-  the same provider inputs reuses cached audio.
+- Cached WAV chunks live under
+  `${XDG_CACHE_HOME:-$HOME/.cache}/gemini-tts-audio`. Re-running with the same
+  model, voice, style, and text reuses cached audio.
 - A short spoken disclosure is included by default. Only use `--no-disclaimer`
   when the user explicitly wants it omitted.
 
 ## Validation
 
-If the run succeeds, the script prints the final path, size, and duration. A
-failed chunk stops assembly so the script never presents incomplete narration as
-a successful result. Re-run the same command to reuse completed cached chunks
-and retry the missing request.
+If the run succeeds, the script prints the final path, size, and duration. If it
+warns about failed chunks, re-run the same command: cached chunks are reused and
+only missing chunks are retried.

@@ -5,6 +5,15 @@
 - When building Docker images, use `docker buildx build` instead of
   `docker build`.
 
+- In zsh commands and scripts, never use special parameter names such as
+  `status`, `path`, `commands`, `functions`, or `pipestatus` as variables. Use
+  domain-specific names such as `exit_code`, `file_path`, or `command_status`.
+  Never repurpose `$HOME`, `$home`, `$PATH`, `$path`, or `$CODEX_HOME`.
+
+- Quote shell arguments containing glob characters, especially GitHub API
+  endpoints containing `?`. When code uses Bash-specific syntax or semantics,
+  run it explicitly with Bash instead of the default zsh shell.
+
 - Don't assume the current date from model knowledge. Prefer the date provided
   by the environment context, and look it up yourself if you don't already have
   it. Use an explicit lookup when exact local time matters.

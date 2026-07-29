@@ -58,6 +58,11 @@
 - Any time I paste a notion.so link, use the available Notion tools to access it
   instead of web tools.
 
+- Safari is my primary web browser. For browser UI tasks that require computer
+  use, prefer Codex Computer Use with Safari. Do not use Chrome or
+  Chrome-extension-driven browser control unless I explicitly request it or
+  Safari Computer Use cannot complete the required workflow.
+
 - I work at a company named "Convergint" spelled exactly like that, and it is
   not a misspelling.
 

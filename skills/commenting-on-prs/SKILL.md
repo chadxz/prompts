@@ -3,8 +3,9 @@ name: commenting-on-prs
 description:
   Posts inline comments, file-level comments, and review replies on
   GitHub pull requests on Chad's behalf. Trigger when replying to PR
-  review comments, leaving PR comments, or responding to review
-  feedback. Applies Chad's writing voice and uses the gh CLI.
+  review comments, leaving PR comments, formatting GitHub alert callouts,
+  or responding to review feedback. Applies Chad's writing voice and uses
+  the gh CLI.
 ---
 
 # Commenting on PRs
@@ -94,6 +95,27 @@ expecting GitHub to render paragraph breaks.
 
 Keep comments short. A few sentences with enough context to stand alone months
 later.
+
+## GitHub Alerts
+
+Use GitHub's blockquote-based alerts when a review comment needs a callout:
+
+```markdown
+> [!WARNING]
+> This migration replaces the production database.
+```
+
+Choose the alert type by purpose:
+
+- `NOTE`: useful context readers should know, even when skimming.
+- `TIP`: advice that makes the work easier or better.
+- `IMPORTANT`: information required to achieve the intended result.
+- `WARNING`: urgent information needed to avoid a problem.
+- `CAUTION`: a risk or negative outcome.
+
+Keep `> [!TYPE]` on its own line and prefix every content line with `>`. Don't
+nest alerts, place them consecutively, or use more than one or two in a comment.
+Prefer ordinary prose when the content doesn't need visual emphasis.
 
 When replying to bot comments (claude[bot], Dependabot, GitHub Actions), don't
 address the bot as a person. No "good catch", "thanks for flagging", or "great

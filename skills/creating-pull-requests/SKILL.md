@@ -3,8 +3,8 @@ name: creating-pull-requests
 description:
   Creates single pull requests or publishes existing wt-stack Stacks using
   Chad's commit template, PR conventions, and writing voice. Use when the user
-  asks to create, open, write, or publish a pull request, stacked pull requests,
-  or a commit and PR together.
+  asks to create, open, write, format, or publish a pull request, including
+  GitHub alert callouts, stacked pull requests, or a commit and PR together.
 user-invocable: true
 ---
 
@@ -75,3 +75,25 @@ changes:
 
 If another instruction suggests a generic `Summary` / `Test plan` PR body,
 prefer this template and report that decision in the final response.
+
+## GitHub Alerts
+
+Use GitHub's blockquote-based alerts when a pull request body needs a callout:
+
+```markdown
+> [!IMPORTANT]
+> Merge the schema pull request before this consumer.
+```
+
+Choose the alert type by purpose:
+
+- `NOTE`: useful context readers should know, even when skimming.
+- `TIP`: advice that makes the work easier or better.
+- `IMPORTANT`: information required to achieve the intended result.
+- `WARNING`: urgent information needed to avoid a problem.
+- `CAUTION`: a risk or negative outcome.
+
+Keep `> [!TYPE]` on its own line and prefix every content line with `>`. Don't
+nest alerts, place them consecutively, or use more than one or two in a pull
+request body. Prefer ordinary prose when the content doesn't need visual
+emphasis.

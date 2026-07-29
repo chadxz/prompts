@@ -64,6 +64,41 @@ Stack. Re-run the resolver after creation to verify the selected checkout.
 Treat unrelated dirty work as user-owned. Do not move, stage, revert, clean, or
 overwrite another checkout's changes unless the user explicitly asks.
 
+## Keep the default worktree current
+
+Fetch the remote default branch before using it as the base for a new task
+worktree. Also fetch whenever status, branch comparisons, or another command
+shows that the default-branch worktree may be behind:
+
+```bash
+git -C <repo-container> fetch origin <default-branch>
+git -C <main-worktree> status --short --branch
+git -C <main-worktree> rev-list --left-right --count \
+  <default-branch>...origin/<default-branch>
+```
+
+The counts are local-ahead and local-behind, in that order. When the default
+worktree is clean and the counts are `0 N`, where `N` is greater than zero,
+update it immediately without waiting for another request:
+
+```bash
+scripts/resolve-worktree \
+  --repo <repo-container> \
+  --main \
+  --mode write \
+  --allow-main
+
+git -C <main-worktree> merge --ff-only origin/<default-branch>
+```
+
+`--allow-main` applies only to this synchronization. Do not make task changes in
+the default worktree.
+
+If the default worktree is dirty, ahead, or diverged, do not stash, reset,
+rebase, merge, or overwrite it. Treat its state as user-owned and report why a
+safe fast-forward was not possible. Base new work on the fetched remote default
+branch when that lets the task continue without modifying the blocked worktree.
+
 ## Choose the review topology
 
 Decide how reviewers should receive the work before creating the first task

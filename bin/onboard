@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+onboard_worktree="${HOME}/src/convergint/ee-monorepo/main"
+
+if [[ ! -f "${onboard_worktree}/tools/onboard/mise.toml" ]]; then
+    echo "onboard worktree not found at ${onboard_worktree}" >&2
+    exit 1
+fi
+
+exec mise -C "${onboard_worktree}" run --quiet //tools/onboard:run -- "$@"

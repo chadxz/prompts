@@ -2,9 +2,9 @@
 set -euo pipefail
 
 SCRIPT_NAME="$(basename "$0")"
-DEFAULT_MODEL="gemini-2.5-pro-preview-tts"
+DEFAULT_MODEL="gemini-2.5-pro-tts"
 DEFAULT_VOICE="Aoede"
-DEFAULT_API_KEY_OP_PATH="op://Employee/Personal Gemini API Key/General/API Key"
+DEFAULT_REGION="${GOOGLE_CLOUD_REGION:-us}"
 DEFAULT_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/gemini-tts-audio"
 
 DEFAULT_STYLE="$(
@@ -25,8 +25,7 @@ EOF
 
 DEFAULT_DISCLAIMER="$(
   cat <<'EOF'
-[extremely fast] This audio was generated using Google Gemini 2.5 Pro Preview
-TTS.
+[extremely fast] This audio was generated using Google Gemini 2.5 Pro TTS.
 EOF
 )"
 
@@ -45,15 +44,16 @@ Options:
       --style-file <file>     Read narration style from a file
       --voice <name>          Gemini prebuilt voice (default: $DEFAULT_VOICE)
       --model <name>          Gemini TTS model (default: $DEFAULT_MODEL)
+      --region <name>         Cloud TTS region (default: $DEFAULT_REGION)
       --disclaimer <text>     Spoken disclosure to prepend
       --no-disclaimer         Skip the spoken disclosure
       --cache-dir <dir>       Cache directory for intermediate WAVs
-      --api-key-op-path <op>  1Password item path for GEMINI_API_KEY fallback
   -h, --help                  Show this help text
 
 Behavior:
-  - Uses GEMINI_API_KEY if it is already set.
-  - Otherwise falls back to 1Password via --api-key-op-path.
+  - Uses Google Cloud Application Default Credentials.
+  - Uses the US multi-region endpoint unless --region or
+    GOOGLE_CLOUD_REGION selects another endpoint.
   - If --output is omitted, writes <input-stem>-<timestamp>.mp3 beside
     the input file.
 EOF
@@ -68,35 +68,16 @@ require_command() {
   command -v "$1" >/dev/null 2>&1 || die "Required command not found: $1"
 }
 
-resolve_api_key() {
-  if [ -n "${GEMINI_API_KEY:-}" ]; then
-    if [[ "$GEMINI_API_KEY" == op://* ]]; then
-      require_command op
-      op read "$GEMINI_API_KEY" | tr -d '\r\n'
-      return 0
-    fi
-
-    printf '%s' "$GEMINI_API_KEY"
-    return 0
-  fi
-
-  require_command op
-  local api_key
-  api_key="$(op read "$API_KEY_OP_PATH" | tr -d '\r\n')"
-  [ -n "$api_key" ] || die "Resolved GEMINI_API_KEY is empty"
-  printf '%s' "$api_key"
-}
-
 INPUT=""
 OUTPUT=""
 STYLE="$DEFAULT_STYLE"
 STYLE_FILE=""
 VOICE="$DEFAULT_VOICE"
 MODEL="$DEFAULT_MODEL"
+REGION="$DEFAULT_REGION"
 DISCLAIMER="$DEFAULT_DISCLAIMER"
 INCLUDE_DISCLAIMER=1
 CACHE_DIR="$DEFAULT_CACHE_DIR"
-API_KEY_OP_PATH="$DEFAULT_API_KEY_OP_PATH"
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -131,6 +112,11 @@ while [ $# -gt 0 ]; do
       MODEL="$2"
       shift 2
       ;;
+    --region)
+      [ $# -ge 2 ] || die "$1 requires a value"
+      REGION="$2"
+      shift 2
+      ;;
     --disclaimer)
       [ $# -ge 2 ] || die "$1 requires a value"
       DISCLAIMER="$2"
@@ -144,11 +130,6 @@ while [ $# -gt 0 ]; do
     --cache-dir)
       [ $# -ge 2 ] || die "$1 requires a value"
       CACHE_DIR="$2"
-      shift 2
-      ;;
-    --api-key-op-path)
-      [ $# -ge 2 ] || die "$1 requires a value"
-      API_KEY_OP_PATH="$2"
       shift 2
       ;;
     -h|--help)
@@ -183,7 +164,7 @@ fi
 
 [ -n "$STYLE" ] || die "Narration style must not be empty"
 
-require_command python3
+require_command uv
 require_command ffmpeg
 require_command ffprobe
 
@@ -204,31 +185,31 @@ cleanup() {
 }
 trap cleanup EXIT
 
-export GEMINI_API_KEY
-GEMINI_API_KEY="$(resolve_api_key)"
-
 echo "Input: $INPUT"
 echo "Output: $OUTPUT"
 echo "Model: $MODEL"
 echo "Voice: $VOICE"
+echo "Region: $REGION"
 echo "Cache: $CACHE_DIR"
 echo "Style: ${STYLE:0:80}..."
 echo ""
 
-python3 - "$STYLE" "$INPUT" "$OUTPUT" "$CACHE_DIR" "$MODEL" "$VOICE" \
+uv run --with 'google-cloud-texttospeech>=2.31.0,<3' python - \
+  "$STYLE" "$INPUT" "$OUTPUT" "$CACHE_DIR" "$MODEL" "$VOICE" "$REGION" \
   "$DISCLAIMER" "$INCLUDE_DISCLAIMER" "$WORK_DIR" <<'PYEOF'
-import base64
 import hashlib
-import json
 import os
 import re
 import subprocess
 import sys
 import time
-import urllib.error
-import urllib.request
 import wave
 from typing import List
+
+from google.api_core.client_options import ClientOptions
+from google.api_core.exceptions import GoogleAPICallError, RetryError
+from google.auth.exceptions import DefaultCredentialsError
+from google.cloud import texttospeech
 
 style = sys.argv[1]
 input_path = sys.argv[2]
@@ -236,20 +217,35 @@ output_path = sys.argv[3]
 cache_dir = sys.argv[4]
 model = sys.argv[5]
 voice = sys.argv[6]
-disclaimer = sys.argv[7]
-include_disclaimer = sys.argv[8] == "1"
-work_dir = sys.argv[9]
-api_key = os.environ["GEMINI_API_KEY"]
+region = sys.argv[7]
+disclaimer = sys.argv[8]
+include_disclaimer = sys.argv[9] == "1"
+work_dir = sys.argv[10]
 
-url = (
-    "https://generativelanguage.googleapis.com/v1beta/models/"
-    f"{model}:generateContent?key={api_key}"
+api_endpoint = (
+    "texttospeech.googleapis.com"
+    if region == "global"
+    else f"{region}-texttospeech.googleapis.com"
 )
 max_chunk_chars = 2000
 
+try:
+    client = texttospeech.TextToSpeechClient(
+        client_options=ClientOptions(api_endpoint=api_endpoint)
+    )
+except DefaultCredentialsError as exc:
+    print(
+        "Error: Google Cloud Application Default Credentials are unavailable. "
+        "Run 'gcloud auth application-default login' or attach a service "
+        f"account. ({exc})"
+    )
+    sys.exit(1)
 
-def cache_key(text: str) -> str:
-    material = f"{model}\0{voice}\0{text}".encode("utf-8")
+
+def cache_key(prompt: str, text: str) -> str:
+    material = (
+        f"{model}\0{voice}\0{region}\0{prompt}\0{text}".encode("utf-8")
+    )
     return hashlib.sha256(material).hexdigest()[:24]
 
 
@@ -333,45 +329,47 @@ def build_chunks(text: str) -> List[str]:
     return chunks
 
 
-def generate_audio(text: str, label: str, retries: int = 3) -> str | None:
-    key = cache_key(text)
+def generate_audio(
+    prompt: str,
+    text: str,
+    label: str,
+    retries: int = 3,
+) -> str | None:
+    key = cache_key(prompt, text)
     cached_path = os.path.join(cache_dir, f"{key}.wav")
     if os.path.exists(cached_path):
         duration = wav_duration(cached_path)
         print(f"  {label}: {duration:.1f}s (cached)")
         return cached_path
 
-    payload = json.dumps(
-        {
-            "contents": [{"parts": [{"text": text}]}],
-            "generationConfig": {
-                "responseModalities": ["AUDIO"],
-                "speechConfig": {
-                    "voiceConfig": {
-                        "prebuiltVoiceConfig": {
-                            "voiceName": voice,
-                        }
-                    }
-                },
-            },
-        }
-    ).encode("utf-8")
+    synthesis_input = texttospeech.SynthesisInput(text=text, prompt=prompt)
+    voice_params = texttospeech.VoiceSelectionParams(
+        language_code="en-US",
+        name=voice,
+        model_name=model,
+    )
+    audio_config = texttospeech.AudioConfig(
+        audio_encoding=texttospeech.AudioEncoding.LINEAR16,
+        sample_rate_hertz=24000,
+    )
 
-    data = None
+    response = None
     for attempt in range(retries):
-        request = urllib.request.Request(
-            url,
-            data=payload,
-            headers={"Content-Type": "application/json"},
-        )
         try:
-            with urllib.request.urlopen(request, timeout=300) as response:
-                data = json.loads(response.read().decode("utf-8"))
+            response = client.synthesize_speech(
+                input=synthesis_input,
+                voice=voice_params,
+                audio_config=audio_config,
+                timeout=300,
+            )
             break
-        except (urllib.error.HTTPError, TimeoutError, OSError) as exc:
+        except (
+            GoogleAPICallError,
+            RetryError,
+            TimeoutError,
+            OSError,
+        ) as exc:
             message = str(exc)
-            if hasattr(exc, "read"):
-                message = exc.read().decode("utf-8")[:200]
             if attempt < retries - 1:
                 wait_seconds = (attempt + 1) * 15
                 print(
@@ -383,26 +381,14 @@ def generate_audio(text: str, label: str, retries: int = 3) -> str | None:
                 print(f"    FAILED after {retries} attempts ({message})")
                 return None
 
-    if not data:
+    if not response:
         return None
 
-    for candidate in data.get("candidates", []):
-        parts = candidate.get("content", {}).get("parts", [])
-        for part in parts:
-            inline = part.get("inlineData")
-            if not inline:
-                continue
-            audio_data = base64.b64decode(inline["data"])
-            with wave.open(cached_path, "wb") as wav_file:
-                wav_file.setnchannels(1)
-                wav_file.setsampwidth(2)
-                wav_file.setframerate(24000)
-                wav_file.writeframes(audio_data)
-            duration = len(audio_data) / (24000 * 2)
-            print(f"  {label}: {duration:.1f}s")
-            return cached_path
-
-    return None
+    with open(cached_path, "wb") as handle:
+        handle.write(response.audio_content)
+    duration = wav_duration(cached_path)
+    print(f"  {label}: {duration:.1f}s")
+    return cached_path
 
 
 with open(input_path, "r", encoding="utf-8") as handle:
@@ -417,7 +403,7 @@ wav_files: List[str] = []
 
 if include_disclaimer:
     print("Generating disclaimer...")
-    disclaimer_wav = generate_audio(disclaimer, "disclaimer")
+    disclaimer_wav = generate_audio("", disclaimer, "disclaimer")
     if disclaimer_wav:
         wav_files.append(disclaimer_wav)
 
@@ -427,7 +413,7 @@ cached_count = sum(
     if os.path.exists(
         os.path.join(
             cache_dir,
-            f"{cache_key(f'<style>{style}</style>\\n\\n{chunk}')}.wav",
+            f"{cache_key(style, chunk)}.wav",
         )
     )
 )
@@ -439,13 +425,12 @@ print(
 
 failed_chunks: List[int] = []
 for index, chunk in enumerate(chunks, start=1):
-    styled_text = f"<style>{style}</style>\n\n{chunk}"
     print(
         f"  Chunk {index}/{len(chunks)} ({len(chunk)} chars)...",
         end=" ",
         flush=True,
     )
-    wav_path = generate_audio(styled_text, f"chunk-{index - 1:03d}")
+    wav_path = generate_audio(style, chunk, f"chunk-{index - 1:03d}")
     if wav_path:
         wav_files.append(wav_path)
     else:

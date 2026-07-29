@@ -20,6 +20,17 @@ written on Chad's behalf, that rewrite must strictly follow the
 
 ## Quick Start
 
+Before the first run, enable Cloud Text-to-Speech for the selected Google Cloud
+project and configure Application Default Credentials:
+
+```bash
+gcloud auth application-default login
+gcloud auth application-default set-quota-project <project-id>
+```
+
+The authenticated principal needs `aiplatform.endpoints.predict`, which the
+`roles/aiplatform.user` role provides.
+
 Create a TTS-friendly intermediate text file, then run the bundled script with
 that file:
 
@@ -103,9 +114,12 @@ bash <skill-dir>/scripts/narrate.sh \
   rewrite the text into a different voice.
 - Pronunciation smoothing should favor what the listener needs to hear, not what
   looks closest to the original typography.
-- If `GEMINI_API_KEY` is unset, the script falls back to Chad's 1Password item
-  at `op://Employee/Personal Gemini API Key/General/API Key`. If `op` is
-  unavailable, set `GEMINI_API_KEY` before running it.
+- The script uses Google Cloud Application Default Credentials. For local use,
+  configure them with `gcloud auth application-default login`. For hosted use,
+  attach a service account with the required permission.
+- The default `us` Cloud TTS endpoint keeps processing within the United States.
+  Use `--region` or `GOOGLE_CLOUD_REGION` when another supported endpoint is
+  required.
 - Output defaults to `<input-stem>-<timestamp>.mp3` beside the input file. Use
   `--output` when the filename should be stable.
 - Cached WAV chunks live under

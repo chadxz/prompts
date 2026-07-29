@@ -1,0 +1,647 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+PROGRAM_NAME="$(basename "$0")"
+
+MODE="read"
+OUTPUT_FORMAT="json"
+CURRENT_DIRECTORY="$PWD"
+REPOSITORY_INPUT=""
+PULL_REQUEST_INPUT=""
+REQUESTED_BRANCH=""
+REQUEST_MAIN=0
+ALLOW_MAIN=0
+SOURCE_ROOT="${WORKTREE_SOURCE_ROOT:-${HOME}/src}"
+
+REPOSITORY_SLUG=""
+REPOSITORY_CONTAINER=""
+GIT_COMMON_DIRECTORY=""
+PULL_REQUEST_NUMBER=""
+PULL_REQUEST_SLUG=""
+EXPECTED_HEAD_SHA=""
+
+usage() {
+  cat <<EOF
+Usage:
+  $PROGRAM_NAME [options]
+
+Resolve an existing Git worktree without changing repository state.
+
+Inputs:
+      --cwd <path>         Start from this directory (default: current directory)
+      --repo <path|slug>   Repository path or owner/repository slug
+      --pr <reference>     Pull request URL, owner/repository#number, or number
+      --branch <name>      Require a worktree for this local branch
+      --main               Resolve the default-branch worktree
+
+Policy:
+      --mode <read|write>  Resolution purpose (default: read)
+      --allow-main         Permit the default branch in write mode
+
+Output:
+      --format <json|path> Output structured state or only the worktree path
+  -h, --help               Show this help text
+
+Examples:
+  $PROGRAM_NAME --repo /path/to/repository --main
+  $PROGRAM_NAME --repo owner/repository --branch agent/example --mode write
+  $PROGRAM_NAME --pr owner/repository#123 --mode write
+EOF
+}
+
+emit_usage_error() {
+  local message="$1"
+
+  echo "Error: $message" >&2
+  echo "Run '$PROGRAM_NAME --help' for usage." >&2
+  exit 64
+}
+
+require_command() {
+  local command_name="$1"
+
+  if ! command -v "$command_name" >/dev/null 2>&1; then
+    echo "Error: required command not found: $command_name" >&2
+    exit 69
+  fi
+}
+
+canonical_directory() {
+  local directory="$1"
+
+  (
+    cd "$directory"
+    pwd -P
+  )
+}
+
+emit_resolution_error() {
+  local reason="$1"
+  local message="$2"
+  local suggested_worktree="${3:-}"
+
+  if [ "$OUTPUT_FORMAT" = "json" ] && command -v jq >/dev/null 2>&1; then
+    jq -n \
+      --arg reason "$reason" \
+      --arg message "$message" \
+      --arg repository "$REPOSITORY_SLUG" \
+      --arg container "$REPOSITORY_CONTAINER" \
+      --arg branch "$REQUESTED_BRANCH" \
+      --arg suggested_worktree "$suggested_worktree" \
+      '{
+        resolved: false,
+        reason: $reason,
+        message: $message,
+        repository: (
+          if $repository == "" then null else $repository end
+        ),
+        container: (
+          if $container == "" then null else $container end
+        ),
+        requested_branch: (
+          if $branch == "" then null else $branch end
+        ),
+        suggested_worktree: (
+          if $suggested_worktree == "" then null else $suggested_worktree end
+        )
+      }'
+  else
+    echo "Error: $message" >&2
+  fi
+
+  exit 2
+}
+
+parse_pull_request() {
+  local pull_request="$1"
+
+  if [[ "$pull_request" =~ ^https?://[^/]+/([^/]+)/([^/]+)/pull/([0-9]+) ]]; then
+    PULL_REQUEST_SLUG="${BASH_REMATCH[1]}/${BASH_REMATCH[2]}"
+    PULL_REQUEST_NUMBER="${BASH_REMATCH[3]}"
+    return
+  fi
+
+  if [[ "$pull_request" =~ ^([^/]+)/([^#]+)#([0-9]+)$ ]]; then
+    PULL_REQUEST_SLUG="${BASH_REMATCH[1]}/${BASH_REMATCH[2]}"
+    PULL_REQUEST_NUMBER="${BASH_REMATCH[3]}"
+    return
+  fi
+
+  if [[ "$pull_request" =~ ^#?([0-9]+)$ ]]; then
+    PULL_REQUEST_NUMBER="${BASH_REMATCH[1]}"
+    return
+  fi
+
+  emit_usage_error "unsupported pull request reference: $pull_request"
+}
+
+repository_slug_from_remote() {
+  local remote_url="$1"
+  local slug=""
+
+  case "$remote_url" in
+    https://github.com/*)
+      slug="${remote_url#https://github.com/}"
+      ;;
+    ssh://git@github.com/*)
+      slug="${remote_url#ssh://git@github.com/}"
+      ;;
+    git@github.com:*)
+      slug="${remote_url#git@github.com:}"
+      ;;
+  esac
+
+  slug="${slug%.git}"
+  printf '%s' "$slug"
+}
+
+locate_repository_slug() {
+  local repository_slug="$1"
+  local repository_name="${repository_slug##*/}"
+  local direct_candidate="${SOURCE_ROOT}/${repository_slug}"
+  local candidate=""
+  local candidate_common_directory=""
+  local candidate_remote_url=""
+  local candidate_slug=""
+  local matched_candidate=""
+
+  if [ -d "$direct_candidate" ]; then
+    canonical_directory "$direct_candidate"
+    return
+  fi
+
+  for candidate in "${SOURCE_ROOT}"/*/"$repository_name"; do
+    [ -d "$candidate" ] || continue
+
+    candidate_common_directory="$(
+      git -C "$candidate" rev-parse \
+        --path-format=absolute --git-common-dir 2>/dev/null || true
+    )"
+    [ -n "$candidate_common_directory" ] || continue
+
+    candidate_remote_url="$(
+      git --git-dir="$candidate_common_directory" \
+        remote get-url origin 2>/dev/null || true
+    )"
+    candidate_slug="$(repository_slug_from_remote "$candidate_remote_url")"
+    [ "$candidate_slug" = "$repository_slug" ] || continue
+
+    if [ -n "$matched_candidate" ]; then
+      emit_resolution_error \
+        "repository-ambiguous" \
+        "multiple local repositories match $repository_slug"
+    fi
+    matched_candidate="$(canonical_directory "$candidate")"
+  done
+
+  if [ -n "$matched_candidate" ]; then
+    printf '%s' "$matched_candidate"
+    return
+  fi
+
+  printf '%s' "$direct_candidate"
+}
+
+default_branch_name() {
+  local remote_head=""
+
+  remote_head="$(
+    git --git-dir="$GIT_COMMON_DIRECTORY" \
+      symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || true
+  )"
+  if [ -n "$remote_head" ]; then
+    printf '%s' "${remote_head#origin/}"
+    return
+  fi
+
+  if git --git-dir="$GIT_COMMON_DIRECTORY" show-ref \
+    --verify --quiet refs/heads/main; then
+    printf 'main'
+    return
+  fi
+
+  if git --git-dir="$GIT_COMMON_DIRECTORY" show-ref \
+    --verify --quiet refs/heads/master; then
+    printf 'master'
+    return
+  fi
+
+  printf ''
+}
+
+worktree_for_branch() {
+  local branch_name="$1"
+
+  git --git-dir="$GIT_COMMON_DIRECTORY" worktree list --porcelain |
+    awk -v expected_branch="refs/heads/$branch_name" '
+      BEGIN {
+        RS = ""
+        FS = "\n"
+      }
+
+      {
+        worktree_path = ""
+        branch_ref = ""
+        is_bare = 0
+
+        for (line_number = 1; line_number <= NF; line_number++) {
+          if ($line_number ~ /^worktree /) {
+            worktree_path = substr($line_number, 10)
+          } else if ($line_number ~ /^branch /) {
+            branch_ref = substr($line_number, 8)
+          } else if ($line_number == "bare") {
+            is_bare = 1
+          }
+        }
+
+        if (!is_bare && branch_ref == expected_branch) {
+          print worktree_path
+          exit
+        }
+      }
+    '
+}
+
+suggested_worktree_for_branch() {
+  local branch_name="$1"
+  local task_slug="${branch_name##*/}"
+
+  printf '%s/%s' "$REPOSITORY_CONTAINER" "$task_slug"
+}
+
+resolve_repository() {
+  local start_directory="$CURRENT_DIRECTORY"
+  local remote_url=""
+  local remote_slug=""
+
+  if [ -n "$REPOSITORY_INPUT" ]; then
+    if [ -d "$REPOSITORY_INPUT" ]; then
+      start_directory="$REPOSITORY_INPUT"
+    elif [[ "$REPOSITORY_INPUT" =~ ^[^/]+/[^/]+$ ]]; then
+      REPOSITORY_SLUG="$REPOSITORY_INPUT"
+      start_directory="$(locate_repository_slug "$REPOSITORY_INPUT")"
+    else
+      emit_resolution_error \
+        "repository-not-found" \
+        "repository path does not exist: $REPOSITORY_INPUT"
+    fi
+  elif [ -n "$PULL_REQUEST_SLUG" ]; then
+    REPOSITORY_SLUG="$PULL_REQUEST_SLUG"
+    start_directory="$(locate_repository_slug "$PULL_REQUEST_SLUG")"
+  fi
+
+  if [ ! -d "$start_directory" ]; then
+    emit_resolution_error \
+      "repository-not-found" \
+      "repository path does not exist: $start_directory"
+  fi
+
+  start_directory="$(canonical_directory "$start_directory")"
+  GIT_COMMON_DIRECTORY="$(
+    git -C "$start_directory" rev-parse \
+      --path-format=absolute --git-common-dir 2>/dev/null || true
+  )"
+  if [ -z "$GIT_COMMON_DIRECTORY" ]; then
+    emit_resolution_error \
+      "not-a-git-repository" \
+      "path is not inside a Git repository: $start_directory"
+  fi
+
+  GIT_COMMON_DIRECTORY="$(canonical_directory "$GIT_COMMON_DIRECTORY")"
+  if [ "$(basename "$GIT_COMMON_DIRECTORY")" = ".git" ]; then
+    REPOSITORY_CONTAINER="$(dirname "$GIT_COMMON_DIRECTORY")"
+  else
+    REPOSITORY_CONTAINER="$GIT_COMMON_DIRECTORY"
+  fi
+
+  remote_url="$(
+    git --git-dir="$GIT_COMMON_DIRECTORY" \
+      remote get-url origin 2>/dev/null || true
+  )"
+  remote_slug="$(repository_slug_from_remote "$remote_url")"
+  if [ -n "$REPOSITORY_SLUG" ] && [ -n "$remote_slug" ] &&
+    [ "$REPOSITORY_SLUG" != "$remote_slug" ]; then
+    emit_resolution_error \
+      "repository-mismatch" \
+      "local repository $remote_slug does not match $REPOSITORY_SLUG"
+  fi
+  if [ -z "$REPOSITORY_SLUG" ]; then
+    REPOSITORY_SLUG="$remote_slug"
+  fi
+}
+
+resolve_pull_request_branch() {
+  local pull_request_json=""
+
+  if [ -z "$PULL_REQUEST_NUMBER" ]; then
+    return 0
+  fi
+  require_command gh
+  require_command jq
+
+  if [ -z "$PULL_REQUEST_SLUG" ]; then
+    PULL_REQUEST_SLUG="$REPOSITORY_SLUG"
+  fi
+  if [ -n "$REPOSITORY_SLUG" ] && [ -n "$PULL_REQUEST_SLUG" ] &&
+    [ "$REPOSITORY_SLUG" != "$PULL_REQUEST_SLUG" ]; then
+    emit_resolution_error \
+      "repository-mismatch" \
+      "pull request repository $PULL_REQUEST_SLUG does not match $REPOSITORY_SLUG"
+  fi
+  if [ -z "$PULL_REQUEST_SLUG" ]; then
+    emit_resolution_error \
+      "repository-slug-required" \
+      "a repository slug is required to resolve pull request $PULL_REQUEST_NUMBER"
+  fi
+
+  if ! pull_request_json="$(
+    gh pr view "$PULL_REQUEST_NUMBER" \
+      --repo "$PULL_REQUEST_SLUG" \
+      --json headRefName,headRefOid
+  )"; then
+    emit_resolution_error \
+      "pull-request-lookup-failed" \
+      "GitHub could not resolve $PULL_REQUEST_SLUG#$PULL_REQUEST_NUMBER"
+  fi
+  REQUESTED_BRANCH="$(jq -r '.headRefName' <<<"$pull_request_json")"
+  EXPECTED_HEAD_SHA="$(jq -r '.headRefOid' <<<"$pull_request_json")"
+
+  if [ -z "$REQUESTED_BRANCH" ] || [ "$REQUESTED_BRANCH" = "null" ]; then
+    emit_resolution_error \
+      "pull-request-head-unavailable" \
+      "GitHub did not return a head branch for $PULL_REQUEST_SLUG#$PULL_REQUEST_NUMBER"
+  fi
+}
+
+mise_trust_state() {
+  local worktree_directory="$1"
+  local trust_output=""
+
+  if ! command -v mise >/dev/null 2>&1; then
+    printf 'unavailable'
+    return
+  fi
+
+  if [ ! -f "$worktree_directory/mise.toml" ] &&
+    [ ! -f "$worktree_directory/.mise.toml" ]; then
+    printf 'not-applicable'
+    return
+  fi
+
+  trust_output="$(mise trust --show -C "$worktree_directory" 2>/dev/null || true)"
+  case "$trust_output" in
+    *": trusted")
+      printf 'trusted'
+      ;;
+    *": untrusted")
+      printf 'untrusted'
+      ;;
+    *)
+      printf 'unknown'
+      ;;
+  esac
+}
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --cwd)
+      [ $# -ge 2 ] || emit_usage_error "$1 requires a value"
+      CURRENT_DIRECTORY="$2"
+      shift 2
+      ;;
+    --repo)
+      [ $# -ge 2 ] || emit_usage_error "$1 requires a value"
+      REPOSITORY_INPUT="$2"
+      shift 2
+      ;;
+    --pr)
+      [ $# -ge 2 ] || emit_usage_error "$1 requires a value"
+      PULL_REQUEST_INPUT="$2"
+      shift 2
+      ;;
+    --branch)
+      [ $# -ge 2 ] || emit_usage_error "$1 requires a value"
+      REQUESTED_BRANCH="$2"
+      shift 2
+      ;;
+    --main)
+      REQUEST_MAIN=1
+      shift
+      ;;
+    --mode)
+      [ $# -ge 2 ] || emit_usage_error "$1 requires a value"
+      MODE="$2"
+      shift 2
+      ;;
+    --allow-main)
+      ALLOW_MAIN=1
+      shift
+      ;;
+    --format)
+      [ $# -ge 2 ] || emit_usage_error "$1 requires a value"
+      OUTPUT_FORMAT="$2"
+      shift 2
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      emit_usage_error "unknown option: $1"
+      ;;
+  esac
+done
+
+case "$MODE" in
+  read | write) ;;
+  *) emit_usage_error "--mode must be read or write" ;;
+esac
+
+case "$OUTPUT_FORMAT" in
+  json | path) ;;
+  *) emit_usage_error "--format must be json or path" ;;
+esac
+
+selector_count=0
+[ -n "$PULL_REQUEST_INPUT" ] && selector_count=$((selector_count + 1))
+[ -n "$REQUESTED_BRANCH" ] && selector_count=$((selector_count + 1))
+[ "$REQUEST_MAIN" -eq 1 ] && selector_count=$((selector_count + 1))
+if [ "$selector_count" -gt 1 ]; then
+  emit_usage_error "--pr, --branch, and --main are mutually exclusive"
+fi
+
+require_command git
+if [ "$OUTPUT_FORMAT" = "json" ]; then
+  require_command jq
+fi
+
+if [ -n "$PULL_REQUEST_INPUT" ]; then
+  parse_pull_request "$PULL_REQUEST_INPUT"
+fi
+
+resolve_repository
+resolve_pull_request_branch
+
+DEFAULT_BRANCH="$(default_branch_name)"
+CURRENT_WORKTREE=""
+CURRENT_GIT_COMMON_DIRECTORY="$(
+  git -C "$CURRENT_DIRECTORY" rev-parse \
+    --path-format=absolute --git-common-dir 2>/dev/null || true
+)"
+if [ -n "$CURRENT_GIT_COMMON_DIRECTORY" ]; then
+  CURRENT_GIT_COMMON_DIRECTORY="$(
+    canonical_directory "$CURRENT_GIT_COMMON_DIRECTORY"
+  )"
+  if [ "$CURRENT_GIT_COMMON_DIRECTORY" = "$GIT_COMMON_DIRECTORY" ]; then
+    CURRENT_WORKTREE="$(
+      git -C "$CURRENT_DIRECTORY" rev-parse \
+        --show-toplevel 2>/dev/null || true
+    )"
+  fi
+fi
+SELECTED_WORKTREE=""
+RESOLUTION=""
+
+if [ -n "$REQUESTED_BRANCH" ]; then
+  SELECTED_WORKTREE="$(worktree_for_branch "$REQUESTED_BRANCH")"
+  if [ -z "$SELECTED_WORKTREE" ]; then
+    emit_resolution_error \
+      "no-matching-worktree" \
+      "no worktree exists for branch $REQUESTED_BRANCH" \
+      "$(suggested_worktree_for_branch "$REQUESTED_BRANCH")"
+  fi
+  if [ -n "$PULL_REQUEST_NUMBER" ]; then
+    RESOLUTION="matched-pr-branch"
+  else
+    RESOLUTION="matched-branch"
+  fi
+elif [ "$REQUEST_MAIN" -eq 1 ]; then
+  if [ -z "$DEFAULT_BRANCH" ]; then
+    emit_resolution_error \
+      "default-branch-unknown" \
+      "the repository default branch could not be determined"
+  fi
+  REQUESTED_BRANCH="$DEFAULT_BRANCH"
+  SELECTED_WORKTREE="$(worktree_for_branch "$DEFAULT_BRANCH")"
+  RESOLUTION="default-worktree"
+elif [ -n "$CURRENT_WORKTREE" ]; then
+  SELECTED_WORKTREE="$(canonical_directory "$CURRENT_WORKTREE")"
+  RESOLUTION="current-worktree"
+elif [ "$MODE" = "read" ]; then
+  if [ -z "$DEFAULT_BRANCH" ]; then
+    emit_resolution_error \
+      "default-branch-unknown" \
+      "the repository default branch could not be determined"
+  fi
+  REQUESTED_BRANCH="$DEFAULT_BRANCH"
+  SELECTED_WORKTREE="$(worktree_for_branch "$DEFAULT_BRANCH")"
+  RESOLUTION="default-worktree"
+else
+  emit_resolution_error \
+    "worktree-required" \
+    "write mode requires a task worktree, branch, or pull request"
+fi
+
+if [ -z "$SELECTED_WORKTREE" ]; then
+  emit_resolution_error \
+    "no-matching-worktree" \
+    "the requested worktree does not exist"
+fi
+
+SELECTED_WORKTREE="$(canonical_directory "$SELECTED_WORKTREE")"
+IS_INSIDE_WORKTREE="$(
+  git -C "$SELECTED_WORKTREE" rev-parse --is-inside-work-tree 2>/dev/null || true
+)"
+if [ "$IS_INSIDE_WORKTREE" != "true" ]; then
+  emit_resolution_error \
+    "invalid-worktree" \
+    "resolved path is not a working tree: $SELECTED_WORKTREE"
+fi
+
+RESOLVED_BRANCH="$(
+  git -C "$SELECTED_WORKTREE" \
+    symbolic-ref --quiet --short HEAD 2>/dev/null || true
+)"
+HEAD_SHA="$(git -C "$SELECTED_WORKTREE" rev-parse HEAD)"
+
+IS_MAIN=false
+if [ -n "$DEFAULT_BRANCH" ] && [ "$RESOLVED_BRANCH" = "$DEFAULT_BRANCH" ]; then
+  IS_MAIN=true
+fi
+
+if [ "$MODE" = "write" ] && [ "$IS_MAIN" = "true" ] &&
+  [ "$ALLOW_MAIN" -ne 1 ]; then
+  emit_resolution_error \
+    "main-worktree-for-write" \
+    "write mode refuses the default-branch worktree without --allow-main"
+fi
+
+DIRTY=false
+if [ -n "$(git -C "$SELECTED_WORKTREE" status --porcelain)" ]; then
+  DIRTY=true
+fi
+
+HEAD_MATCHES_EXPECTED_JSON="null"
+if [ -n "$EXPECTED_HEAD_SHA" ] && [ "$EXPECTED_HEAD_SHA" != "null" ]; then
+  if [ "$HEAD_SHA" = "$EXPECTED_HEAD_SHA" ]; then
+    HEAD_MATCHES_EXPECTED_JSON=true
+  else
+    HEAD_MATCHES_EXPECTED_JSON=false
+  fi
+fi
+
+MISE_TRUST_STATE="$(mise_trust_state "$SELECTED_WORKTREE")"
+
+if [ "$OUTPUT_FORMAT" = "path" ]; then
+  printf '%s\n' "$SELECTED_WORKTREE"
+  exit 0
+fi
+
+jq -n \
+  --arg repository "$REPOSITORY_SLUG" \
+  --arg container "$REPOSITORY_CONTAINER" \
+  --arg git_common_directory "$GIT_COMMON_DIRECTORY" \
+  --arg worktree "$SELECTED_WORKTREE" \
+  --arg branch "$RESOLVED_BRANCH" \
+  --arg pull_request_number "$PULL_REQUEST_NUMBER" \
+  --arg head_sha "$HEAD_SHA" \
+  --arg expected_head_sha "$EXPECTED_HEAD_SHA" \
+  --arg default_branch "$DEFAULT_BRANCH" \
+  --arg mode "$MODE" \
+  --arg resolution "$RESOLUTION" \
+  --arg mise_trust "$MISE_TRUST_STATE" \
+  --argjson dirty "$DIRTY" \
+  --argjson is_main "$IS_MAIN" \
+  --argjson head_matches_expected "$HEAD_MATCHES_EXPECTED_JSON" \
+  '{
+    resolved: true,
+    repository: (
+      if $repository == "" then null else $repository end
+    ),
+    container: $container,
+    git_common_directory: $git_common_directory,
+    worktree: $worktree,
+    branch: (
+      if $branch == "" then null else $branch end
+    ),
+    pull_request_number: (
+      if $pull_request_number == "" then null else $pull_request_number end
+    ),
+    head_sha: $head_sha,
+    expected_head_sha: (
+      if $expected_head_sha == "" or $expected_head_sha == "null"
+      then null
+      else $expected_head_sha
+      end
+    ),
+    head_matches_expected: $head_matches_expected,
+    default_branch: (
+      if $default_branch == "" then null else $default_branch end
+    ),
+    is_main: $is_main,
+    dirty: $dirty,
+    mise_trust: $mise_trust,
+    mode: $mode,
+    resolution: $resolution
+  }'

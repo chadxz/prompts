@@ -26,18 +26,40 @@ files.
 
 ## Start with the current state
 
-If you are already inside a worktree, run:
+Resolve an existing worktree before running status, diff, build, test, or
+file-changing commands. Run the bundled read-only resolver from this skill's
+directory:
 
 ```bash
-git status --short --branch
-git worktree list
+scripts/resolve-worktree --cwd "$PWD" --mode write
 ```
 
-If you are at the repository container, run:
+When the task names a repository, branch, or pull request, pass it directly:
 
 ```bash
-git -C <repo> worktree list
+scripts/resolve-worktree \
+  --repo ~/src/convergint/ee-monorepo \
+  --branch agent/fix-sftp-tenant-validation \
+  --mode write
+
+scripts/resolve-worktree \
+  --pr convergint/ee-monorepo#5678 \
+  --mode write
 ```
+
+The resolver never creates a branch or worktree. It reports the repository
+container, selected worktree, branch, head SHA, dirty state, default-branch
+status, mise trust state, and whether a pull request worktree matches the
+current PR head. Use its absolute `worktree` value as the working directory for
+every later command.
+
+The resolver requires Bash and Git. JSON output requires `jq`, and pull request
+resolution also requires `gh`.
+
+Write mode refuses the default-branch worktree unless `--allow-main` is
+explicitly provided. If no matching worktree exists, continue through the
+topology decision below and create one only after choosing a single branch or
+Stack. Re-run the resolver after creation to verify the selected checkout.
 
 Treat unrelated dirty work as user-owned. Do not move, stage, revert, clean, or
 overwrite another checkout's changes unless the user explicitly asks.
@@ -129,9 +151,10 @@ After choosing the worktree:
 
 1. Change into the worktree.
 2. Re-read repository instructions from inside that checkout.
-3. Run setup commands if the project needs dependencies, generated files, or
+3. Run `mise trust` if the checkout's mise configuration is untrusted.
+4. Run setup commands if the project needs dependencies, generated files, or
    per-worktree environment files.
-4. Make edits, run verification, and inspect `git status --short --branch` from
+5. Make edits, run verification, and inspect `git status --short --branch` from
    the worktree before reporting back.
 
 Do not run broad destructive cleanup until you understand which worktree you are

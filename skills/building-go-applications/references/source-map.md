@@ -1,5 +1,10 @@
 # Source Map
 
+- [Shared guidance](#shared-guidance)
+- [EE monorepo repo plumbing](#ee-monorepo-repo-plumbing)
+- [Go app examples](#go-app-examples)
+- [IT monorepo example](#it-monorepo-example)
+
 This skill was extracted from Go code and contributor guidance in these local
 repositories:
 

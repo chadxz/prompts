@@ -1,0 +1,8 @@
+interface:
+  display_name: "Reviewing Complex Work"
+  short_description: "Get an independent peer-agent review"
+  default_prompt: >-
+    Use $reviewing-complex-work to get an independent peer-agent review of the
+    current work.
+policy:
+  allow_implicit_invocation: true

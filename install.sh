@@ -12,4 +12,5 @@ setup_global_gitignore "$SCRIPT_DIR/.gitignore_global"
 setup_git_clone_override "$SCRIPT_DIR/bin"
 install_wt_stack "$SCRIPT_DIR"
 link_path_if_present "$SCRIPT_DIR/cursor-commands" "$COMMANDS_DIR"
+link_path "$SCRIPT_DIR/AGENTS.md" "$CURSOR_DIR/AGENTS.md"
 "$SCRIPT_DIR/bin/cursor-cli-config" install

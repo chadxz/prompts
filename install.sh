@@ -9,6 +9,7 @@ COMMANDS_DIR="$CURSOR_DIR/commands"
 source "$SCRIPT_DIR/setup-common.sh"
 
 setup_global_gitignore "$SCRIPT_DIR/.gitignore_global"
+setup_git_commit_template "$SCRIPT_DIR/.git_commit_template"
 setup_git_clone_override "$SCRIPT_DIR/bin"
 install_wt_stack "$SCRIPT_DIR"
 link_path_if_present "$SCRIPT_DIR/cursor-commands" "$COMMANDS_DIR"

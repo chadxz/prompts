@@ -9,6 +9,7 @@ PROMPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$PROMPTS_DIR/setup-common.sh"
 
 setup_global_gitignore "$PROMPTS_DIR/.gitignore_global"
+setup_git_commit_template "$PROMPTS_DIR/.git_commit_template"
 setup_git_clone_override "$PROMPTS_DIR/bin"
 install_wt_stack "$PROMPTS_DIR"
 link_path "$PROMPTS_DIR/AGENTS.md" "$HOME/.claude/CLAUDE.md"

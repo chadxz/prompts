@@ -17,6 +17,7 @@ mkdir -p "$CODEX_DIR"
 mkdir -p "$CODEX_DIR/skills"
 
 setup_global_gitignore "$PROMPTS_DIR/.gitignore_global"
+setup_git_commit_template "$PROMPTS_DIR/.git_commit_template"
 setup_git_clone_override "$PROMPTS_DIR/bin"
 ensure_mise_shims_on_zprofile
 install_wt_stack "$PROMPTS_DIR"

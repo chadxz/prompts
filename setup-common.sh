@@ -108,6 +108,22 @@ setup_global_gitignore() {
   fi
 }
 
+setup_git_commit_template() {
+  local source="$1"
+  local target="$HOME/.git_commit_template"
+  local configured_path
+
+  link_path "$source" "$target"
+
+  configured_path="$(git config --global --get commit.template || true)"
+  if [[ "$configured_path" != "$target" ]]; then
+    git config --global commit.template "$target"
+    echo "Configured git commit.template -> $target"
+  else
+    echo "git commit.template already points to $target"
+  fi
+}
+
 setup_git_clone_override() {
   local bin_dir="$1"
   local wrapper="$bin_dir/git"

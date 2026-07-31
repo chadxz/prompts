@@ -46,6 +46,12 @@ Do not run `gh pr create`, push branches individually, or set pull request bases
 manually for Stack-owned branches. `wt-stack` owns those operations and keeps
 the remote Stack consistent.
 
+Do not add pull request body alerts or instructions that tell reviewers which
+pull request in a Stack to merge first. GitHub's native Stack UI shows the
+order, and its merge workflow handles the required lower layers and retargets
+the remaining higher layers. Reserve callouts for context GitHub does not
+already communicate.
+
 ## PR Overrides
 
 These override the `creating-commits` skill's defaults when the commit is part
@@ -82,7 +88,7 @@ Use GitHub's blockquote-based alerts when a pull request body needs a callout:
 
 ```markdown
 > [!IMPORTANT]
-> Merge the schema pull request before this consumer.
+> Enable the feature flag only after the schema migration finishes.
 ```
 
 Choose the alert type by purpose:

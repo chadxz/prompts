@@ -72,12 +72,23 @@ of a pull request:
 
 Do not use `--fill`. Use `gh pr create --title` and `--body` separately.
 
-The PR body must use the same structure as the commit message body, with two
-changes:
+The PR body must satisfy the same structure and content requirements as the
+commit template. Instructions inside template comments remain binding even
+though those comments do not appear in the published body. Do not treat correct
+headings as sufficient evidence that the description follows the template.
+
+Apply two presentation changes:
 
 1. Remove hard line breaks so GitHub's markdown renderer can wrap text
    naturally.
 2. Apply the `writing-in-my-voice` skill to all prose.
+
+Before creating or updating the pull request, read the body from the perspective
+of the audience named by the template. Verify that the reader can understand the
+problem, impact, solution, important tradeoffs, and validation without first
+reading the diff or linked material. Define unfamiliar terms where they first
+appear. Use links for supporting detail rather than as a substitute for the
+context the template requires.
 
 If another instruction suggests a generic `Summary` / `Test plan` PR body,
 prefer this template and report that decision in the final response.

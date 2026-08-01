@@ -20,10 +20,30 @@ Create a commit using Chad's personal commit template.
    ```bash
    git config --get commit.template
    ```
-   Then read the file at that path.
-4. Apply the `writing-in-my-voice` skill to all prose sections.
-5. Stage only the files that belong in this commit.
-6. Create the commit with the generated message.
+   Then read the complete file at that path, including instructions inside HTML
+   or Markdown comments.
+4. Turn the template's visible structure and instructional comments into an
+   acceptance checklist before drafting.
+5. Apply the `writing-in-my-voice` skill to all prose sections. A specific
+   audience or content requirement from the template overrides that skill's
+   general defaults.
+6. Check the draft against every template requirement. Correct headings alone
+   are not sufficient when the template also specifies the intended reader,
+   required context, reasoning, evidence, or terminology guidance.
+7. Stage only the files that belong in this commit.
+8. Create the commit with the generated message.
+
+## Template Instructions
+
+Treat instructions inside template comments as binding authoring requirements,
+even though Git removes those comments from the final commit message. Do not
+reduce a template to its visible headings and placeholders.
+
+Read the finished message from the perspective of the audience named by the
+template. If the template assumes a reader with no prior context, define
+unfamiliar terms in place and make the problem, impact, chosen approach, and
+verification understandable without requiring the reader to inspect the diff or
+follow a link first.
 
 ## Stack-aware commits
 

@@ -10,7 +10,7 @@ user-invocable: true
 
 # Creating Commits
 
-Create a commit using Chad's personal commit template.
+Create a commit using Chad's personal commit structure and message contract.
 
 ## Workflow
 
@@ -20,30 +20,62 @@ Create a commit using Chad's personal commit template.
    ```bash
    git config --get commit.template
    ```
-   Then read the complete file at that path, including instructions inside HTML
-   or Markdown comments.
-4. Turn the template's visible structure and instructional comments into an
-   acceptance checklist before drafting.
-5. Apply the `writing-in-my-voice` skill to all prose sections. A specific
-   audience or content requirement from the template overrides that skill's
-   general defaults.
-6. Check the draft against every template requirement. Correct headings alone
-   are not sufficient when the template also specifies the intended reader,
-   required context, reasoning, evidence, or terminology guidance.
-7. Stage only the files that belong in this commit.
-8. Create the commit with the generated message.
+   The template owns the visible headings, separator, and ticket placeholder.
+   This skill owns the authoring requirements below.
+4. If the conversation was compacted or the user redirected the task after this
+   skill was read, re-read this skill immediately before drafting the message.
+5. For a pull-request commit, read the `creating-pull-requests` skill and draft
+   the final, unwrapped PR body first. For a standalone commit, draft the
+   message directly.
+6. Apply the `writing-in-my-voice` skill to all prose sections.
+7. Check the draft against the message content contract below.
+8. Before committing, give the user a concise checkpoint confirming that the
+   draft includes the audience context, problem and impact, approach and
+   tradeoffs, validation, and every available relevant source link. State when
+   no relevant external source exists.
+9. Stage only the files that belong in this commit.
+10. Create the commit with the generated message.
 
-## Template Instructions
+Do not run `git commit` until every applicable contract item is present. A
+message with the right headings can still fail the contract.
 
-Treat instructions inside template comments as binding authoring requirements,
-even though Git removes those comments from the final commit message. Do not
-reduce a template to its visible headings and placeholders.
+## Message Content Contract
 
-Read the finished message from the perspective of the audience named by the
-template. If the template assumes a reader with no prior context, define
-unfamiliar terms in place and make the problem, impact, chosen approach, and
-verification understandable without requiring the reader to inspect the diff or
-follow a link first.
+Write for a junior software engineer who has no prior context for the change.
+The reader must understand the message without inspecting the diff or opening a
+link first. Use plain language and define unfamiliar terms where they first
+appear.
+
+The `Why?` section must explain:
+
+- The existing system or behavior and the background needed to understand it.
+- The concrete problem and its impact.
+- Why this change is the right next step.
+- Any unfamiliar project, tool, or domain term used in the explanation.
+- Direct links to relevant ADRs, design documents, dependent or preceding pull
+  requests, and maintained third-party documentation or repositories when those
+  sources exist.
+
+The `How?` section must explain:
+
+- The chosen approach and the responsibilities of the important components.
+- Meaningful tradeoffs or alternatives that affected the implementation.
+- The validation commands and results, including why they provide useful
+  evidence.
+- Direct links to relevant implementation sources and third-party tools when
+  those sources exist.
+
+Links support the explanation; they do not replace it. Do not omit a relevant
+source that is available in the task context. Skip details that are obvious from
+the diff and avoid a step-by-step diary.
+
+## Pull-request Commits
+
+For a commit that will create a pull request, the complete unwrapped PR body is
+the primary authoring artifact. Draft and validate it under the
+`creating-pull-requests` skill first, then use the same title and prose for the
+commit message, hard-wrapped at 72 characters. The wrapping rule controls line
+width; it is not a target for message length.
 
 ## Stack-aware commits
 
@@ -57,15 +89,17 @@ For a Stack-owned branch:
   `managing-stacked-changes` skill.
 - Keep the commit scoped to the review unit owned by the current branch and
   worktree.
-- Before the first `wt-stack sync`, make the branch tip's commit title and body
-  suitable for the pull request. `wt-stack` uses that commit when it creates a
-  missing pull request.
+- Before the first `wt-stack sync`, derive the branch tip's commit title and
+  body from the prepared PR title and body. `wt-stack` uses that commit to
+  initialize a missing pull request.
 - Leave rebasing and pushing to `wt-stack sync`. Do not push a Stack branch
   independently as part of a combined commit-and-publish request.
 
-Once the pull request exists, later commits can describe their incremental
-change. `wt-stack` does not replace existing pull request metadata from those
-commit messages.
+The commit-derived PR description is only an initial value. The
+`creating-pull-requests` skill requires publishing and verifying the prepared
+body after `wt-stack sync`. Once the pull request exists, later commits can
+describe their incremental change because `wt-stack` does not replace existing
+pull request metadata from those messages.
 
 ## Defaults
 

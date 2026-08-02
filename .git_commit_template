@@ -3,32 +3,9 @@
 Why?
 ====
 
-<!--
-  Explain why we're making this change. Assume the reader is a junior
-  software engineer with no context for it. Give them enough background
-  to understand the problem, its impact, and why this is the right next
-  step. Use plain language and define unfamiliar terms in place. Keep
-  the explanation focused, and link to docs or projects for details.
-// -->
-
 How?
 ====
 
-<!--
-  Explain how we arrived at and verified the solution so a junior
-  software engineer can follow the reasoning. Call out the important
-  evidence, tradeoffs, commands, and validation steps, and briefly say
-  why they mattered. Skip details that are obvious from the diff and
-  avoid a step-by-step diary. Prefer a short paragraph or a few focused
-  bullets. Link to relevant docs or third-party tools.
-// -->
-
 ----
-
-<!--
-  The issue comment must be exactly as is written below, as Linear
-  looks for specific words (i.e. "Related to") to determine how the
-  Pull Request relates to the ticket.
-// -->
 
 [Related to EE-](https://linear.app/convergint/issue/EE-).

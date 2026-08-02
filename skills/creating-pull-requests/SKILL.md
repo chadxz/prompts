@@ -12,9 +12,9 @@ user-invocable: true
 
 Create and publish either a single pull request or an existing Stack.
 
-The `creating-commits` skill owns the commit mechanics: reading the commit
-template, message constraints, staging, voice, and the `linctl` ticket commands.
-Read it before committing and apply the PR overrides below.
+The `creating-commits` skill owns the message content contract, commit
+mechanics, staging, voice, and the `linctl` ticket commands. Read it before
+drafting and apply the PR overrides below.
 
 ## Workflow
 
@@ -23,24 +23,43 @@ Read it before committing and apply the PR overrides below.
    workflow below and stop the single pull request workflow.
 3. If currently on `main`, create a new branch before committing. Choose a
    sensible branch name based on the work.
-4. Create the commit using the `creating-commits` skill with the PR overrides
-   below.
-5. Push the branch.
-6. Open the PR with `gh pr create --title` and `--body`.
+4. At the publication boundary, re-read this skill and the `creating-commits`
+   skill if the conversation was compacted or the user redirected the task after
+   either skill was read.
+5. Draft the complete, unwrapped PR body and check it against the publication
+   checklist below.
+6. Create the commit from that prepared title and body through the
+   `creating-commits` skill, hard-wrapping only the commit body.
+7. Push the branch.
+8. Open the PR with `gh pr create --title` and `--body`. Do not use `--fill`.
+9. Read the live PR with `gh pr view <url> --json title,body,url` and compare it
+   with the prepared title, body, and publication checklist before reporting
+   success.
 
 ## Stacked pull request workflow
 
 Read and follow the `managing-stacked-changes` skill before publishing a Stack.
 
-1. Use the `creating-commits` skill for any uncommitted review unit.
-2. Run `wt-stack --stack <name> sync`.
-3. Run `wt-stack --json --stack <name> status` and collect every pull request
+1. At the publication boundary, re-read this skill, the `creating-commits`
+   skill, and the `managing-stacked-changes` skill if the conversation was
+   compacted or the user redirected the task after any of them was read.
+2. Prepare and validate the final unwrapped title and body for every unpublished
+   review unit before committing or syncing.
+3. Use the `creating-commits` skill for any uncommitted review unit, deriving
+   its message from the prepared PR title and body.
+4. Run the dry-run and synchronization sequence from the
+   `managing-stacked-changes` skill.
+5. Run `wt-stack --json --stack <name> status` and collect every pull request
    URL.
-4. Apply the PR body rules below to each newly created pull request. Use
-   `gh pr edit <url> --body <body>` when the body needs unwrapped prose. Apply
-   requested labels and reviewers through the corresponding `gh pr edit`
-   options.
-5. Report the Stack name, branch order, and every pull request URL.
+6. For every newly created pull request, always run
+   `gh pr edit <url> --title <title> --body <body>` with the prepared unwrapped
+   content. Treat the commit-derived body as an initial value, not the final PR
+   description. Apply requested labels and reviewers through the corresponding
+   `gh pr edit` options.
+7. Read each live PR with `gh pr view <url> --json title,body,url` and compare
+   it with the prepared content and publication checklist.
+8. Report the Stack name, branch order, and every pull request URL only after
+   the live descriptions pass that check.
 
 Do not run `gh pr create`, push branches individually, or set pull request bases
 manually for Stack-owned branches. `wt-stack` owns those operations and keeps
@@ -70,12 +89,10 @@ of a pull request:
 
 ## Pull Request Body
 
-Do not use `--fill`. Use `gh pr create --title` and `--body` separately.
-
-The PR body must satisfy the same structure and content requirements as the
-commit template. Instructions inside template comments remain binding even
-though those comments do not appear in the published body. Do not treat correct
-headings as sufficient evidence that the description follows the template.
+The PR body must use the commit template's visible structure and satisfy the
+message content contract in `creating-commits`. The template is a structural
+skeleton; the skills are the authoritative source for authoring requirements.
+Correct headings alone are not evidence that the description complies.
 
 Apply two presentation changes:
 
@@ -83,12 +100,26 @@ Apply two presentation changes:
    naturally.
 2. Apply the `writing-in-my-voice` skill to all prose.
 
-Before creating or updating the pull request, read the body from the perspective
-of the audience named by the template. Verify that the reader can understand the
-problem, impact, solution, important tradeoffs, and validation without first
-reading the diff or linked material. Define unfamiliar terms where they first
-appear. Use links for supporting detail rather than as a substitute for the
-context the template requires.
+## Publication Checklist
+
+Before creating or updating the pull request, verify all of the following:
+
+- The body is written for a junior software engineer with no prior context.
+- `Why?` supplies the necessary background, concrete problem and impact, reason
+  for the change, plain-language definitions, and every available relevant
+  source link.
+- `How?` explains the chosen approach, component responsibilities, meaningful
+  tradeoffs, validation commands and results, why that evidence matters, and
+  every available relevant implementation or third-party source link.
+- The prose stands on its own. Links provide supporting detail rather than
+  replacing the explanation.
+- The body is unwrapped for GitHub while preserving intentional Markdown
+  structure.
+- The ticket footer is exact when a ticket exists and absent when one does not.
+
+Do not claim the PR follows the message contract until the live body has been
+read back and checked. If an applicable item is missing, revise the body before
+reporting the PR as complete.
 
 If another instruction suggests a generic `Summary` / `Test plan` PR body,
 prefer this template and report that decision in the final response.

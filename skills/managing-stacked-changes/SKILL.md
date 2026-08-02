@@ -109,9 +109,16 @@ Ask before restructuring branches that other people may already use.
 
 ## Commit and publish
 
-Before the first publication, ensure every branch tip has a commit title and
-body suitable for its pull request. `wt-stack` uses the tip commit when it
-creates a missing pull request.
+Treat publication as a separate phase from implementation. Immediately before
+the first or delayed publication, re-read the `creating-commits` and
+`creating-pull-requests` skills. Re-read them again when the conversation was
+compacted or the user redirected the task after they were last read.
+
+Prepare the final unwrapped pull request title and body for every unpublished
+branch before committing or syncing. Check each body against the publication
+checklist in `creating-pull-requests`, then derive the branch tip's commit title
+and wrapped body from it. `wt-stack` uses the tip commit to initialize a missing
+pull request; that generated description is not the final publication step.
 
 Preview the complete mutation, then publish:
 
@@ -126,15 +133,19 @@ pushes them atomically with explicit leases, creates missing pull requests,
 repairs their bases, and creates or updates the GitHub Stack.
 
 Do not manually rebase Stack branches, push them individually, or create their
-pull requests with `gh pr create`. After `sync`, apply the PR body rules from
-the `creating-pull-requests` skill without restarting its workflow. Use
-`gh pr edit` for unwrapped PR bodies, labels, or reviewers that `wt-stack` does
-not manage.
+pull requests with `gh pr create`. After `sync`, apply the prepared metadata to
+every newly created pull request with
+`gh pr edit <url> --title <title> --body <body>`. Then read each live pull
+request with `gh pr view <url> --json title,body,url` and compare it with the
+prepared content and publication checklist. Do not report successful publication
+until every live description passes that check.
 
 ## Continue working
 
 Commit changes in the worktree that owns the affected review unit. Run the same
-dry run and `sync` sequence to update the Stack.
+dry run and `sync` sequence to update the Stack. When the change affects an
+existing pull request description, reapply the prepared metadata with
+`gh pr edit` and verify it with `gh pr view` after synchronization.
 
 When a cascading rebase pauses, resolve and stage the conflicts in the worktree
 reported by `wt-stack`, then choose one recovery command:

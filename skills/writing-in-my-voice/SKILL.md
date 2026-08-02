@@ -23,11 +23,9 @@ Azure, GitHub Actions) and don't need acronyms expanded or basics explained.
 When writing for a broader audience (e.g., leadership, cross-functional teams),
 adjust jargon accordingly, but keep the same voice.
 
-An audience requirement from the user's request, a source template, or the
-destination overrides this default. Follow the most specific audience guidance,
-including instructions inside template comments. When a template names a junior
-engineer with no prior context, define unfamiliar terms and supply the context
-that reader needs.
+A more specific audience requirement from the user's request, a task-specific
+skill, or the destination overrides this default. Follow the most specific
+audience guidance available.
 
 ## Priorities
 

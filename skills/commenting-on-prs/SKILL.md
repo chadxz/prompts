@@ -1,11 +1,11 @@
 ---
 name: commenting-on-prs
 description:
-  Posts inline comments, file-level comments, and review replies on
-  GitHub pull requests on Chad's behalf. Trigger when replying to PR
-  review comments, leaving PR comments, formatting GitHub alert callouts,
-  or responding to review feedback. Applies Chad's writing voice and uses
-  the gh CLI.
+  Handles pull request feedback end to end and posts inline comments,
+  file-level comments, and review replies on Chad's behalf. Trigger when
+  asked to fix, address, or handle PR comments or bot feedback, reply to
+  review comments, resolve review threads, leave PR comments, or format
+  GitHub alert callouts. Applies Chad's writing voice and uses the gh CLI.
 ---
 
 # Commenting on PRs
@@ -20,18 +20,56 @@ literal backslash-n text.
 
 ## Comment Placement
 
-Start every new comment as a review thread attached to the relevant changed
-line or file. Never leave a top-level pull request comment, including for
-overall feedback, status updates, or feedback that doesn't apply to a specific
-line. When there isn't a useful line target, attach a file-level comment to the
-most relevant file.
+Start every new comment as a review thread attached to the relevant changed line
+or file. Never leave a top-level pull request comment, including for overall
+feedback, status updates, or feedback that doesn't apply to a specific line.
+When there isn't a useful line target, attach a file-level comment to the most
+relevant file.
 
 Keep each new review thread unresolved until the pull request owner replies and
 acknowledges it. A code change without a reply isn't an acknowledgement. Treat
 any unacknowledged thread as blocking approval or merge so the owner has to
 respond before the pull request can merge.
 
-## Review Feedback Workflow
+## Addressing PR Feedback
+
+Treat requests to "fix the PR comments," "address PR feedback," or "handle bot
+comments" as instructions to complete the feedback loop. These phrases authorize
+the code changes, commits, pushes, GitHub replies, and thread resolution
+required to finish the work on the current pull request. A request that only
+asks whether comments are worth addressing remains read-only unless Chad also
+asks to act.
+
+Use this workflow for all unresolved feedback in scope:
+
+1. Fetch thread-aware review state and include relevant pull request-level bot
+   feedback. Don't treat a flat comment list as complete.
+2. Evaluate each comment against the current code and group duplicates that
+   describe the same underlying problem.
+3. Implement valid feedback, run the relevant checks, and push the verified
+   change to the pull request branch before saying it has been fixed.
+4. Leave the code unchanged when a comment is incorrect or isn't appropriate for
+   the pull request. Reply with the concrete reason so later readers can
+   understand the decision.
+5. Reply in-thread to every handled non-Datadog comment and resolve it. A
+   decision not to change the code still counts as handled after the rationale
+   is posted.
+6. Fetch the thread state again and confirm that the intended threads are
+   resolved and no actionable feedback was missed.
+
+Leave a non-Datadog thread unresolved only when clarification is still needed,
+the work is incomplete, or Chad explicitly asks to leave it open.
+
+### Datadog exception
+
+Don't reply to or manually resolve review comments from Datadog bots. Fix valid
+findings in the code. For a false positive, add a narrow exclusion to the
+repository's Datadog or code-quality configuration with an explanatory comment
+when that repository supports exclusions. Push the change and let Datadog
+re-evaluate and resolve its own comment. Confirm the resulting check or thread
+state when practical.
+
+## Replying and Resolving Threads
 
 When responding to inline PR feedback, reply to the existing review comment
 thread and then resolve that review thread. Use thread-aware data from GitHub
@@ -41,9 +79,8 @@ GraphQL or the GitHub comment helper scripts to map both IDs involved:
 - the review thread GraphQL ID for `resolveReviewThread`
 
 Treat a user request to respond to PR feedback as permission to reply in-thread
-and resolve the thread once the feedback has been addressed. Leave a thread
-unresolved only when the response asks for clarification, explains that the
-feedback won't be addressed, or the user explicitly asks not to resolve it.
+and resolve the thread once the feedback has been addressed. A reply that asks
+for clarification leaves the thread unresolved until the answer is available.
 
 Common patterns:
 

@@ -1,4 +1,4 @@
 interface:
   display_name: "Comment on PRs"
-  short_description: "Post inline and file-level PR comments"
-  default_prompt: "Use $commenting-on-prs to draft a short reply to this PR review comment."
+  short_description: "Address PR feedback and resolve review threads"
+  default_prompt: "Use $commenting-on-prs to address this PR's comments, reply to handled threads, and resolve them."

@@ -60,7 +60,12 @@ Use this workflow for all unresolved feedback in scope:
 Leave a non-Datadog thread unresolved only when clarification is still needed,
 the work is incomplete, or Chad explicitly asks to leave it open.
 
-### Datadog exception
+### Datadog-only exception
+
+Datadog bot review comments are the only comments left for automatic
+re-evaluation. Every other handled comment requires an in-thread reply and
+manual thread resolution, even when its author re-evaluates the pull request
+after a push.
 
 Don't reply to or manually resolve review comments from Datadog bots. Fix valid
 findings in the code. For a false positive, add a narrow exclusion to the
@@ -154,6 +159,6 @@ Keep `> [!TYPE]` on its own line and prefix every content line with `>`. Don't
 nest alerts, place them consecutively, or use more than one or two in a comment.
 Prefer ordinary prose when the content doesn't need visual emphasis.
 
-When replying to bot comments (claude[bot], Dependabot, GitHub Actions), don't
-address the bot as a person. No "good catch", "thanks for flagging", or "great
-find". State the facts for the humans who'll read the thread later.
+When replying to bot comments, don't address the bot as a person. No "good
+catch", "thanks for flagging", or "great find". State the facts for the humans
+who'll read the thread later.

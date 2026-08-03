@@ -1,4 +1,7 @@
 interface:
   display_name: "Comment on PRs"
   short_description: "Address PR feedback and resolve review threads"
-  default_prompt: "Use $commenting-on-prs to address this PR's comments, reply to handled threads, and resolve them."
+  default_prompt: >-
+    Use $commenting-on-prs to address this PR's comments, reply to and resolve
+    every handled thread except Datadog bot comments, and leave only Datadog bot
+    comments for automatic re-evaluation.

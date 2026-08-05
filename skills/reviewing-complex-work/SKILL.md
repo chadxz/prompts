@@ -80,10 +80,10 @@ tell the peer not to apply this skill, delegate, or invoke another agent CLI.
 
 Verify each finding against the task, source, and runtime behavior. Classify it
 as confirmed, rejected with evidence, or unresolved. Fix confirmed in-scope
-issues and rerun primary validation. Request at most one focused follow-up
-review, and only when a consequential fix changes the risk surface or a material
-finding remains unresolved. After that follow-up, resolve or report remaining
-risk without requesting another review.
+issues and rerun primary validation. Do not request a follow-up peer review for
+any reason, including after a consequential fix or when a material finding
+remains unresolved. Resolve or report remaining risk using primary-agent
+verification.
 
 Report the peer model and thinking level, confirmed findings and fixes, and any
 unresolved risks. A clean review is useful evidence, not proof of correctness.

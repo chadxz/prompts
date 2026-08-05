@@ -1,0 +1,8 @@
+interface:
+  display_name: "Building Implementation Plans"
+  short_description: "Create decision-complete execution plans"
+  default_prompt: >-
+    Use $building-implementation-plans to build an evidence-grounded,
+    reviewable implementation plan.
+policy:
+  allow_implicit_invocation: true

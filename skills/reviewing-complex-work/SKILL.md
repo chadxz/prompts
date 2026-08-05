@@ -1,21 +1,23 @@
 ---
 name: reviewing-complex-work
 description:
-  Obtains an independent, read-only peer-agent review of complex completed work
-  through an installed alternate CLI such as Claude Code, Codex CLI, or Cursor
-  Agent, then verifies and reconciles the findings. Use automatically before
-  finalizing substantial or high-risk code, architecture, infrastructure,
-  migrations, security or authorization, concurrency, distributed systems,
-  broad refactors, or long multi-step analysis where a second model could catch
-  correctness gaps. Also use for explicit peer-review, second-opinion,
-  adversarial-review, or cross-model-review requests. Skip routine mechanical
-  edits and small low-risk changes.
+  Allows one self-requested, independent, read-only peer-agent review per
+  session for complex completed work through an installed alternate CLI such as
+  Claude Code, Codex CLI, or Cursor Agent, then verifies and reconciles the
+  findings. Use automatically before finalizing substantial or high-risk code,
+  architecture, infrastructure, migrations, security or authorization,
+  concurrency, distributed systems, broad refactors, or long multi-step
+  analysis where a second model could catch correctness gaps. Also use for
+  explicit peer-review, second-opinion, adversarial-review, or cross-model-review
+  requests. Skip routine mechanical edits and small low-risk changes.
 ---
 
 # Reviewing Complex Work
 
-Get one independent peer review after self-review and primary validation, while
-there is still time to correct the work. Keep final judgment with the primary
+Self-request at most one independent peer review per agent session. Run it after
+self-review and primary validation, while there is still time to correct the
+work. Reviews explicitly requested by the user are user-directed and do not
+count as the agent's self-requested review. Keep final judgment with the primary
 agent.
 
 ## Decide When to Review
@@ -80,8 +82,8 @@ tell the peer not to apply this skill, delegate, or invoke another agent CLI.
 
 Verify each finding against the task, source, and runtime behavior. Classify it
 as confirmed, rejected with evidence, or unresolved. Fix confirmed in-scope
-issues and rerun primary validation. Do not request a follow-up peer review for
-any reason, including after a consequential fix or when a material finding
+issues and rerun primary validation. Do not self-request a follow-up peer review
+for any reason, including after a consequential fix or when a material finding
 remains unresolved. Resolve or report remaining risk using primary-agent
 verification.
 

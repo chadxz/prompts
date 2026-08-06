@@ -182,7 +182,7 @@ The brief text and the stream file do not need a grant on their own: the caller
 expands the brief and writes the stream, so both happen outside the peer's
 session. Each reference gives the flag, or notes that the peer needs none.
 
-## Run Detached and Collect Once
+## Run Detached and Watch the Stream
 
 Do not launch the peer and then block on it. Blocking forces the caller to
 choose between waiting blind and killing the run, and callers reliably choose
@@ -194,24 +194,31 @@ Three rules, which apply to every peer:
 1. **Write the event stream to a file and detach.** Redirect the CLI's streaming
    output to a file under `~/tmp` and background the process. The caller keeps
    working instead of spending turns waiting.
-2. **Never ingest the raw stream.** A streamed review carries every file the
-   peer read and every intermediate step, which is routinely 40 or more times
-   the size of the review itself and commonly exceeds a caller's output cap.
-   Because the final result is the last event, an overflowing stream truncates
-   away exactly the part that was wanted. Project the stream with `jq`; never
-   paste it into the caller's context.
-3. **Check status before consuming.** Every peer reports whether it finished or
-   died. Treat an unfinished run as no review at all: a truncated run ends on
-   mid-work narration that reads like a conclusion and will otherwise be
-   mistaken for findings.
+2. **Project the stream; never paste it.** The rule is about shape, not
+   frequency. Nearly all of a stream's volume is file contents echoed back in
+   tool results, plus reasoning blocks; together they routinely make the stream
+   40 or more times the size of the review and can exceed a caller's output cap,
+   which truncates away the final result because it arrives last. The peer's own
+   narration is a small fraction of that. Read `jq` projections as often as they
+   are useful, and never paste raw events.
+3. **Only the final result is the deliverable.** Everything before it is
+   provisional: a peer may drop, merge, or reverse a finding before it finishes.
+   Watch the stream to steer the run, not to collect from it. Check the peer's
+   completion status before consuming a result, and treat an unfinished run as
+   no review at all, because a truncated run ends on mid-work narration that
+   reads like a conclusion.
 
 Do not cap the peer's turns. A turn ceiling truncates mid-investigation and
 returns narration; the budget line in the brief is the right lever. Where a
 spend cap is used, set it high enough that it is a runaway guard rather than a
 stopping condition, and check for it in the status.
 
-When a heartbeat is genuinely needed, this works for every peer without
-depending on its event schema:
+### Inspect While It Runs
+
+Streaming exists so the caller can see what is happening. Use it. Each view
+below costs about one percent of the raw stream, so re-running one is cheap.
+
+Progress works for every peer without depending on its event schema:
 
 ```bash
 stream="$review_dir/review.jsonl"
@@ -219,8 +226,22 @@ printf '%s events, last=%s\n' "$(wc -l < "$stream")" \
   "$(tail -1 "$stream" | jq -Rr 'fromjson? // empty | .type // "partial"')"
 ```
 
-Each reference gives a richer per-agent heartbeat and the exact extraction
-command.
+Each reference gives two richer per-agent views and the exact extraction
+command: what the peer is currently inspecting, and its narration so far.
+
+Inspect when a decision depends on it, and act on what you see:
+
+- Wrong files or wrong scope means the brief was wrong. Stop the run
+  deliberately, fix the brief, and start over rather than waiting out a review
+  that is already off target.
+- Repeated failures against the same wall mean a missing grant or a bad path.
+  Fix the invocation and start over.
+- Steady progress through relevant files means leave it alone.
+
+Two cautions. Do not act on partial findings, because they are not final until
+the run completes. Do not poll in a loop: the failure this whole section exists
+to prevent is a caller spending dozens of turns on empty polls and then
+interrupting a healthy review.
 
 ## Verify No Mutation
 

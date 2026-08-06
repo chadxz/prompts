@@ -97,12 +97,27 @@ Observed event types are `thread.started`, `turn.started`, `item.completed`, and
 `input_tokens`, `cached_input_tokens`, `output_tokens`, and
 `reasoning_output_tokens`.
 
-## Heartbeat
+## Inspect While It Runs
+
+Completed items carry `.item.type`, so progress needs no item contents:
 
 ```bash
 jq -Rr 'fromjson? // empty | select(.type=="item.completed") | .item.type' "$review_dir/review.jsonl" \
   | awk '{n++; last=$0} END{print (n+0)" items, last="last}'
 ```
 
-Completed items carry `.item.type`, such as `agent_message`, so this reports
-progress without reading item contents.
+Narration so far comes from the agent-message items:
+
+```bash
+jq -Rr 'fromjson? // empty | select(.type=="item.completed")
+        | select(.item.type=="agent_message") | .item.text' "$review_dir/review.jsonl"
+```
+
+Treat that text as provisional and use it to steer the run, not to collect
+findings. The final review is whatever lands in the `--output-last-message`
+file.
+
+`agent_message` is the only item type confirmed here. Other item types carry
+their own fields, so a view of what the peer is currently inspecting has to be
+built against a real review's stream; list `.item.type` first and project from
+what that shows.

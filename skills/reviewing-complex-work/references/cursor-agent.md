@@ -96,7 +96,7 @@ took effect, since a mistyped model can otherwise resolve to a default.
 `--stream-partial-output` adds text deltas. Leave it off: it multiplies stream
 volume without improving the extraction, which reads only the final event.
 
-## Heartbeat
+## Inspect While It Runs
 
 Cursor emits one `assistant` event per step, so line growth tracks progress:
 
@@ -105,7 +105,18 @@ printf '%s events, last=%s\n' "$(wc -l < "$review_dir/review.jsonl")" \
   "$(tail -1 "$review_dir/review.jsonl" | jq -Rr 'fromjson? // empty | .type // "partial"')"
 ```
 
-A tool-name heartbeat equivalent to the Claude Code one is likely available
-through `.message.content[]`, but the tool-call shape was not confirmed here.
-Verify it against a real review before relying on it, and use the event-count
-form above until then.
+Narration so far uses the same `.message.content[]` path as Claude Code, since
+the event shapes match:
+
+```bash
+jq -Rr 'fromjson? // empty | select(.type=="assistant")
+        | .message.content[]? | select(.type=="text") | .text' "$review_dir/review.jsonl"
+```
+
+Treat that text as provisional and use it to steer the run, not to collect
+findings.
+
+The tool-call shape was not confirmed here, so the Claude Code views for tool
+names and inspected paths may or may not transfer. Check `.message.content[]`
+against a real review before relying on them, and use the two views above until
+then.

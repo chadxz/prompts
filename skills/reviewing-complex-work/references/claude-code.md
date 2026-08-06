@@ -98,7 +98,13 @@ review text. Observed failure shapes are `error_max_turns`
 (`terminal_reason: aborted_streaming`, which is what an interrupted process
 looks like), and `error_max_budget_usd`.
 
-## Heartbeat
+## Inspect While It Runs
+
+Assistant events carry `.message.content[]`, which supports three views. All
+three are safe to re-run at any point; none of them read tool results, which is
+where the stream's volume lives.
+
+Progress:
 
 ```bash
 jq -Rr 'fromjson? // empty | select(.type=="assistant")
@@ -106,6 +112,26 @@ jq -Rr 'fromjson? // empty | select(.type=="assistant")
   | awk '{n++; last=$0} END{print (n+0)" tool calls, last="last}'
 ```
 
-Assistant events carry `.message.content[]`, so this reports progress such as
-`47 tool calls, last=Grep`. If it reports `0 tool calls` while the process is
-alive, fall back to the schema-independent heartbeat in `SKILL.md`.
+This reports progress such as `47 tool calls, last=Grep`. If it reports
+`0 tool calls` while the process is alive, fall back to the schema-independent
+progress check in `SKILL.md`.
+
+What the peer is inspecting, which is how a wrong-scope review is caught early:
+
+```bash
+jq -Rr 'fromjson? // empty | select(.type=="assistant")
+        | .message.content[]? | select(.type=="tool_use")
+        | "\(.name)\t\(.input.file_path // .input.pattern // .input.command // "")"' \
+  "$review_dir/review.jsonl" | tail -15
+```
+
+Narration so far, which surfaces a rabbit hole or an unexpected wall:
+
+```bash
+jq -Rr 'fromjson? // empty | select(.type=="assistant")
+        | .message.content[]? | select(.type=="text") | .text' "$review_dir/review.jsonl"
+```
+
+Treat this text as provisional. It includes intermediate reasoning the peer may
+revise before the `result` event, so use it to steer the run rather than to
+collect findings.

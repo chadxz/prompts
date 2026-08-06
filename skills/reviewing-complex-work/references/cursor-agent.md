@@ -5,7 +5,7 @@ were verified against `cursor-agent` 2026.07.23-e383d2b.
 
 ## Invoke
 
-Run detached, streaming to a file inside the worktree:
+Run detached from the worktree, with every scratch file under `~/tmp`:
 
 ```bash
 cd "$WORKTREE"
@@ -15,10 +15,11 @@ nohup cursor-agent -p \
   --sandbox enabled \
   --trust \
   --workspace "$WORKTREE" \
+  --add-dir "$HOME/tmp" \
   --output-format stream-json \
-  "$(cat review-brief.txt)" \
-  > review.jsonl 2>&1 &
-echo "$!" > review.pid
+  "$(cat "$review_dir/brief.txt")" \
+  > "$review_dir/review.jsonl" 2>&1 &
+echo "$!" > "$review_dir/review.pid"
 ```
 
 List models with `cursor-agent models` and pin an exact identifier. The account
@@ -47,8 +48,9 @@ not depend on local configuration.
 Never pass `--force`, `--yolo`, or `-f`. They are the opposite of what a review
 needs, and `--yolo` is only an alias for `--force`.
 
-Grant any path outside the workspace with `--add-dir`, and prefer keeping every
-input inside the worktree.
+Reads are scoped to the workspace, so pass `--add-dir "$HOME/tmp"` whenever the
+brief points at something staged there. Without it the peer cannot open the file
+and will review the wrong scope.
 
 ## Tools
 
@@ -78,7 +80,7 @@ works:
 jq -Rr 'fromjson? // empty | select(.type=="result")
         | if .subtype=="success" then .result
           else "FAILED subtype=\(.subtype) is_error=\(.is_error) duration_ms=\(.duration_ms)"
-          end' review.jsonl
+          end' "$review_dir/review.jsonl"
 ```
 
 Observed event types are `system` with `subtype: init`, `user`, `assistant`, and
@@ -99,8 +101,8 @@ volume without improving the extraction, which reads only the final event.
 Cursor emits one `assistant` event per step, so line growth tracks progress:
 
 ```bash
-printf '%s events, last=%s\n' "$(wc -l < review.jsonl)" \
-  "$(tail -1 review.jsonl | jq -Rr 'fromjson? // empty | .type // "partial"')"
+printf '%s events, last=%s\n' "$(wc -l < "$review_dir/review.jsonl")" \
+  "$(tail -1 "$review_dir/review.jsonl" | jq -Rr 'fromjson? // empty | .type // "partial"')"
 ```
 
 A tool-name heartbeat equivalent to the Claude Code one is likely available

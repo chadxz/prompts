@@ -90,17 +90,17 @@ ENVIRONMENT
   stays blocked. Do not retry a blocked command in another form, and do not
   investigate why it was blocked.
 - Tools available: <exact list>.
-- Everything needed is inside this worktree. Do not read outside it.
+- Readable roots: this worktree and <granted scratch paths>. Do not read
+  anything else.
 - Budget: about N minutes. At 80% of budget, stop investigating and report what
   you have, marking any area you did not reach as "not reviewed".
 - Prefer one shell command per call. Chained commands are harder to admit.
 ```
 
-Put every input inside the worktree. A brief that points at a scratch path
-outside the review root produces a confident review of the wrong scope when the
-peer cannot open it. If an external file is genuinely required, grant it
-explicitly with the CLI's additional-directory flag and confirm the peer can
-read it.
+Name every readable root, and make sure each one is actually granted. A brief
+that points at a path the peer cannot open produces a confident review of the
+wrong scope, and says so only in passing. Grant scratch paths with the CLI's
+additional-directory flag, then confirm the peer can read them.
 
 Set the budget from the size of the change, not from patience: roughly 15
 minutes for a focused diff, 30 for an ordinary complex review, 60 for broad,
@@ -161,6 +161,27 @@ an allowlist over a denylist. Enforcement strength differs by peer and is
 described in each reference. Read-only shell still permits a determined write in
 some harnesses, so treat the mutation check below as the real guarantee.
 
+## Stage Scratch Files Outside the Worktree
+
+Keep the review's own files out of the repository. Stage the brief, the event
+stream, and any process-id file under `~/tmp`, in a run-specific directory:
+
+```bash
+review_dir="$HOME/tmp/peer-review-$(date +%Y%m%d-%H%M%S)"
+mkdir -p "$review_dir"
+```
+
+The worktree is the artifact under review, so writing scratch files into it
+corrupts the thing being measured. Untracked review output shows up in
+`git status --short`, which is the mutation check below, and a peer that lists
+the working tree sees files that are not part of the change.
+
+Grant `~/tmp` to the peer when, and only when, the brief points at something
+there, such as a progress ledger, a prior review, or an artifact under review.
+The brief text and the stream file do not need a grant on their own: the caller
+expands the brief and writes the stream, so both happen outside the peer's
+session. Each reference gives the flag, or notes that the peer needs none.
+
 ## Run Detached and Collect Once
 
 Do not launch the peer and then block on it. Blocking forces the caller to
@@ -171,7 +192,7 @@ silent process and a hung process look identical.
 Three rules, which apply to every peer:
 
 1. **Write the event stream to a file and detach.** Redirect the CLI's streaming
-   output to a file in the worktree and background the process. The caller keeps
+   output to a file under `~/tmp` and background the process. The caller keeps
    working instead of spending turns waiting.
 2. **Never ingest the raw stream.** A streamed review carries every file the
    peer read and every intermediate step, which is routinely 40 or more times
@@ -193,8 +214,9 @@ When a heartbeat is genuinely needed, this works for every peer without
 depending on its event schema:
 
 ```bash
-printf '%s events, last=%s\n' "$(wc -l < review.jsonl)" \
-  "$(tail -1 review.jsonl | jq -Rr 'fromjson? // empty | .type // "partial"')"
+stream="$review_dir/review.jsonl"
+printf '%s events, last=%s\n' "$(wc -l < "$stream")" \
+  "$(tail -1 "$stream" | jq -Rr 'fromjson? // empty | .type // "partial"')"
 ```
 
 Each reference gives a richer per-agent heartbeat and the exact extraction
@@ -210,7 +232,9 @@ git status --short
 git stash list
 ```
 
-Treat any unexpected mutation as a failed review.
+Treat any unexpected mutation as a failed review. This check is only meaningful
+when the review's own scratch files live under `~/tmp`; a stream file written
+into the worktree shows up here as an untracked change and masks a real one.
 
 ## Reconcile and Report
 

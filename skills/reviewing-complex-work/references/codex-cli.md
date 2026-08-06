@@ -5,7 +5,8 @@ verified against `codex-cli` 0.144.1.
 
 ## Invoke
 
-Run detached, streaming events to a file and the final message to its own file:
+Run detached from the worktree, with every scratch file under `~/tmp`. Events
+stream to one file and the final message lands in another:
 
 ```bash
 cd "$WORKTREE"
@@ -15,11 +16,11 @@ nohup codex exec \
   --cd "$WORKTREE" \
   --ephemeral \
   --json \
-  --output-last-message review-final.md \
+  --output-last-message "$review_dir/final.md" \
   -c 'tools.web_search=true' \
-  "$(cat review-brief.txt)" \
-  > review.jsonl 2>&1 &
-echo "$!" > review.pid
+  "$(cat "$review_dir/brief.txt")" \
+  > "$review_dir/review.jsonl" 2>&1 &
+echo "$!" > "$review_dir/review.pid"
 ```
 
 `--output-last-message` is the reason Codex is the easiest peer to collect from:
@@ -40,9 +41,11 @@ Do not pass `--dangerously-bypass-approvals-and-sandbox`. It removes exactly the
 property that makes the review safe.
 
 `--add-dir` grants write access alongside the workspace, so it is the wrong tool
-for a read-only review. Under `--sandbox read-only` the whole filesystem is
-readable, so an out-of-worktree input needs no extra flag. Prefer keeping inputs
-inside the worktree anyway, so the review scope matches the brief.
+for a read-only review. Codex needs no grant to read scratch files: under
+`--sandbox read-only` the whole filesystem is readable, so a brief staged in
+`~/tmp` and any ledger or artifact beside it are already reachable. Name those
+paths as readable roots in the brief so the peer knows the intended scope, and
+do not add a directory flag for them.
 
 `--ephemeral` keeps the peer from persisting session files, which suits a
 one-shot review.
@@ -75,16 +78,16 @@ survive better as an explicit prompt.
 The final review is already a file:
 
 ```bash
-cat review-final.md
+cat "$review_dir/final.md"
 ```
 
 Confirm the run actually finished before trusting it. A completed run exits
 zero, emits a `turn.completed` event, and leaves a non-empty final-message file:
 
 ```bash
-wait "$(cat review.pid)"; exit_code=$?
-completed=$(jq -Rr 'fromjson? // empty | select(.type=="turn.completed") | .type' review.jsonl | wc -l)
-if [ "$exit_code" -ne 0 ] || [ "$completed" -eq 0 ] || [ ! -s review-final.md ]; then
+wait "$(cat "$review_dir/review.pid")"; exit_code=$?
+completed=$(jq -Rr 'fromjson? // empty | select(.type=="turn.completed") | .type' "$review_dir/review.jsonl" | wc -l)
+if [ "$exit_code" -ne 0 ] || [ "$completed" -eq 0 ] || [ ! -s "$review_dir/final.md" ]; then
   echo "FAILED exit=$exit_code turn_completed=$completed"
 fi
 ```
@@ -97,7 +100,7 @@ Observed event types are `thread.started`, `turn.started`, `item.completed`, and
 ## Heartbeat
 
 ```bash
-jq -Rr 'fromjson? // empty | select(.type=="item.completed") | .item.type' review.jsonl \
+jq -Rr 'fromjson? // empty | select(.type=="item.completed") | .item.type' "$review_dir/review.jsonl" \
   | awk '{n++; last=$0} END{print (n+0)" items, last="last}'
 ```
 

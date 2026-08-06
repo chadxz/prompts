@@ -5,7 +5,7 @@ were verified against `claude` 2.1.223.
 
 ## Invoke
 
-Run detached, streaming to a file inside the worktree:
+Run detached from the worktree, with every scratch file under `~/tmp`:
 
 ```bash
 cd "$WORKTREE"
@@ -14,11 +14,12 @@ nohup claude -p \
   --effort max \
   --permission-mode bypassPermissions \
   --tools Read,Grep,Glob,Bash,WebSearch,WebFetch \
+  --add-dir "$HOME/tmp" \
   --output-format stream-json --verbose \
   --no-session-persistence \
-  "$(cat review-brief.txt)" \
-  > review.jsonl 2>&1 &
-echo "$!" > review.pid
+  "$(cat "$review_dir/brief.txt")" \
+  > "$review_dir/review.jsonl" 2>&1 &
+echo "$!" > "$review_dir/review.pid"
 ```
 
 Discover the model rather than assuming one. `--model` accepts an alias such as
@@ -59,8 +60,14 @@ outright, with a denial message stating that Bash is unavailable because Claude
 Code is running in don't-ask mode. The review silently degrades to static
 reading.
 
-Grant any path outside the worktree with `--add-dir`, or the peer cannot open it
-and will review the wrong scope while saying so only in passing.
+Claude Code confines reads to the working directory, so any path outside it
+needs `--add-dir`. Without it the peer cannot open the file and will review the
+wrong scope while saying so only in passing.
+
+Pass `--add-dir "$HOME/tmp"` whenever the brief points at something staged
+there. It is harmless when the brief points only at the worktree, so including
+it by default is reasonable; drop it when the brief must be confined to the
+repository.
 
 ## Turn and Spend Limits
 
@@ -80,7 +87,7 @@ findings:
 jq -Rr 'fromjson? // empty | select(.type=="result")
         | if .subtype=="success" then .result
           else "FAILED subtype=\(.subtype) reason=\(.terminal_reason // "n/a") turns=\(.num_turns) cost=\(.total_cost_usd) errors=\(.errors // [] | join("; "))"
-          end' review.jsonl
+          end' "$review_dir/review.jsonl"
 ```
 
 The `result` event carries `subtype`, `terminal_reason`, `num_turns`,
@@ -95,7 +102,7 @@ looks like), and `error_max_budget_usd`.
 
 ```bash
 jq -Rr 'fromjson? // empty | select(.type=="assistant")
-        | .message.content[]? | select(.type=="tool_use") | .name' review.jsonl \
+        | .message.content[]? | select(.type=="tool_use") | .name' "$review_dir/review.jsonl" \
   | awk '{n++; last=$0} END{print (n+0)" tool calls, last="last}'
 ```
 

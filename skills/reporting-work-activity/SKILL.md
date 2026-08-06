@@ -165,8 +165,8 @@ Activity report refresh progress:
     overlap, gray blocks, missing backgrounds, and unreadable tables.
 23. Run `mise run check` if you changed code, tests, or docs.
 24. Tell the user the exact window, scope, verification result, local URL, PDF
-    path, and whether visual inspection was completed. If browser inspection
-    was not available, name that gap instead of claiming visual QA.
+    path, and whether visual inspection was completed. If browser inspection was
+    not available, name that gap instead of claiming visual QA.
 
 ## Freshness and synthesis gate
 
@@ -178,16 +178,16 @@ The report is current only when all of these are true:
   modification times.
 - Slack search terms use the exact window. Retrieved messages outside it may
   explain background but cannot be presented as current activity.
-- Notion's page body, last-edited time, and any "as of" date are checked.
-  Older pages may provide context but cannot anchor a current-week conclusion.
+- Notion's page body, last-edited time, and any "as of" date are checked. Older
+  pages may provide context but cannot anchor a current-week conclusion.
 - Datadog queries use the same bounds and selected personal or org scope.
 - Every statement in the hero, discussion callout, workstreams, lowlights, and
   methodology was synthesized after the fresh evidence pass.
 - `mise run verify-report` passes against the selected window.
 - The refresh manifest records a current receipt for every evidence source.
 
-Do not treat a recent snapshot file timestamp, successful renderer exit, or
-HTTP 200 response as proof that the research itself is current.
+Do not treat a recent snapshot file timestamp, successful renderer exit, or HTTP
+200 response as proof that the research itself is current.
 
 ## Redesign mode
 
@@ -208,8 +208,8 @@ The non-negotiable rules are:
 - Update export-only CSS so the one-page PDF carries the same new system.
 - Preserve evidence links, mute controls, accessible semantics, focus states,
   reduced-motion behavior, and responsive tables.
-- Generate bitmap artwork only when it supports the named concept. Remove
-  unused generated assets and the code that creates them.
+- Generate bitmap artwork only when it supports the named concept. Remove unused
+  generated assets and the code that creates them.
 - Inspect both desktop and mobile renders. Static checks are a fallback, not a
   substitute for visual inspection.
 
@@ -313,9 +313,9 @@ Default execution:
   missing source receipt or a window that differs from the selected report.
 - `mise run verify-report` is the artifact gate. Run it after every report build
   using the same `REPORT_DATE` and `REPORT_TIMEZONE` as the fetch.
-- Every report includes
-  `dist/chad-weekly-activity-report-single-page.pdf`. Do not treat the run as
-  complete until the PDF is exactly one page and its rendered PNG is clean.
+- Every report includes `dist/chad-weekly-activity-report-single-page.pdf`. Do
+  not treat the run as complete until the PDF is exactly one page and its
+  rendered PNG is clean.
 - A new stylesheet appended after the old stylesheet is not a redesign. Remove
   superseded rules and assets so the generator has one intentional UI.
 - Single-page PDF export needs export-specific browser CSS. Read

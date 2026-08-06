@@ -1,8 +1,8 @@
 # Activity report visual design contract
 
-Read this reference whenever the user asks for a new UI, redesign, retheme,
-coat of paint, or a distinctly different look. The goal is a coherent new
-interface, not a decorative layer over the previous one.
+Read this reference whenever the user asks for a new UI, redesign, retheme, coat
+of paint, or a distinctly different look. The goal is a coherent new interface,
+not a decorative layer over the previous one.
 
 ## Preserve the product contract
 
@@ -27,8 +27,8 @@ asks for a visual-only prototype.
 Before editing markup, CSS, JavaScript, or assets:
 
 1. Serve the existing report.
-2. Capture one desktop view around 1440 by 1000 and one mobile view around
-   390 by 844 with the in-app browser.
+2. Capture one desktop view around 1440 by 1000 and one mobile view around 390
+   by 844 with the in-app browser.
 3. Open at least one drill-down page.
 4. Record the baseline visual fingerprint:
    - palette and contrast mode
@@ -64,8 +64,8 @@ Texture or motion change:
 Behaviors and evidence contracts preserved:
 ```
 
-The concept is a decision tool. It should explain why the page looks the way
-it does, not become marketing copy inside the report.
+The concept is a decision tool. It should explain why the page looks the way it
+does, not become marketing copy inside the report.
 
 ## Pass the distinctness gate
 
@@ -150,8 +150,8 @@ the interaction.
 
 After `mise run report` and `mise run verify-report` pass:
 
-1. Confirm the server is returning the newly generated file, not a stale
-   runtime on the same port.
+1. Confirm the server is returning the newly generated file, not a stale runtime
+   on the same port.
 2. Reload the home page in the in-app browser.
 3. Capture desktop and mobile screenshots using the same sizes as the baseline.
 4. Compare them against the design brief and five-dimension gate.

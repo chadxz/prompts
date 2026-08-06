@@ -19,8 +19,8 @@ builds:
       - -trimpath
     ldflags:
       - >-
-        -s -w
-        -X github.com/chadxz/prompts/apps/wt-stack/internal/cli.version={{.Version}}
+          -s -w
+          -X github.com/chadxz/prompts/apps/wt-stack/internal/cli.version={{.Version}}
 
 archives:
   - formats:

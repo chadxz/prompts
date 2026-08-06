@@ -58,9 +58,9 @@ linctl auth status
 
 If either one isn't ready, use `gh auth login` or `linctl auth` first.
 
-PDF export uses Playwright with a locally installed Chrome or Chromium. On
-macOS it discovers Google Chrome automatically. Elsewhere, set
-`REPORT_CHROME_PATH` or install Playwright's managed browser:
+PDF export uses Playwright with a locally installed Chrome or Chromium. On macOS
+it discovers Google Chrome automatically. Elsewhere, set `REPORT_CHROME_PATH` or
+install Playwright's managed browser:
 
 ```bash
 uv run playwright install chromium
@@ -89,8 +89,8 @@ per-team Linear samples that feed the deduped issue export.
 
 Slack, Notion, scoped Datadog evidence, and the current personal narrative are
 refreshed separately through the Codex skill at
-[reporting-work-activity](../../SKILL.md). If
-`tracked_sources.json` is missing, first run:
+[reporting-work-activity](../../SKILL.md). If `tracked_sources.json` is missing,
+first run:
 
 ```bash
 mise run bootstrap-tracked-sources
@@ -156,8 +156,7 @@ Refresh Slack, Notion, and the current narrative through Codex:
 - Use `$reporting-work-activity` from Codex when you want the full report
   refresh, not just the GitHub and Linear snapshot pull. The refresh writes
   `data/refresh_manifest.json` and `data/personal_report.json` after the
-  evidence pass so the report cannot reuse an older source receipt or
-  narrative.
+  evidence pass so the report cannot reuse an older source receipt or narrative.
 
 Regenerate the HTML report and required single-page PDF, then verify both:
 

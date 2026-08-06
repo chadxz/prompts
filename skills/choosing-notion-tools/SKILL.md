@@ -33,8 +33,8 @@ Choose `ntn` for:
 - low-level block CRUD and direct public API access
 - operations missing from the current MCP tool surface
 
-When both can complete the task, prefer MCP for an interactive agent session
-and `ntn` for a reusable script.
+When both can complete the task, prefer MCP for an interactive agent session and
+`ntn` for a reusable script.
 
 ## Verify current capabilities
 

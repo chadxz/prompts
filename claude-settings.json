@@ -13,7 +13,7 @@
     ],
     "defaultMode": "default"
   },
-  "model": "claude-fable-5[1m]",
+  "model": "opus[1m]",
   "hooks": {
     "Notification": [
       {
@@ -125,11 +125,11 @@
       }
     }
   },
-  "effortLevel": "high",
+  "effortLevel": "xhigh",
+  "autoUpdatesChannel": "latest",
   "tui": "fullscreen",
   "autoMemoryEnabled": false,
   "autoDreamEnabled": false,
   "skipDangerousModePermissionPrompt": true,
-  "verbose": true,
-  "autoUpdatesChannel": "latest"
+  "verbose": true
 }

@@ -34,10 +34,10 @@ The runtime uses a rolling seven-day window ending on `REPORT_DATE`. Keep the
 same explicit date and timezone in the environment for `mise run fetch`,
 `mise run report`, and `mise run verify-report`.
 
-For the latest weekly activity report, use today's local date. Set
-`REPORT_DATE` to a prior Sunday only when the user explicitly requests the
-previous calendar week. State the derived inclusive start and end dates before
-fetching connector data.
+For the latest weekly activity report, use today's local date. Set `REPORT_DATE`
+to a prior Sunday only when the user explicitly requests the previous calendar
+week. State the derived inclusive start and end dates before fetching connector
+data.
 
 Timestamp queries use an inclusive local start and exclusive next-day end.
 Slack's `after:` and `before:` search dates must express the same boundary.
@@ -230,8 +230,8 @@ digest.
 - `sources`: receipts for `github`, `linear`, `slack`, `notion`, and `datadog`
 
 Each receipt has a `status` of `refreshed`. Use `confirmed_current` only when
-the user explicitly approved preserved cache. A short `detail` may describe
-the query, source count, or discovery coverage.
+the user explicitly approved preserved cache. A short `detail` may describe the
+query, source count, or discovery coverage.
 
 Example:
 
@@ -244,11 +244,11 @@ Example:
   },
   "refreshed_at": "2026-07-09T18:15:11-05:00",
   "sources": {
-    "github": {"status": "refreshed"},
-    "linear": {"status": "refreshed"},
-    "slack": {"status": "refreshed"},
-    "notion": {"status": "refreshed"},
-    "datadog": {"status": "refreshed"}
+    "github": { "status": "refreshed" },
+    "linear": { "status": "refreshed" },
+    "slack": { "status": "refreshed" },
+    "notion": { "status": "refreshed" },
+    "datadog": { "status": "refreshed" }
   }
 }
 ```
@@ -277,9 +277,9 @@ Example window field:
 }
 ```
 
-The renderer rejects the narrative when those values do not equal
-`WINDOW_START` and `WINDOW_END`. This prevents a stale narrative from becoming
-current merely because its file was touched or the renderer was rerun.
+The renderer rejects the narrative when those values do not equal `WINDOW_START`
+and `WINDOW_END`. This prevents a stale narrative from becoming current merely
+because its file was touched or the renderer was rerun.
 
 ## Verification rules
 

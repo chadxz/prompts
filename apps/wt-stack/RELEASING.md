@@ -153,6 +153,6 @@ If failure occurs after the tag is pushed, preserve that tag. Retry its workflow
 only when the tagged source is correct and publication was interrupted. Any fix
 to source or release configuration requires a newer version.
 
-If verification finds a bad artifact after publication, preserve the release
-for traceability. Record the correction under `Unreleased` and let the
-automation publish the next version.
+If verification finds a bad artifact after publication, preserve the release for
+traceability. Record the correction under `Unreleased` and let the automation
+publish the next version.

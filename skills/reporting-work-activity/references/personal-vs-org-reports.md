@@ -48,8 +48,8 @@ report when Chad's Linear issue, Slack guidance, or support thread explains why
 it mattered.
 
 Structure the personal report around a small number of bodies of work, not
-around tools. Derive those bodies of work from the current window each time.
-Do not preserve last week's workstream names as a template. A useful current
+around tools. Derive those bodies of work from the current window each time. Do
+not preserve last week's workstream names as a template. A useful current
 workstream connects a concrete outcome or decision to two or more pieces of
 evidence, regardless of which source supplied them.
 
@@ -90,8 +90,8 @@ week, make it visually obvious. Good treatments:
 - a highlighted "Demo angle" line inside the card
 - a top-level "Discuss this week" callout for meetings or transcripts
 
-Keep the treatment consistent, but do not carry demo-worthy projects forward
-as a standing source list. Choose demo and discussion highlights again from the
+Keep the treatment consistent, but do not carry demo-worthy projects forward as
+a standing source list. Choose demo and discussion highlights again from the
 current evidence on every run.
 
 ## Visual redesigns
@@ -104,12 +104,11 @@ passing its four-of-five distinctness gate.
 
 ## Required single-page PDF export
 
-Every report includes
-`dist/chad-weekly-activity-report-single-page.pdf`. `mise run report` builds it
-after the HTML, and `mise run pdf` re-exports an unchanged HTML report. The
-browser page and one-page PDF need different layout rules. Browser CSS can use
-sticky navigation, clipped overflow, and scrollable tables. A static PDF should
-not.
+Every report includes `dist/chad-weekly-activity-report-single-page.pdf`.
+`mise run report` builds it after the HTML, and `mise run pdf` re-exports an
+unchanged HTML report. The browser page and one-page PDF need different layout
+rules. Browser CSS can use sticky navigation, clipped overflow, and scrollable
+tables. A static PDF should not.
 
 When exporting a full report as a single PDF page:
 

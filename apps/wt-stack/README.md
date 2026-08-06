@@ -117,9 +117,9 @@ Runtime requirements:
 credential directly. The core `gh` binary and `gh-stack` extension do not need
 to be installed after authentication has been configured.
 
-Stacked Pull Requests is currently a private preview. The official
-documentation links to GitHub's preview waitlist and is the source of truth for
-GitHub-side feature availability and behavior.
+Stacked Pull Requests is currently a private preview. The official documentation
+links to GitHub's preview waitlist and is the source of truth for GitHub-side
+feature availability and behavior.
 
 `WT_STACK_GIT_BIN` may select an alternate Git executable for testing or
 diagnosis. It is trusted as executable code and should be set only to a binary
@@ -288,8 +288,8 @@ retrying.
 wt-stack completion <bash|fish|powershell|zsh> [--no-descriptions]
 ```
 
-Generates a shell completion script. Follow the shell-specific instructions
-from `wt-stack completion <shell> --help` to load it for the current session or
+Generates a shell completion script. Follow the shell-specific instructions from
+`wt-stack completion <shell> --help` to load it for the current session or
 install it permanently.
 
 - `--no-descriptions` omits command descriptions from completion candidates.

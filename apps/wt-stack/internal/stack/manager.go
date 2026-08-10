@@ -44,7 +44,7 @@ type githubClient interface {
 		github.Repository,
 		string,
 	) (*state.PullRequest, error)
-	Link(context.Context, github.Repository, string, []string) error
+	Link(context.Context, github.Repository, string, []string, bool) error
 	Unstack(context.Context, github.Repository, []int) (bool, error)
 }
 
@@ -95,6 +95,12 @@ type AddOptions struct {
 type RebaseOptions struct {
 	StackName string
 	Fetch     bool
+}
+
+// SubmitOptions configures Stack publication.
+type SubmitOptions struct {
+	StackName string
+	Draft     bool
 }
 
 // Status is a live view of one locally tracked stack.
@@ -583,8 +589,8 @@ func (m *Manager) Refresh(ctx context.Context, stackName string) error {
 }
 
 // Submit pushes active branches and creates or updates their GitHub Stack.
-func (m *Manager) Submit(ctx context.Context, stackName string) error {
-	locked, file, stack, err := m.lockedStack(ctx, stackName)
+func (m *Manager) Submit(ctx context.Context, options SubmitOptions) error {
+	locked, file, stack, err := m.lockedStack(ctx, options.StackName)
 	if err != nil {
 		return err
 	}
@@ -613,6 +619,7 @@ func (m *Manager) Submit(ctx context.Context, stackName string) error {
 		repository,
 		stack.Trunk,
 		branches,
+		options.Draft,
 	); err != nil {
 		return err
 	}

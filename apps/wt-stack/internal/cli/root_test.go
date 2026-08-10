@@ -188,6 +188,32 @@ func TestExecuteDryRunHumanOutputDescribesAPlan(t *testing.T) {
 	}
 }
 
+func TestExecutePreservesDraftSubmissionOption(t *testing.T) {
+	t.Parallel()
+
+	for _, command := range []string{"submit", "sync"} {
+		t.Run(command, func(t *testing.T) {
+			t.Parallel()
+
+			manager := &fakeCommandManager{}
+			var errOut bytes.Buffer
+			code := execute(
+				[]string{"--stack", "delivery", command, "--draft"},
+				&bytes.Buffer{},
+				&errOut,
+				manager,
+			)
+			if code != 0 {
+				t.Fatalf("exit code = %d, stderr = %s", code, errOut.String())
+			}
+			if manager.submitOptions.StackName != "delivery" ||
+				!manager.submitOptions.Draft {
+				t.Fatalf("submit options = %#v", manager.submitOptions)
+			}
+		})
+	}
+}
+
 func TestExecuteUnstackLocalLeavesGitHubUntouched(t *testing.T) {
 	t.Parallel()
 
@@ -551,11 +577,12 @@ func assertJSONKeysInSchema(t *testing.T, schema []byte, value any) {
 }
 
 type fakeCommandManager struct {
-	calls        []string
-	dryRun       bool
-	rebaseErr    error
-	commandErr   error
-	unstackLocal bool
+	calls         []string
+	dryRun        bool
+	rebaseErr     error
+	commandErr    error
+	unstackLocal  bool
+	submitOptions stackmanager.SubmitOptions
 }
 
 func (m *fakeCommandManager) SetDryRun(enabled bool) {
@@ -634,8 +661,12 @@ func (m *fakeCommandManager) Refresh(context.Context, string) error {
 	return m.commandErr
 }
 
-func (m *fakeCommandManager) Submit(context.Context, string) error {
+func (m *fakeCommandManager) Submit(
+	_ context.Context,
+	options stackmanager.SubmitOptions,
+) error {
 	m.calls = append(m.calls, "submit")
+	m.submitOptions = options
 	return m.commandErr
 }
 

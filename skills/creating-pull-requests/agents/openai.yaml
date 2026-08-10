@@ -1,6 +1,6 @@
 interface:
   display_name: "Creating Pull Requests"
-  short_description: "Create one PR or publish a wt-stack Stack."
+  short_description: "Create draft PRs or publish a wt-stack Stack in draft."
   default_prompt: >-
     Use $creating-pull-requests to commit and publish the current single-branch
-    or wt-stack changes.
+    or wt-stack changes as draft pull requests.

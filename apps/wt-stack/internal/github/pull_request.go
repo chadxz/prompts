@@ -82,6 +82,7 @@ func (c *Client) createPullRequest(
 	repository Repository,
 	branch string,
 	base string,
+	draft bool,
 ) (*state.PullRequest, error) {
 	title, body, err := c.commitMessage(ctx, branch)
 	if err != nil {
@@ -92,7 +93,7 @@ func (c *Client) createPullRequest(
 		Head:  branch,
 		Base:  base,
 		Body:  body,
-		Draft: false,
+		Draft: draft,
 	}
 	var created pullRequestWire
 	if _, err := c.request(

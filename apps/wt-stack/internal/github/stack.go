@@ -27,11 +27,13 @@ type stackRequest struct {
 }
 
 // Link creates pull requests and creates or additively updates their Stack.
+// Draft applies only to pull requests created by this call.
 func (c *Client) Link(
 	ctx context.Context,
 	repository Repository,
 	trunk string,
 	branches []string,
+	draft bool,
 ) error {
 	if len(branches) == 0 {
 		return errors.New("stack has no branches")
@@ -62,6 +64,7 @@ func (c *Client) Link(
 			trunk,
 			branches,
 			pullRequests,
+			draft,
 		)
 		return err
 	}
@@ -86,6 +89,7 @@ func (c *Client) Link(
 		trunk,
 		branches,
 		pullRequests,
+		draft,
 	)
 	if err != nil {
 		return err
@@ -190,6 +194,7 @@ func (c *Client) ensurePullRequests(
 	trunk string,
 	branches []string,
 	pullRequests []*state.PullRequest,
+	draft bool,
 ) ([]*state.PullRequest, error) {
 	resolved := make([]*state.PullRequest, len(branches))
 	expectedBase := trunk
@@ -202,6 +207,7 @@ func (c *Client) ensurePullRequests(
 				repository,
 				branch,
 				expectedBase,
+				draft,
 			)
 			if err != nil {
 				return nil, fmt.Errorf(

@@ -33,7 +33,7 @@ type commandManager interface {
 	Abort(context.Context) error
 	Push(context.Context, string) error
 	Refresh(context.Context, string) error
-	Submit(context.Context, string) error
+	Submit(context.Context, stackmanager.SubmitOptions) error
 	Unstack(context.Context, string, bool) (bool, error)
 	Doctor(context.Context, string) (map[string]string, error)
 }
@@ -348,7 +348,8 @@ func newRefreshCommand(opts *options) *cobra.Command {
 }
 
 func newSubmitCommand(opts *options) *cobra.Command {
-	return &cobra.Command{
+	var draft bool
+	command := &cobra.Command{
 		Use:   "submit",
 		Short: "Push branches and create or update the GitHub Stack",
 		Args:  cobra.NoArgs,
@@ -357,7 +358,13 @@ func newSubmitCommand(opts *options) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if err := manager.Submit(command.Context(), opts.stackName); err != nil {
+			if err := manager.Submit(
+				command.Context(),
+				stackmanager.SubmitOptions{
+					StackName: opts.stackName,
+					Draft:     draft,
+				},
+			); err != nil {
 				return err
 			}
 			return opts.print(commandResult{
@@ -367,10 +374,14 @@ func newSubmitCommand(opts *options) *cobra.Command {
 			})
 		},
 	}
+	command.Flags().BoolVar(&draft, "draft", false,
+		"create missing pull requests as drafts")
+	return command
 }
 
 func newSyncCommand(opts *options) *cobra.Command {
-	return &cobra.Command{
+	var draft bool
+	command := &cobra.Command{
 		Use:   "sync",
 		Short: "Refresh, rebase, push, and submit the selected stack",
 		Args:  cobra.NoArgs,
@@ -388,7 +399,13 @@ func newSyncCommand(opts *options) *cobra.Command {
 			}); err != nil {
 				return err
 			}
-			if err := manager.Submit(command.Context(), opts.stackName); err != nil {
+			if err := manager.Submit(
+				command.Context(),
+				stackmanager.SubmitOptions{
+					StackName: opts.stackName,
+					Draft:     draft,
+				},
+			); err != nil {
 				return err
 			}
 			return opts.print(commandResult{
@@ -398,6 +415,9 @@ func newSyncCommand(opts *options) *cobra.Command {
 			})
 		},
 	}
+	command.Flags().BoolVar(&draft, "draft", false,
+		"create missing pull requests as drafts")
+	return command
 }
 
 func newUnstackCommand(opts *options) *cobra.Command {

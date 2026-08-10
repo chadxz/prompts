@@ -54,6 +54,7 @@ func TestLinkCreatesAStackThroughHTTP(t *testing.T) {
 		testRepository(server),
 		"main",
 		[]string{"feature-one", "feature-two"},
+		false,
 	); err != nil {
 		t.Fatalf("link stack: %v", err)
 	}
@@ -102,6 +103,7 @@ func TestLinkAppendsToAnExistingStack(t *testing.T) {
 		testRepository(server),
 		"main",
 		[]string{"feature-one", "feature-two"},
+		false,
 	); err != nil {
 		t.Fatalf("append stack: %v", err)
 	}
@@ -110,7 +112,7 @@ func TestLinkAppendsToAnExistingStack(t *testing.T) {
 	}
 }
 
-func TestLinkCreatesMissingPullRequestsAndRepairsBases(t *testing.T) {
+func TestLinkCreatesMissingDraftPullRequestsAndRepairsBases(t *testing.T) {
 	root := t.TempDir()
 	var created createPullRequestRequest
 	var repaired struct {
@@ -171,13 +173,14 @@ func TestLinkCreatesMissingPullRequestsAndRepairsBases(t *testing.T) {
 		testRepository(server),
 		"main",
 		[]string{"feature-one", "feature-two"},
+		true,
 	); err != nil {
 		t.Fatalf("link stack: %v", err)
 	}
 	if created.Title != "Feature two" ||
 		created.Head != "feature-two" ||
 		created.Base != "feature-one" ||
-		created.Draft {
+		!created.Draft {
 		t.Fatalf("unexpected pull request create body: %#v", created)
 	}
 	if repaired.Base != "main" {
@@ -215,6 +218,7 @@ func TestLinkChecksPreviewBeforeCreatingPullRequests(t *testing.T) {
 		testRepository(server),
 		"main",
 		[]string{"feature-one", "feature-two"},
+		false,
 	)
 	if err == nil || !strings.Contains(err.Error(), "HTTP 404") {
 		t.Fatalf("Link() error = %v, want preview 404", err)
@@ -274,10 +278,13 @@ func TestLinkReplacesClosedUnmergedPullRequest(t *testing.T) {
 		testRepository(server),
 		"main",
 		[]string{"feature-one", "feature-two"},
+		false,
 	); err != nil {
 		t.Fatalf("replace closed pull request: %v", err)
 	}
-	if created.Head != "feature-two" || created.Base != "feature-one" {
+	if created.Head != "feature-two" ||
+		created.Base != "feature-one" ||
+		created.Draft {
 		t.Fatalf("unexpected replacement pull request: %#v", created)
 	}
 }
@@ -324,6 +331,7 @@ func TestLinkPreservesMergedStackMembers(t *testing.T) {
 		testRepository(server),
 		"main",
 		[]string{"merged-feature", "active-feature"},
+		false,
 	); err != nil {
 		t.Fatalf("link stack with merged member: %v", err)
 	}
@@ -371,6 +379,7 @@ func TestLinkOmitsMergedMembersWhenCreatingAStack(t *testing.T) {
 		testRepository(server),
 		"main",
 		[]string{"merged-feature", "active-feature"},
+		false,
 	); err != nil {
 		t.Fatalf("link stack with merged member: %v", err)
 	}
@@ -422,6 +431,7 @@ func TestLinkAcceptsExistingStackAfterBottomPullRequestMerged(t *testing.T) {
 		testRepository(server),
 		"main",
 		[]string{"merged-feature", "active-feature"},
+		false,
 	); err != nil {
 		t.Fatalf("link stack after bottom merge: %v", err)
 	}
@@ -494,6 +504,7 @@ func TestLinkStartsNewStackAfterPreviousGenerationMerged(t *testing.T) {
 		testRepository(server),
 		"main",
 		[]string{"merged-one", "merged-two", "active-feature"},
+		false,
 	); err != nil {
 		t.Fatalf("link next stack generation: %v", err)
 	}
@@ -551,6 +562,7 @@ func TestLinkFindsExistingStackOnLaterPage(t *testing.T) {
 		testRepository(server),
 		"main",
 		[]string{"feature-one", "feature-two"},
+		false,
 	); err != nil {
 		t.Fatalf("link paginated stack: %v", err)
 	}

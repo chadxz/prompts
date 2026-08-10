@@ -249,21 +249,27 @@ Use it after merges or changes made through GitHub.
 ### `submit`
 
 ```console
-wt-stack [--stack <name>] submit
+wt-stack [--stack <name>] submit [--draft]
 ```
 
 Pushes active branches, creates missing pull requests, repairs pull request
 bases, and creates or additively updates the GitHub Stack. It does not rebase
 branches first.
 
+- `--draft` creates missing pull requests as drafts. Existing pull requests keep
+  their current draft or ready-for-review state.
+
 ### `sync`
 
 ```console
-wt-stack [--stack <name>] sync
+wt-stack [--stack <name>] sync [--draft]
 ```
 
 Runs the normal update loop: `refresh`, `rebase`, `push`, and Stack submission.
 Use it for routine publication after committing branch changes.
+
+- `--draft` creates missing pull requests as drafts during submission. Existing
+  pull requests keep their current draft or ready-for-review state.
 
 ### `unstack`
 

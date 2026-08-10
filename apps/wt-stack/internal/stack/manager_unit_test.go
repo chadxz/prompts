@@ -76,11 +76,18 @@ func TestManagerRunsStackLifecycleWithFakes(t *testing.T) {
 		t.Fatalf("rebase calls = %v", repository.calls)
 	}
 
-	if err := manager.Submit(ctx, "delivery"); err != nil {
+	if err := manager.Submit(ctx, SubmitOptions{
+		StackName: "delivery",
+		Draft:     true,
+	}); err != nil {
 		t.Fatalf("submit stack: %v", err)
 	}
-	if githubClient.links != 1 {
-		t.Fatalf("GitHub links = %d, want 1", githubClient.links)
+	if githubClient.links != 1 || !githubClient.linkDraft {
+		t.Fatalf(
+			"GitHub links = %d, draft = %t, want one draft link",
+			githubClient.links,
+			githubClient.linkDraft,
+		)
 	}
 	if store.file.Stacks[0].Branches[0].PullRequest == nil {
 		t.Fatal("submit did not refresh pull request state")
@@ -270,7 +277,9 @@ func TestManagerDryRunDoesNotMutateRepositoryOrState(t *testing.T) {
 		{
 			name: "submit",
 			run: func(manager *Manager) error {
-				return manager.Submit(context.Background(), "delivery")
+				return manager.Submit(context.Background(), SubmitOptions{
+					StackName: "delivery",
+				})
 			},
 		},
 		{
@@ -680,6 +689,7 @@ func (r *fakeRepository) PushStack(
 type fakeGitHubClient struct {
 	pullRequests    map[string]*state.PullRequest
 	links           int
+	linkDraft       bool
 	unstacks        int
 	dissolved       bool
 	authentications int
@@ -724,8 +734,10 @@ func (c *fakeGitHubClient) Link(
 	_ github.Repository,
 	_ string,
 	_ []string,
+	draft bool,
 ) error {
 	c.links++
+	c.linkDraft = draft
 	return nil
 }
 

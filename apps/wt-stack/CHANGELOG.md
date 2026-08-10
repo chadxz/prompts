@@ -5,6 +5,10 @@ Versioning.
 
 ## Unreleased
 
+### Added
+
+- Draft pull request creation through `submit --draft` and `sync --draft`.
+
 ## 0.4.0 - 2026-07-24
 
 ### Added

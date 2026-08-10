@@ -1,16 +1,19 @@
 ---
 name: creating-pull-requests
 description:
-  Creates single pull requests or publishes existing wt-stack Stacks using
-  Chad's commit template, PR conventions, and writing voice. Use when the user
-  asks to create, open, write, format, or publish a pull request, including
-  GitHub alert callouts, stacked pull requests, or a commit and PR together.
+  Creates draft single pull requests or publishes existing wt-stack Stacks
+  with new pull requests left in draft, using Chad's commit template, PR
+  conventions, and writing voice. Use when the user asks to create, open,
+  write, format, or publish a pull request, including GitHub alert callouts,
+  stacked pull requests, or a commit and PR together.
 user-invocable: true
 ---
 
 # Creating Pull Requests
 
-Create and publish either a single pull request or an existing Stack.
+Create and publish either a single pull request or an existing Stack. Leave
+every newly created pull request in draft unless the user explicitly asks to
+open it ready for review.
 
 The `creating-commits` skill owns the message content contract, commit
 mechanics, staging, voice, and the `linctl` ticket commands. Read it before
@@ -31,10 +34,12 @@ drafting and apply the PR overrides below.
 6. Create the commit from that prepared title and body through the
    `creating-commits` skill, hard-wrapping only the commit body.
 7. Push the branch.
-8. Open the PR with `gh pr create --title` and `--body`. Do not use `--fill`.
-9. Read the live PR with `gh pr view <url> --json title,body,url` and compare it
-   with the prepared title, body, and publication checklist before reporting
-   success.
+8. Open the PR with `gh pr create --draft --title` and `--body`. Do not use
+   `--fill`. Omit `--draft` only when the user explicitly asks to open the PR
+   ready for review.
+9. Read the live PR with `gh pr view <url> --json isDraft,title,body,url` and
+   compare it with the requested draft state, prepared title, body, and
+   publication checklist before reporting success.
 
 ## Stacked pull request workflow
 
@@ -47,8 +52,9 @@ Read and follow the `managing-stacked-changes` skill before publishing a Stack.
    review unit before committing or syncing.
 3. Use the `creating-commits` skill for any uncommitted review unit, deriving
    its message from the prepared PR title and body.
-4. Run the dry-run and synchronization sequence from the
-   `managing-stacked-changes` skill.
+4. Unless the user explicitly asks to open the Stack ready for review, run the
+   dry-run and synchronization sequence from the `managing-stacked-changes`
+   skill with `--draft`. Omit `--draft` only for that explicit override.
 5. Run `wt-stack --json --stack <name> status` and collect every pull request
    URL.
 6. For every newly created pull request, always run
@@ -56,10 +62,11 @@ Read and follow the `managing-stacked-changes` skill before publishing a Stack.
    content. Treat the commit-derived body as an initial value, not the final PR
    description. Apply requested labels and reviewers through the corresponding
    `gh pr edit` options.
-7. Read each live PR with `gh pr view <url> --json title,body,url` and compare
-   it with the prepared content and publication checklist.
+7. Read each live PR with `gh pr view <url> --json isDraft,title,body,url` and
+   compare it with the requested draft state, prepared content, and publication
+   checklist.
 8. Report the Stack name, branch order, and every pull request URL only after
-   the live descriptions pass that check.
+   the live state and descriptions pass that check.
 
 Do not run `gh pr create`, push branches individually, or set pull request bases
 manually for Stack-owned branches. `wt-stack` owns those operations and keeps
@@ -115,6 +122,8 @@ Before creating or updating the pull request, verify all of the following:
   replacing the explanation.
 - The body is unwrapped for GitHub while preserving intentional Markdown
   structure.
+- Every newly created pull request is in draft unless the user explicitly asked
+  to open it ready for review.
 - The ticket footer is exact when a ticket exists and absent when one does not.
 
 Do not claim the PR follows the message contract until the live body has been

@@ -5,11 +5,13 @@ were verified against `claude` 2.1.223.
 
 ## Invoke
 
-Run detached from the worktree, with every scratch file under `~/tmp`:
+Run Claude as the foreground process in the caller's managed persistent command
+session, with every scratch file under `~/tmp`. Give the command a short initial
+yield so the caller receives a session handle while Claude keeps running:
 
 ```bash
 cd "$WORKTREE"
-nohup claude -p \
+exec claude -p \
   --model "$MODEL" \
   --effort max \
   --permission-mode bypassPermissions \
@@ -17,10 +19,16 @@ nohup claude -p \
   --add-dir "$HOME/tmp" \
   --output-format stream-json --verbose \
   --no-session-persistence \
-  "$(cat "$review_dir/brief.txt")" \
-  > "$review_dir/review.jsonl" 2>&1 &
-echo "$!" > "$review_dir/review.pid"
+  "$(< "$review_dir/brief.txt")" \
+  > "$review_dir/review.jsonl" 2>&1
 ```
+
+Retain the execution or session handle returned by the command runner. In Codex,
+start the command with a short yield and continue it through the returned
+session ID. Do not add `nohup`, `&`, `disown`, or a PID file: the command runner
+can terminate shell-backgrounded descendants as soon as the wrapper returns.
+`exec` makes Claude the managed process, so its eventual exit status remains
+available through the same session handle.
 
 Discover the model rather than assuming one. `--model` accepts an alias such as
 `opus` or a full identifier; pass the full identifier so a later alias remapping
@@ -80,7 +88,10 @@ catches it.
 
 ## Collect
 
-Extract the review, and surface a failed run as a failure rather than as
+First confirm that the managed command session completed. Because stdout is
+redirected, an empty continuation response while it runs is normal; use the
+event-stream projections below to inspect progress. Once the session completes,
+extract the review and surface a failed run as a failure rather than as
 findings:
 
 ```bash

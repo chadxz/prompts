@@ -5,7 +5,8 @@ description:
   session for complex completed work through an installed alternate CLI such as
   Claude Code, Codex CLI, or Cursor Agent, then verifies and reconciles the
   findings. Covers writing the review brief, granting read-only investigation
-  tools, running the peer detached, and collecting its result from a stream.
+  tools, running the peer in a persistent command session, and collecting its
+  result from a stream.
   Use automatically before finalizing substantial or high-risk code,
   architecture, infrastructure, migrations, security or authorization,
   concurrency, distributed systems, broad refactors, or long multi-step
@@ -60,8 +61,8 @@ later. Do not use a mode that adds delegation unless the user asked for a panel.
 
 Never lower the model or thinking level to make a review fit a waiting window.
 If reviews are not finishing, fix the waiting mechanism described below. A
-faster tier is a last resort after the detached pattern has been tried, and it
-must be reported.
+faster tier is a last resort after the persistent-session pattern has been
+tried, and it must be reported.
 
 Read the matching reference for exact flags, tool grants, and collection
 commands:
@@ -182,18 +183,21 @@ The brief text and the stream file do not need a grant on their own: the caller
 expands the brief and writes the stream, so both happen outside the peer's
 session. Each reference gives the flag, or notes that the peer needs none.
 
-## Run Detached and Watch the Stream
+## Run Persistently and Watch the Stream
 
-Do not launch the peer and then block on it. Blocking forces the caller to
-choose between waiting blind and killing the run, and callers reliably choose
-badly: they interrupt working reviews that had produced nothing yet, because a
-silent process and a hung process look identical.
+Do not launch the peer in a blocking, one-shot command. Use the caller's managed
+long-running command facility when one is available. It should return an
+execution or session handle after a short initial yield while keeping the peer
+attached to the managed process.
 
 Three rules, which apply to every peer:
 
-1. **Write the event stream to a file and detach.** Redirect the CLI's streaming
-   output to a file under `~/tmp` and background the process. The caller keeps
-   working instead of spending turns waiting.
+1. **Let the execution runtime own the process.** Redirect the CLI's streaming
+   output to a file under `~/tmp`, run the peer as the foreground process in a
+   managed persistent command, and retain the returned session handle. Do not
+   add `nohup`, `&`, `disown`, or a PID file inside a managed command runner.
+   The runner may terminate background descendants when its wrapper exits, and a
+   PID file does not provide a usable continuation channel.
 2. **Project the stream; never paste it.** The rule is about shape, not
    frequency. Nearly all of a stream's volume is file contents echoed back in
    tool results, plus reasoning blocks; together they routinely make the stream
@@ -207,6 +211,12 @@ Three rules, which apply to every peer:
    completion status before consuming a result, and treat an unfinished run as
    no review at all, because a truncated run ends on mid-work narration that
    reads like a conclusion.
+
+The managed session handle is the source of truth for process completion. The
+event stream is the source of truth for review progress. An empty continuation
+read is expected when the peer's stdout is redirected and does not mean that the
+review is idle. Use the continuation tool when completion status matters;
+inspect the projected stream only when a decision depends on it.
 
 Do not cap the peer's turns. A turn ceiling truncates mid-investigation and
 returns narration; the budget line in the brief is the right lever. Where a

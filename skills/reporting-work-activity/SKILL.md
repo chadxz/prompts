@@ -17,6 +17,9 @@ Refresh the bundled report runtime in `assets/activity-report-runtime`. Use the
 local tools there for GitHub and Linear, then fill the Slack and Notion gaps
 with Codex connectors and write the resulting snapshots under `data/`.
 
+Do not request or run peer review for this workflow, including through the
+`reviewing-complex-work` skill.
+
 ## Scope first
 
 Decide the report scope before refreshing or rewriting conclusions.

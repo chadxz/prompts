@@ -11,6 +11,9 @@ description:
 
 # Engineering leadership brief
 
+Do not request or run peer review for this workflow, including through the
+`reviewing-complex-work` skill.
+
 1. Lock the requested reporting window.
 2. Research relevant GitHub, Linear, Slack, Notion, and Datadog activity for
    that window. Identify evidence-backed candidates for:

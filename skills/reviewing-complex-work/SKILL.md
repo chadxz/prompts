@@ -1,18 +1,17 @@
 ---
 name: reviewing-complex-work
 description:
-  Allows one self-requested, independent, read-only peer-agent review per
-  session for complex completed work through an installed alternate CLI such as
-  Claude Code, Codex CLI, or Cursor Agent, then verifies and reconciles the
-  findings. Covers writing the review brief, granting read-only investigation
-  tools, running the peer in a persistent command session, and collecting its
-  result from a stream.
-  Use automatically before finalizing substantial or high-risk code,
-  architecture, infrastructure, migrations, security or authorization,
-  concurrency, distributed systems, broad refactors, or long multi-step
-  analysis where a second model could catch correctness gaps. Also use for
-  explicit peer-review, second-opinion, adversarial-review, or cross-model
-  review requests. Skip routine mechanical edits and small low-risk changes.
+  Runs one independent, read-only peer-agent review through an alternate CLI.
+  Use for explicit requests for a peer review, second opinion, adversarial
+  review, or cross-model review. Invoke automatically only for rare completed
+  changes that alter a high-consequence boundary, could fail severely or be
+  hard to reverse, retain a specific risk that primary validation cannot cover,
+  and would gain distinct evidence from another model. Do not invoke merely
+  because work is long, multi-step, cross-component, unfamiliar,
+  infrastructure-related, or analytically nuanced. Skip reports, plans,
+  ordinary code or architecture reviews, documentation, PR-feedback fixes,
+  routine Terraform or configuration changes, and other bounded work unless
+  the user explicitly requests an independent peer.
 ---
 
 # Reviewing Complex Work
@@ -29,19 +28,48 @@ and collect its result.
 
 ## Decide When to Review
 
-Review automatically when there is one high-risk signal or at least two
-complexity signals.
+Treat automatic review as an exception. Run it only when all of these are true:
 
-High-risk signals include security, privacy, migrations, data loss, irreversible
-state, concurrency, distributed behavior, public APIs, schemas, compatibility,
-and infrastructure boundaries.
+1. The completed change introduces or materially changes a high-consequence
+   boundary, rather than merely touching code in a high-risk domain.
+2. A realistic failure could cause severe harm, broad impact, or a recovery that
+   is difficult to execute safely. A reversible change with a tested rollback
+   does not meet this gate by consequence alone.
+3. Primary validation leaves a specific correctness risk that tests, plans,
+   linters, type checks, or a safe rollout cannot adequately cover.
+4. A read-only peer can inspect relevant evidence and bring a meaningfully
+   independent line of reasoning before the work is finalized.
 
-Complexity signals include work spanning components, substantial refactors with
-behavior changes, interacting requirements or edge cases, unfamiliar systems,
-important behavior that tests cannot cover, and nuanced analysis.
+Qualifying boundaries include authorization enforcement where a bypass could
+grant access, destructive or difficult-to-reverse data migrations, distributed
+concurrency and idempotency, production release or promotion machinery with a
+broad blast radius, and compatibility changes to a widely consumed public API or
+schema. These labels are not triggers by themselves. The current change must
+materially alter the risky behavior and pass every gate above.
 
-Skip mechanical, low-risk work covered by deterministic checks. Honor a user
-request to skip or limit external review.
+Do not treat elapsed time, token or tool volume, diff size, component count,
+unfamiliarity, a broad refactor, or nuanced analysis as independent reasons to
+review. Skip automatic review for:
+
+- reports, plans, research, summaries, visualizations, and other analytical or
+  editorial artifacts;
+- ordinary code reviews, architecture reviews, and requests to inspect a pull
+  request or answer questions about it;
+- documentation, tests, mechanical refactors, and routine feature, bug,
+  Terraform, infrastructure, schema, or configuration changes that have strong
+  deterministic checks or a safe rollback;
+- addressing review comments, fixing CI, preparing commits or pull requests,
+  publishing a draft for human review, merging an already reviewed change, or
+  performing bounded follow-up work.
+
+A request to "review" work directs the primary agent to review it. It is an
+explicit request for this skill only when the user asks for an independent peer,
+second opinion, adversarial pass, another model, or a named agent CLI.
+Authorization to finish, push, publish, apply, or merge does not imply a peer
+review request.
+
+Honor any request to skip, stop, or avoid peer review for the rest of the agent
+session. Resume only if the user later explicitly requests an independent peer.
 
 ## Choose the Peer
 

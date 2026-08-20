@@ -1,17 +1,18 @@
 #!/bin/bash
-# Setup Grok Bot: shared git/tooling hooks plus a fuse-overlayfs union of
-# prompts/skills over the Grok Bot workflows catalog.
+# Setup Grok Bot: shared git/tooling hooks, Tailscale on boot, plus a
+# fuse-overlayfs union of prompts/skills over the Grok Bot workflows catalog.
 #
 # Grok Bot's catalog only treats real directories as skills (directory
 # symlinks are ignored). fuse-overlayfs presents both the prompts skill
 # packages and Grok-native packages as real directories in workflows/.
 #
 # Usage:
-#   ./setup_grokbot.sh                 # shared hooks + overlay
+#   ./setup_grokbot.sh                 # shared hooks + Tailscale + overlay
 #   ./setup_grokbot.sh --overlay-only  # remount the overlay only
 #
 # Overlay paths can be overridden with GROK_BOT_DATA_DIR (the directory
-# that contains workflows/). The mount needs passwordless sudo.
+# that contains workflows/). The mount and Tailscale start need
+# passwordless sudo.
 
 set -euo pipefail
 
@@ -217,11 +218,75 @@ mount_skills_overlay() {
   verify_overlay "$workflows"
 }
 
+install_tailscale() {
+  if [[ "$(uname -s)" != Linux ]]; then
+    echo "Skipping Tailscale install (Linux-only)"
+    return 0
+  fi
+
+  if command -v tailscale >/dev/null 2>&1 && command -v tailscaled >/dev/null 2>&1; then
+    echo "tailscale already installed ($(tailscale version --short 2>/dev/null || tailscale version | awk 'NR==1{print; exit}'))"
+    return 0
+  fi
+
+  if ! sudo -n true >/dev/null 2>&1; then
+    echo "Error: passwordless sudo is required to install Tailscale" >&2
+    return 1
+  fi
+
+  echo "Installing Tailscale"
+  curl -fsSL https://tailscale.com/install.sh | sudo -n sh
+}
+
+ensure_tailscale_session_hook() {
+  local bashrc="$HOME/.bashrc"
+  local mark="# Tailscale: PID 1 is tini/pod-daemon"
+
+  mkdir -p "$(dirname "$bashrc")"
+  touch "$bashrc"
+  if grep -qF "$mark" "$bashrc"; then
+    echo "Tailscale session hook already in ~/.bashrc"
+    return 0
+  fi
+
+  {
+    echo ""
+    echo "$mark (not systemd), so start tailscaled if needed."
+    echo "if command -v start-grokbot-tailscaled >/dev/null 2>&1; then"
+    echo "    start-grokbot-tailscaled >/dev/null 2>&1 || true"
+    echo "fi"
+  } >> "$bashrc"
+  echo "Added Tailscale session hook to ~/.bashrc"
+}
+
+setup_grokbot_tailscale() {
+  local dest="$HOME/.local/bin/start-grokbot-tailscaled"
+
+  if [[ "$(uname -s)" != Linux ]]; then
+    echo "Skipping Grok Bot Tailscale setup (Linux-only)"
+    return 0
+  fi
+
+  install_tailscale
+  mkdir -p "$(dirname "$dest")"
+  ensure_bin_on_path "$(dirname "$dest")" >/dev/null
+  # Copy so boot still works if this checkout moves.
+  install -m 0755 "$PROMPTS_DIR/bin/start-grokbot-tailscaled" "$dest"
+  echo "Installed $dest"
+  ensure_tailscale_session_hook
+  "$dest"
+  if command -v tailscale >/dev/null 2>&1; then
+    echo "Tailscale status:"
+    tailscale status --self 2>/dev/null || tailscale status || true
+  fi
+}
+
 if [[ "$OVERLAY_ONLY" -eq 0 ]]; then
   setup_global_gitignore "$PROMPTS_DIR/.gitignore_global"
   setup_git_commit_template "$PROMPTS_DIR/.git_commit_template"
   setup_git_clone_override "$PROMPTS_DIR/bin"
   install_wt_stack "$PROMPTS_DIR"
+  setup_grokbot_tailscale
 fi
 
 mount_skills_overlay

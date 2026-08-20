@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Start tailscaled on Grok Bot computers that have no systemd.
+# Safe to call from every shell: no-op when the daemon is already up.
+
+set -euo pipefail
+
+SOCKET="${TAILSCALED_SOCKET:-/var/run/tailscale/tailscaled.sock}"
+STATE="${TAILSCALED_STATE:-/var/lib/tailscale/tailscaled.state}"
+LOG="${TAILSCALED_LOG:-/var/log/tailscaled.log}"
+HOSTNAME="${TAILSCALE_HOSTNAME:-chads-grokbot}"
+
+if ! command -v tailscaled >/dev/null 2>&1; then
+  exit 0
+fi
+
+if ! sudo -n true >/dev/null 2>&1; then
+  echo "passwordless sudo is required to start tailscaled" >&2
+  exit 1
+fi
+
+backend_state() {
+  sudo -n tailscale --socket="$SOCKET" status --json 2>/dev/null \
+    | python3 -c 'import json,sys; print(json.load(sys.stdin).get("BackendState",""))' \
+    2>/dev/null || true
+}
+
+start_daemon() {
+  if command -v systemctl >/dev/null 2>&1 \
+    && systemctl list-unit-files tailscaled.service >/dev/null 2>&1; then
+    sudo -n systemctl enable --now tailscaled
+    return 0
+  fi
+
+  if pgrep -x tailscaled >/dev/null 2>&1 && [[ -S "$SOCKET" ]]; then
+    return 0
+  fi
+
+  sudo -n mkdir -p /var/run/tailscale /var/lib/tailscale
+  sudo -n touch "$LOG"
+  sudo -n sh -c "nohup tailscaled --state='$STATE' --socket='$SOCKET' >>'$LOG' 2>&1 &"
+}
+
+start_daemon
+
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+  [[ -S "$SOCKET" ]] && break
+  sleep 0.2
+done
+
+state="$(backend_state)"
+case "$state" in
+  Running|Stopped|Starting)
+    sudo -n tailscale --socket="$SOCKET" up --hostname="$HOSTNAME" >/dev/null 2>&1 || true
+    ;;
+esac

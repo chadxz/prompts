@@ -112,9 +112,10 @@ Apply two presentation changes:
 Before creating or updating the pull request, verify all of the following:
 
 - The body is written for a junior software engineer with no prior context.
-- `Why?` supplies the necessary background, concrete problem and impact, reason
-  for the change, plain-language definitions, and every available relevant
-  source link.
+- `Why?` supplies the necessary background, the business problem and its
+  impact, the value the change creates, plain-language definitions, and every
+  available relevant source link. It never treats a ticket, plan, ADR, RFC, or
+  "the user asked" as the reason the work exists.
 - `How?` explains the chosen approach, component responsibilities, meaningful
   tradeoffs, validation commands and results, why that evidence matters, and
   every available relevant implementation or third-party source link.

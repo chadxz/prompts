@@ -49,12 +49,21 @@ appear.
 The `Why?` section must explain:
 
 - The existing system or behavior and the background needed to understand it.
-- The concrete problem and its impact.
-- Why this change is the right next step.
+- The concrete problem and its impact on the business: cost, risk, delay,
+  lost revenue, support load, or a capability the company cannot offer yet.
+- The value this change creates: who is unblocked, what we can ship or operate
+  after this that we could not before, and why that matters now.
 - Any unfamiliar project, tool, or domain term used in the explanation.
 - Direct links to relevant ADRs, design documents, dependent or preceding pull
   requests, and maintained third-party documentation or repositories when those
   sources exist.
+
+Never treat a ticket, plan, ADR, RFC, or "the user asked" as the reason for the
+change. Those are pointers to the work. Sentences like "the ticket says so,"
+"the plan calls for this," "this implements EE-1232," or "the RFC requires it"
+fail the contract even when they are factually true. Name the operational or
+business outcome instead. Links still belong in `Why?` as supporting sources;
+they do not replace the value explanation.
 
 The `How?` section must explain:
 

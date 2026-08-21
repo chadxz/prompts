@@ -50,6 +50,8 @@ done
 state="$(backend_state)"
 case "$state" in
   Running|Stopped|Starting)
-    sudo -n tailscale --socket="$SOCKET" up --hostname="$HOSTNAME" >/dev/null 2>&1 || true
+    sudo -n tailscale --socket="$SOCKET" up \
+      --hostname="$HOSTNAME" \
+      --accept-routes >/dev/null 2>&1 || true
     ;;
 esac

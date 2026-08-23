@@ -90,6 +90,30 @@ without a concession-pivot formula, context before the reveal, no fanfare.
 - Name the people who contributed. Don't generalize with "the team". If you
   don't know who contributed, insert `[TODO: names]` and flag it.
 
+## Plain speech
+
+- **Say what it does, not how it feels.** "the database stays close at hand",
+  "SQL you can read", "types that follow your schema" name a feeling. The fix
+  names the mechanism or a number: "`.toSQL()` returns the exact string sent to
+  the database", "a column rename fails the build". Ask what the sentence tells
+  the reader to do or know, then write that. If you can't restate it as a
+  concrete instruction, fact, or number, cut it. One more check: if the sentence
+  could appear unchanged in another project's docs, it says nothing about this
+  one. Cut it.
+- **Shorten or split dense sentences.** If the reader has to backtrack to parse
+  a sentence, break it in two or drop clauses. One idea per sentence.
+- **Active voice.** Prefer it. Catch "is/are/was/were + past participle" and
+  name the actor: "queries are validated" becomes "the compiler validates
+  queries", "the file is parsed by the loader" becomes "the loader parses the
+  file". Passive is fine only when the actor is unknown or genuinely doesn't
+  matter.
+- **Cut adverbs, or use a stronger verb.** "runs quickly" becomes "is fast" or
+  the number. "significantly improves" becomes the measured delta. An adverb
+  propping up a weak verb means the verb is wrong.
+- **Prefer the plain word.** "utilize" becomes "use", "leverage" becomes "use",
+  "facilitate" becomes "help", "numerous" becomes "many", "in the event that"
+  becomes "if". The fancier synonym is rarely clearer.
+
 ## Structure
 
 - Titles should be descriptive, not clever. State what the document is about.
@@ -160,7 +184,7 @@ These are always wrong in my writing:
 
 - No em-dash. Use commas, semicolons, parentheses, or split into two sentences.
 - No "delve", "utilize", "leverage" (as a verb), "robust", "streamline",
-  "harness", "certainly".
+  "harness", "certainly", "load bearing", or "load-bearing".
 - No negative parallelism ("It's not X, it's Y"). Includes the causal variant
   "not because X, but because Y" and the cross-sentence reframe "The question
   isn't X. The question is Y."

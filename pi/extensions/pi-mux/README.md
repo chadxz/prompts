@@ -11,6 +11,10 @@ It exposes exactly three tools to the model:
 
 At runtime, `pi-mux` discovers its internal provider modules dynamically.
 
+The bundled providers are Cloudflare, Datadog, Notion, and Slack. Cloudflare
+uses the official code-mode API MCP endpoint, which keeps its approximately
+2,500 API operations behind three compact server tools.
+
 The human control plane stays outside the model-facing tool API. Authentication
 and connection state are managed through `/mux` commands.
 
@@ -100,6 +104,29 @@ package under `pi/extensions/pi-mux/providers/`. `pi-mux` discovers those
 provider modules dynamically rather than hardcoding a provider list. They are
 internal implementation details and are not auto-loaded as standalone pi
 extensions.
+
+### Cloudflare Codex adapter
+
+Cloudflare currently omits an OAuth issuer parameter that its metadata says it
+will return. Codex rejects that callback, so the Cloudflare provider includes a
+small stdio adapter based on the official MCP TypeScript SDK. It keeps an
+independent OAuth grant in `~/.codex/cloudflare-mcp-auth.json`.
+
+From the `pi-mux` package directory, authenticate it once:
+
+```bash
+node providers/cloudflare/cloudflare-mcp-stdio.ts --authenticate
+```
+
+Then configure Codex with the adapter's absolute path:
+
+```bash
+codex mcp add cloudflare-api -- node \
+  "$PWD/providers/cloudflare/cloudflare-mcp-stdio.ts"
+```
+
+The adapter should be removed in favor of Codex's native streamable HTTP
+transport after Cloudflare's callback includes the advertised issuer.
 
 Each provider module is meant to feel like a normal pi extension first:
 

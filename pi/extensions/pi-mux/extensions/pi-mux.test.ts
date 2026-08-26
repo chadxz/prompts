@@ -601,6 +601,7 @@ describe("dynamic provider discovery", () => {
   it("loads provider modules from providers/*/index.ts", async () => {
     const definitions = await loadEmbeddedProviderDefinitions();
     expect(definitions.map((definition) => definition.provider)).toEqual([
+      "cloudflare",
       "datadog",
       "notion",
       "slack",
@@ -1362,7 +1363,9 @@ describe("tool rendering", () => {
 
     expect(findTool?.description).toContain("pass provider to limit discovery to that exact provider");
     expect(findTool?.promptSnippet).toContain("Search installed provider tools for a task");
-    expect(findTool?.promptSnippet).toContain("Installed providers: datadog, notion, slack.");
+    expect(findTool?.promptSnippet).toContain(
+      "Installed providers: cloudflare, datadog, notion, slack.",
+    );
     expect(findTool?.promptSnippet).toContain("If you already know the provider, pass provider to search only that provider");
     expect(findTool?.promptGuidelines).toEqual(
       expect.arrayContaining([

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Writing Diataxis Documentation"
+  short_description: "Write documentation around user needs"
+  default_prompt: "Use $writing-diataxis-documentation to classify this reader need and draft the matching Diataxis form."

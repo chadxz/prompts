@@ -19,9 +19,13 @@ inside out:
 When content blurs, classify at sentence level. Move useful intrusions into the
 correct form and link them.
 
-Diataxis addresses deep quality: fit to human needs, flow, and anticipation. It
-can expose gaps in functional quality. Check accuracy, completeness,
-consistency, and precision separately.
+Treat a documentation set as complete for its current stage. Continue changing
+it as the product and reader needs change.
+
+Functional quality is a prerequisite for deep quality. Diataxis can expose gaps
+in accuracy, completeness, consistency, and precision; verify each against the
+documented system. Deep quality comes from fit to human needs, flow, and
+anticipation.
 
 Sources:
 

@@ -25,6 +25,8 @@ to create the learning experience.
 - State what the output should look like.
 - Use "Notice ...", "Remember ...", and "Let's check ..." to direct attention
   and confirm progress.
+- Give only the explanation needed to keep moving: "We do X before Y because Z.
+  See the explanation for details."
 - Close by naming what the learner built or accomplished.
 
 Reject a draft that merely gets a task done. Test the complete experience with

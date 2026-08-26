@@ -1,7 +1,7 @@
 {
   "providers": {
     "omlx": {
-      "baseUrl": "http://127.0.0.1:8000/v1",
+      "baseUrl": "http://127.0.0.1:8010/v1",
       "api": "openai-completions",
       "apiKey": "omlx",
       "authHeader": true,
@@ -11,6 +11,17 @@
         "maxTokensField": "max_tokens"
       },
       "models": [
+        {
+          "id": "Muse-Glimmer-30B-4bit",
+          "name": "Muse Glimmer 30B (MLX 4-bit)",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 32768
+        },
         {
           "id": "Qwen3.6-27B-UD-MLX-6bit",
           "reasoning": true,

@@ -23,6 +23,19 @@
           "maxTokens": 32768
         },
         {
+          "id": "Ornith-1.5-35B-A3B-MLX-8bit",
+          "name": "Ornith 1.5 35B A3B (MLX 8-bit)",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 32768,
+          "compat": {
+            "thinkingFormat": "qwen"
+          }
+        },
+        {
           "id": "Qwen3.6-27B-UD-MLX-6bit",
           "reasoning": true,
           "input": [

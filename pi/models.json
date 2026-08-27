@@ -23,11 +23,12 @@
           "maxTokens": 32768
         },
         {
-          "id": "Ornith-1.5-35B-A3B-MLX-8bit",
-          "name": "Ornith 1.5 35B A3B (MLX 8-bit)",
+          "id": "Ornith-1.5-35B-A3B-oQ8e-fixed-mtp",
+          "name": "Ornith 1.5 35B A3B (oQ8 + Vision + MTP)",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
           ],
           "contextWindow": 131072,
           "maxTokens": 32768,

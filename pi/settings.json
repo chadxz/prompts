@@ -1,11 +1,11 @@
 {
   "lastChangelogVersion": "0.79.3",
   "defaultProvider": "omlx",
-  "defaultModel": "Qwen3.8-27B-oQ8-mtp",
+  "defaultModel": "Ornith-1.5-35B-A3B-oQ8e-fixed-mtp",
   "defaultThinkingLevel": "high",
   "enabledModels": [
     "omlx/Qwen3.8-27B-oQ8-mtp",
-    "omlx/Ornith-1.5-35B-A3B-MLX-8bit",
+    "omlx/Ornith-1.5-35B-A3B-oQ8e-fixed-mtp",
     "openai-codex/gpt-5.5",
     "openai-codex/gpt-5.4",
     "omlx/*"

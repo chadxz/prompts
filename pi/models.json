@@ -36,6 +36,20 @@
           }
         },
         {
+          "id": "Qwen3.8-27B-oQ8-mtp",
+          "name": "Qwen 3.8 27B (oQ8 + MTP)",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 32768,
+          "compat": {
+            "thinkingFormat": "qwen-chat-template"
+          }
+        },
+        {
           "id": "Qwen3.6-27B-UD-MLX-6bit",
           "reasoning": true,
           "input": [

@@ -150,6 +150,17 @@ function safeJsonStringify(value: unknown): string {
   }
 }
 
+/** Encodes an MCP mirrored header value without allowing header injection. */
+function encodeMcpHeaderValue(value: string): string {
+  const isPlainAscii = /^[\x20-\x7e]+$/u.test(value);
+  const hasUnsafeWhitespace = value.trim() !== value;
+  const looksEncoded = value.startsWith("=?base64?") && value.endsWith("?=");
+  if (isPlainAscii && !hasUnsafeWhitespace && !looksEncoded) {
+    return value;
+  }
+  return `=?base64?${Buffer.from(value, "utf8").toString("base64")}?=`;
+}
+
 /** Extracts useful text from an MCP tool result. */
 function formatMcpResult(result: unknown): string {
   if (!isRecord(result)) {
@@ -669,15 +680,38 @@ class TeamsMCPClient {
     const requestSignal = signal
       ? AbortSignal.any([signal, timeoutSignal])
       : timeoutSignal;
+    const headers: Record<string, string> = {
+      Accept: "application/json, text/event-stream",
+      Authorization: `Bearer ${await this.getAccessToken()}`,
+      "Content-Type": "application/json",
+      "MCP-Protocol-Version": MCP_PROTOCOL_VERSION,
+      "Mcp-Method": method,
+    };
+    if (method === "tools/call") {
+      const toolName = getStringValue(params, "name");
+      if (toolName) {
+        headers["Mcp-Name"] = encodeMcpHeaderValue(toolName);
+      }
+    }
     const response = await fetch(this.mcpUrl, {
       method: "POST",
-      headers: {
-        Accept: "application/json, text/event-stream",
-        Authorization: `Bearer ${await this.getAccessToken()}`,
-        "Content-Type": "application/json",
-        "MCP-Protocol-Version": MCP_PROTOCOL_VERSION,
-      },
-      body: JSON.stringify({ jsonrpc: "2.0", id: requestId, method, params }),
+      headers,
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: requestId,
+        method,
+        params: {
+          ...params,
+          _meta: {
+            "io.modelcontextprotocol/protocolVersion": MCP_PROTOCOL_VERSION,
+            "io.modelcontextprotocol/clientCapabilities": {},
+            "io.modelcontextprotocol/clientInfo": {
+              name: "pi-mux",
+              version: "1.0.0",
+            },
+          },
+        },
+      }),
       signal: requestSignal,
     });
     if (response.status === 401) {

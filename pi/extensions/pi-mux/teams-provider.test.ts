@@ -177,11 +177,38 @@ describe("TeamsMCPClient", () => {
       "tools/list",
       "tools/call",
     ]);
+    expect(requests.map((request) => request.params._meta)).toEqual([
+      {
+        "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+        "io.modelcontextprotocol/clientCapabilities": {},
+        "io.modelcontextprotocol/clientInfo": {
+          name: "pi-mux",
+          version: "1.0.0",
+        },
+      },
+      {
+        "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+        "io.modelcontextprotocol/clientCapabilities": {},
+        "io.modelcontextprotocol/clientInfo": {
+          name: "pi-mux",
+          version: "1.0.0",
+        },
+      },
+    ]);
     expect(
       new Headers(fetchMock.mock.calls[0]?.[1]?.headers).get(
         "MCP-Protocol-Version",
       ),
     ).toBe("2026-07-28");
+    expect(
+      new Headers(fetchMock.mock.calls[0]?.[1]?.headers).get("Mcp-Method"),
+    ).toBe("tools/list");
+    expect(
+      new Headers(fetchMock.mock.calls[1]?.[1]?.headers).get("Mcp-Method"),
+    ).toBe("tools/call");
+    expect(
+      new Headers(fetchMock.mock.calls[1]?.[1]?.headers).get("Mcp-Name"),
+    ).toBe("auth_status");
     expect(
       new Headers(fetchMock.mock.calls[0]?.[1]?.headers).has(
         "MCP-Session-Id",

@@ -11,101 +11,7 @@
       "mcp__notion-hosted__search",
       "mcp__notion-hosted__fetch"
     ],
-    "defaultMode": "default"
-  },
-  "model": "claude-fable-5[1m]",
-  "hooks": {
-    "Notification": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "[ -n \"${SUPACODE_SOCKET_PATH:-}\" ] && [ -n \"${SUPACODE_WORKTREE_ID:-}\" ] && [ -n \"${SUPACODE_TAB_ID:-}\" ] && [ -n \"${SUPACODE_SURFACE_ID:-}\" ] && { payload=$(cat); printf '%s' \"{\\\"event\\\":\\\"awaiting_input\\\",\\\"v\\\":1,\\\"agent\\\":\\\"claude\\\",\\\"surface_id\\\":\\\"$SUPACODE_SURFACE_ID\\\",\\\"pid\\\":$PPID}\" | /usr/bin/nc -U -w1 \"$SUPACODE_SOCKET_PATH\"; { printf '%s claude\\n' \"$SUPACODE_WORKTREE_ID $SUPACODE_TAB_ID $SUPACODE_SURFACE_ID\"; printf '%s' \"$payload\"; } | /usr/bin/nc -U -w1 \"$SUPACODE_SOCKET_PATH\"; } >/dev/null 2>&1 || true # supacode-managed-hook",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "[ -n \"${SUPACODE_SOCKET_PATH:-}\" ] && [ -n \"${SUPACODE_WORKTREE_ID:-}\" ] && [ -n \"${SUPACODE_TAB_ID:-}\" ] && [ -n \"${SUPACODE_SURFACE_ID:-}\" ] && printf '%s' \"{\\\"event\\\":\\\"idle\\\",\\\"v\\\":1,\\\"agent\\\":\\\"claude\\\",\\\"surface_id\\\":\\\"$SUPACODE_SURFACE_ID\\\",\\\"pid\\\":$PPID}\" | /usr/bin/nc -U -w1 \"$SUPACODE_SOCKET_PATH\" >/dev/null 2>&1 || true # supacode-managed-hook",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "[ -n \"${SUPACODE_SOCKET_PATH:-}\" ] && [ -n \"${SUPACODE_WORKTREE_ID:-}\" ] && [ -n \"${SUPACODE_TAB_ID:-}\" ] && [ -n \"${SUPACODE_SURFACE_ID:-}\" ] && printf '%s' \"{\\\"event\\\":\\\"busy\\\",\\\"v\\\":1,\\\"agent\\\":\\\"claude\\\",\\\"surface_id\\\":\\\"$SUPACODE_SURFACE_ID\\\",\\\"pid\\\":$PPID}\" | /usr/bin/nc -U -w1 \"$SUPACODE_SOCKET_PATH\" >/dev/null 2>&1 || true # supacode-managed-hook",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "matcher": "AskUserQuestion|ExitPlanMode",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "[ -n \"${SUPACODE_SOCKET_PATH:-}\" ] && [ -n \"${SUPACODE_WORKTREE_ID:-}\" ] && [ -n \"${SUPACODE_TAB_ID:-}\" ] && [ -n \"${SUPACODE_SURFACE_ID:-}\" ] && printf '%s' \"{\\\"event\\\":\\\"awaiting_input\\\",\\\"v\\\":1,\\\"agent\\\":\\\"claude\\\",\\\"surface_id\\\":\\\"$SUPACODE_SURFACE_ID\\\",\\\"pid\\\":$PPID}\" | /usr/bin/nc -U -w1 \"$SUPACODE_SOCKET_PATH\" >/dev/null 2>&1 || true # supacode-managed-hook",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "[ -n \"${SUPACODE_SOCKET_PATH:-}\" ] && [ -n \"${SUPACODE_WORKTREE_ID:-}\" ] && [ -n \"${SUPACODE_TAB_ID:-}\" ] && [ -n \"${SUPACODE_SURFACE_ID:-}\" ] && { printf '%s' \"{\\\"event\\\":\\\"session_end\\\",\\\"v\\\":1,\\\"agent\\\":\\\"claude\\\",\\\"surface_id\\\":\\\"$SUPACODE_SURFACE_ID\\\",\\\"pid\\\":$PPID}\" | /usr/bin/nc -U -w1 \"$SUPACODE_SOCKET_PATH\"; printf '%s' \"{\\\"event\\\":\\\"idle\\\",\\\"v\\\":1,\\\"agent\\\":\\\"claude\\\",\\\"surface_id\\\":\\\"$SUPACODE_SURFACE_ID\\\",\\\"pid\\\":$PPID}\" | /usr/bin/nc -U -w1 \"$SUPACODE_SOCKET_PATH\"; } >/dev/null 2>&1 || true # supacode-managed-hook",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "[ -n \"${SUPACODE_SOCKET_PATH:-}\" ] && [ -n \"${SUPACODE_WORKTREE_ID:-}\" ] && [ -n \"${SUPACODE_TAB_ID:-}\" ] && [ -n \"${SUPACODE_SURFACE_ID:-}\" ] && printf '%s' \"{\\\"event\\\":\\\"session_start\\\",\\\"v\\\":1,\\\"agent\\\":\\\"claude\\\",\\\"surface_id\\\":\\\"$SUPACODE_SURFACE_ID\\\",\\\"pid\\\":$PPID}\" | /usr/bin/nc -U -w1 \"$SUPACODE_SOCKET_PATH\" >/dev/null 2>&1 || true # supacode-managed-hook",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "[ -n \"${SUPACODE_SOCKET_PATH:-}\" ] && [ -n \"${SUPACODE_WORKTREE_ID:-}\" ] && [ -n \"${SUPACODE_TAB_ID:-}\" ] && [ -n \"${SUPACODE_SURFACE_ID:-}\" ] && { payload=$(cat); printf '%s' \"{\\\"event\\\":\\\"idle\\\",\\\"v\\\":1,\\\"agent\\\":\\\"claude\\\",\\\"surface_id\\\":\\\"$SUPACODE_SURFACE_ID\\\",\\\"pid\\\":$PPID}\" | /usr/bin/nc -U -w1 \"$SUPACODE_SOCKET_PATH\"; { printf '%s claude\\n' \"$SUPACODE_WORKTREE_ID $SUPACODE_TAB_ID $SUPACODE_SURFACE_ID\"; printf '%s' \"$payload\"; } | /usr/bin/nc -U -w1 \"$SUPACODE_SOCKET_PATH\"; } >/dev/null 2>&1 || true # supacode-managed-hook",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "[ -n \"${SUPACODE_SOCKET_PATH:-}\" ] && [ -n \"${SUPACODE_WORKTREE_ID:-}\" ] && [ -n \"${SUPACODE_TAB_ID:-}\" ] && [ -n \"${SUPACODE_SURFACE_ID:-}\" ] && printf '%s' \"{\\\"event\\\":\\\"busy\\\",\\\"v\\\":1,\\\"agent\\\":\\\"claude\\\",\\\"surface_id\\\":\\\"$SUPACODE_SURFACE_ID\\\",\\\"pid\\\":$PPID}\" | /usr/bin/nc -U -w1 \"$SUPACODE_SOCKET_PATH\" >/dev/null 2>&1 || true # supacode-managed-hook",
-            "timeout": 10
-          }
-        ]
-      }
-    ]
+    "defaultMode": "auto"
   },
   "statusLine": {
     "type": "command",
@@ -125,7 +31,7 @@
       }
     }
   },
-  "effortLevel": "xhigh",
+  "effortLevel": "medium",
   "autoUpdatesChannel": "latest",
   "tui": "fullscreen",
   "autoMemoryEnabled": false,

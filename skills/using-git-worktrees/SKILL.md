@@ -195,6 +195,38 @@ After choosing the worktree:
 Do not run broad destructive cleanup until you understand which worktree you are
 inside and what other worktrees exist for the repository.
 
+## Merge Stack-owned pull requests
+
+A pull request managed through the worktree Stack workflow can't be merged with
+the regular `gh pr merge` command. That command uses GitHub's single-PR merge
+path, which doesn't support Stack merges. Use the official `gh stack` extension
+to submit an atomic Stack merge through GitHub's asynchronous Merge API:
+
+```bash
+gh stack merge <pull-request-or-stack-number> --yes --merge-method <method>
+```
+
+Use `squash`, `merge`, or `rebase` for `<method>` according to repository
+policy. A pull request number merges that pull request and every unmerged pull
+request below it. A Stack number merges the entire Stack. When the base branch
+uses a merge queue, GitHub queues the Stack together and chooses the merge
+method.
+
+Install the extension if `gh stack merge` isn't available:
+
+```bash
+gh extension install github/gh-stack
+```
+
+After GitHub accepts the merge, refresh the local Stack state:
+
+```bash
+wt-stack --stack <stack> refresh
+```
+
+This restriction applies to Stack-owned pull requests. A single, unstacked pull
+request created from a worktree can still use `gh pr merge`.
+
 ## Finish safely
 
 Commit, push, open a PR, merge, remove the worktree, or delete the branch only

@@ -11,12 +11,34 @@ It exposes exactly three tools to the model:
 
 At runtime, `pi-mux` discovers its internal provider modules dynamically.
 
-The bundled providers are Cloudflare, Datadog, Notion, and Slack. Cloudflare
-uses the official code-mode API MCP endpoint, which keeps its approximately
-2,500 API operations behind three compact server tools.
+The bundled providers are Cloudflare, Datadog, Microsoft Teams, Notion, and
+Slack. Cloudflare uses the official code-mode API MCP endpoint, which keeps its
+approximately 2,500 API operations behind three compact server tools.
 
 The human control plane stays outside the model-facing tool API. Authentication
 and connection state are managed through `/mux` commands.
+
+### Microsoft Teams
+
+The Teams provider connects to the hosted multi-user MCP at
+`https://teams.mcp.convergint.tech/mcp`. Each person signs into Microsoft
+Entra as themselves through authorization-code PKCE. The remote server exchanges
+that user token for Microsoft Graph access on each request, so Pi never shares a
+server-side user identity or OAuth cache with Codex, Claude, or another person.
+
+Run:
+
+```text
+/mux connect teams
+```
+
+Pi opens Microsoft sign-in in the default browser, uses an ephemeral localhost
+callback, and stores that user's access and refresh tokens with owner-only
+permissions in `~/.pi/agent/teams-mcp-config.json`. The managed tenant, public
+client registration, and MCP URL are built in. Override them with
+`TEAMS_MCP_TENANT_ID`, `TEAMS_MCP_CLIENT_ID`, and `TEAMS_MCP_URL` (or their
+matching Pi flags) only when testing another deployment. Disconnecting Pi clears
+process-local connection state while preserving its user grant.
 
 ## Commands
 

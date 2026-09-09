@@ -22,17 +22,18 @@ import type {
   ExtensionContext,
 } from "@mariozechner/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
+import {
+  discoverAuthorizationServerMetadata,
+  discoverOAuthProtectedResourceMetadata,
+  registerClient,
+} from "@modelcontextprotocol/sdk/client/auth.js";
 
 const DEFAULT_MCP_URL = "https://teams.mcp.convergint.tech/mcp";
-const DEFAULT_CLIENT_ID = "01abdeb5-0a8a-4459-b513-54fc87eaa68b";
-const DEFAULT_TENANT_ID = "2b4de1bd-251e-4878-bdb8-5180f7d15525";
 const DEFAULT_CONFIG_FILE = "~/.pi/agent/teams-mcp-config.json";
 const MCP_PROTOCOL_VERSION = "2026-07-28";
 const MCP_TOOL_TIMEOUT_MS = 300_000;
 const TOKEN_REFRESH_WINDOW_MS = 60_000;
 const DEFAULT_TOKEN_LIFETIME_MS = 60 * 60 * 1000;
-const TEAMS_MCP_CLIENT_ID_ENV = "TEAMS_MCP_CLIENT_ID";
-const TEAMS_MCP_TENANT_ID_ENV = "TEAMS_MCP_TENANT_ID";
 const TEAMS_MCP_URL_ENV = "TEAMS_MCP_URL";
 const TEAMS_MCP_CONFIG_FILE_ENV = "TEAMS_MCP_PI_CONFIG_PATH";
 
@@ -49,9 +50,14 @@ type MCPTool = {
   inputSchema: Record<string, unknown>;
   outputSchema?: Record<string, unknown>;
 };
+type TeamsOAuthRegistration = {
+  clientId: string;
+  issuer: string;
+  authorizationEndpoint: string;
+  tokenEndpoint: string;
+};
 type PersistedTeamsConfiguration = {
-  clientId?: string;
-  tenantId?: string;
+  oauth?: TeamsOAuthRegistration;
   mcpUrl?: string;
   accessToken?: string;
   refreshToken?: string;
@@ -59,11 +65,9 @@ type PersistedTeamsConfiguration = {
 };
 type TeamsRuntimeOverrides = Pick<
   PersistedTeamsConfiguration,
-  "clientId" | "tenantId" | "mcpUrl"
+  "mcpUrl"
 >;
 type TeamsConfiguration = PersistedTeamsConfiguration & {
-  clientId: string;
-  tenantId: string;
   mcpUrl: string;
 };
 type TeamsTokenBundle = {
@@ -211,12 +215,13 @@ function resolveTeamsConfiguration(
   runtime: TeamsRuntimeOverrides,
   persisted: PersistedTeamsConfiguration,
 ): TeamsConfiguration {
-  return {
-    ...persisted,
-    clientId: runtime.clientId ?? persisted.clientId ?? DEFAULT_CLIENT_ID,
-    tenantId: runtime.tenantId ?? persisted.tenantId ?? DEFAULT_TENANT_ID,
-    mcpUrl: runtime.mcpUrl ?? persisted.mcpUrl ?? DEFAULT_MCP_URL,
-  };
+  const mcpUrl = runtime.mcpUrl ?? persisted.mcpUrl ?? DEFAULT_MCP_URL;
+  // Tokens belong to the resource and registration that issued them. Legacy
+  // caches without discovered registration metadata require a fresh sign-in.
+  if (persisted.mcpUrl !== mcpUrl || !persisted.oauth) {
+    return { mcpUrl };
+  }
+  return { ...persisted, mcpUrl };
 }
 
 /** Persists Pi's per-user OAuth tokens with owner-only permissions. */
@@ -259,6 +264,103 @@ function getAccessScope(configuration: TeamsConfiguration): string {
   return `${configuration.mcpUrl.replace(/\/$/u, "")}/access_as_user`;
 }
 
+/** Requires HTTPS without embedded credentials or fragments for OAuth URLs. */
+function requireOAuthUrl(value: string): string {
+  const url = new URL(value);
+  if (url.protocol !== "https:" || url.username || url.password || url.hash) {
+    throw new Error("Teams OAuth endpoints must use HTTPS without credentials or fragments.");
+  }
+  return value;
+}
+
+/** Bounds OAuth requests and rejects redirects before sending any credentials. */
+async function fetchOAuth(
+  input: string | URL,
+  init?: RequestInit,
+): Promise<Response> {
+  requireOAuthUrl(input.toString());
+  return await fetch(input, {
+    ...init,
+    redirect: "error",
+    signal: AbortSignal.timeout(15_000),
+  });
+}
+
+/** Discovers OAuth metadata and registers the exact callback for this sign-in. */
+async function registerTeamsOAuthClient(
+  configuration: TeamsConfiguration,
+  redirectUri: string,
+): Promise<TeamsOAuthRegistration> {
+  const resource = await discoverOAuthProtectedResourceMetadata(
+    requireOAuthUrl(configuration.mcpUrl),
+    { protocolVersion: MCP_PROTOCOL_VERSION },
+    fetchOAuth,
+  );
+  if (resource.resource !== configuration.mcpUrl || !resource.authorization_servers?.length) {
+    throw new Error("Teams OAuth discovery returned a different resource or no authorization server.");
+  }
+  const issuer = requireOAuthUrl(resource.authorization_servers[0]!);
+  const metadata = await discoverAuthorizationServerMetadata(issuer, {
+    fetchFn: fetchOAuth,
+    protocolVersion: MCP_PROTOCOL_VERSION,
+  });
+  if (!metadata || metadata.issuer !== issuer) {
+    throw new Error("Teams OAuth discovery returned a different authorization-server issuer.");
+  }
+  if (
+    !metadata.code_challenge_methods_supported?.includes("S256") ||
+    !metadata.registration_endpoint ||
+    !metadata.authorization_endpoint ||
+    !metadata.token_endpoint
+  ) {
+    throw new Error("Teams OAuth requires dynamic registration and S256 PKCE.");
+  }
+  const authorizationEndpoint = requireOAuthUrl(metadata.authorization_endpoint);
+  const tokenEndpoint = requireOAuthUrl(metadata.token_endpoint);
+  requireOAuthUrl(metadata.registration_endpoint);
+  const scope = `${getAccessScope(configuration)} openid profile offline_access`;
+  const registration = await registerClient(issuer, {
+    metadata,
+    clientMetadata: {
+      client_name: "Pi Teams MCP",
+      redirect_uris: [redirectUri],
+      grant_types: ["authorization_code", "refresh_token"],
+      response_types: ["code"],
+      token_endpoint_auth_method: "none",
+    },
+    scope,
+    fetchFn: fetchOAuth,
+  });
+  const grantedScopes = new Set((registration.scope ?? scope).split(" "));
+  if (
+    !isNonEmptyString(registration.client_id) ||
+    registration.token_endpoint_auth_method !== "none" ||
+    registration.client_secret ||
+    registration.redirect_uris.length !== 1 ||
+    registration.redirect_uris[0] !== redirectUri ||
+    !registration.grant_types?.includes("authorization_code") ||
+    !registration.grant_types.includes("refresh_token") ||
+    !registration.response_types?.includes("code") ||
+    scope.split(" ").some((item) => !grantedScopes.has(item))
+  ) {
+    throw new Error("Teams OAuth registration must return the requested public PKCE client and scopes.");
+  }
+  return {
+    clientId: registration.client_id,
+    issuer,
+    authorizationEndpoint,
+    tokenEndpoint,
+  };
+}
+
+/** Requires saved discovery state before sending an authorization code or token. */
+function requireRegistration(configuration: TeamsConfiguration): TeamsOAuthRegistration {
+  if (!configuration.oauth) {
+    throw new Error("No Teams OAuth registration is stored. Run /mux connect teams.");
+  }
+  return configuration.oauth;
+}
+
 /** Derives the S256 PKCE challenge sent to Microsoft Entra. */
 function createCodeChallenge(codeVerifier: string): string {
   return createHash("sha256").update(codeVerifier).digest("base64url");
@@ -272,11 +374,10 @@ function buildAuthorizationUrl(
   codeChallenge: string,
   claims?: string,
 ): URL {
-  const url = new URL(
-    `https://login.microsoftonline.com/${configuration.tenantId}/oauth2/v2.0/authorize`,
-  );
+  const registration = requireRegistration(configuration);
+  const url = new URL(requireOAuthUrl(registration.authorizationEndpoint));
   url.search = new URLSearchParams({
-    client_id: configuration.clientId,
+    client_id: registration.clientId,
     response_type: "code",
     redirect_uri: redirectUri,
     response_mode: "query",
@@ -395,7 +496,11 @@ async function startOAuthCallback(
   return {
     redirectUri: `http://localhost:${address.port}`,
     result,
-    close: () => server.close(),
+    close: () => {
+      clearTimeout(timeout);
+      reject?.(new Error("Microsoft authorization was closed."));
+      server.close();
+    },
   };
 }
 
@@ -435,8 +540,8 @@ async function requestTokens(
   form: URLSearchParams,
   previousRefreshToken?: string,
 ): Promise<TeamsTokenBundle> {
-  const response = await fetch(
-    `https://login.microsoftonline.com/${configuration.tenantId}/oauth2/v2.0/token`,
+  const response = await fetchOAuth(
+    requireRegistration(configuration).tokenEndpoint,
     {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -460,7 +565,7 @@ async function exchangeCodeForTokens(
   return await requestTokens(
     configuration,
     new URLSearchParams({
-      client_id: configuration.clientId,
+      client_id: requireRegistration(configuration).clientId,
       grant_type: "authorization_code",
       code,
       redirect_uri: redirectUri,
@@ -480,7 +585,7 @@ async function refreshTokens(
   return await requestTokens(
     configuration,
     new URLSearchParams({
-      client_id: configuration.clientId,
+      client_id: requireRegistration(configuration).clientId,
       grant_type: "refresh_token",
       refresh_token: configuration.refreshToken,
       scope: `${getAccessScope(configuration)} openid profile offline_access`,
@@ -494,28 +599,32 @@ async function authenticateInteractively(
   configuration: TeamsConfiguration,
   notify: NotifyFn,
   claims?: string,
-): Promise<TeamsTokenBundle> {
+): Promise<TeamsTokenBundle & { oauth: TeamsOAuthRegistration }> {
   const state = randomBytes(24).toString("base64url");
   const codeVerifier = randomBytes(48).toString("base64url");
   const callback = await startOAuthCallback(state);
-  const authorizeUrl = buildAuthorizationUrl(
-    configuration,
-    callback.redirectUri,
-    state,
-    createCodeChallenge(codeVerifier),
-    claims,
-  );
   try {
+    notify("Discovering Teams OAuth and registering Pi's callback.");
+    const oauth = await registerTeamsOAuthClient(configuration, callback.redirectUri);
+    const registeredConfiguration = { ...configuration, oauth };
+    const authorizeUrl = buildAuthorizationUrl(
+      registeredConfiguration,
+      callback.redirectUri,
+      state,
+      createCodeChallenge(codeVerifier),
+      claims,
+    );
     notify("Opening Microsoft sign-in in your browser.");
     await openBrowser(authorizeUrl.toString());
     const code = await callback.result;
     notify("Microsoft sign-in completed; exchanging the authorization code.");
-    return await exchangeCodeForTokens(
-      configuration,
+    const bundle = await exchangeCodeForTokens(
+      registeredConfiguration,
       code,
       callback.redirectUri,
       codeVerifier,
     );
+    return { ...bundle, oauth };
   } finally {
     callback.close();
   }
@@ -841,8 +950,6 @@ function getRuntimeOverrides(pi: ExtensionAPI): TeamsRuntimeOverrides {
     return isNonEmptyString(value) ? value.trim() : undefined;
   };
   return {
-    clientId: flagValue("--teams-mcp-client-id") ?? process.env[TEAMS_MCP_CLIENT_ID_ENV],
-    tenantId: flagValue("--teams-mcp-tenant-id") ?? process.env[TEAMS_MCP_TENANT_ID_ENV],
     mcpUrl: flagValue("--teams-mcp-url") ?? process.env[TEAMS_MCP_URL_ENV],
   };
 }
@@ -857,14 +964,6 @@ function getConfigFilePath(pi: ExtensionAPI): string {
 
 /** Registers the Teams provider, control command, and mux control tools. */
 export default function teamsMcpExtension(pi: ExtensionAPI): void {
-  pi.registerFlag("--teams-mcp-client-id", {
-    description: "Optional override for the managed Teams MCP native client ID.",
-    type: "string",
-  });
-  pi.registerFlag("--teams-mcp-tenant-id", {
-    description: "Optional override for the managed Microsoft Entra tenant ID.",
-    type: "string",
-  });
   pi.registerFlag("--teams-mcp-url", {
     description: "Optional override for the hosted Teams MCP endpoint.",
     type: "string",
@@ -880,13 +979,8 @@ export default function teamsMcpExtension(pi: ExtensionAPI): void {
   const getConfiguration = (): TeamsConfiguration =>
     resolveTeamsConfiguration(runtime, storage.load());
   /** Persists a refreshed token bundle without changing endpoint settings. */
-  const saveTokens = (bundle: TeamsTokenBundle): void => {
-    storage.save({
-      ...storage.load(),
-      accessToken: bundle.accessToken,
-      refreshToken: bundle.refreshToken,
-      expiresAt: bundle.expiresAt,
-    });
+  const saveTokens = (bundle: TeamsTokenBundle & { oauth?: TeamsOAuthRegistration }): void => {
+    storage.save({ ...getConfiguration(), ...bundle });
   };
   /** Returns a valid user token, refreshing it before expiry when possible. */
   const getAccessToken = async (): Promise<string> => {
@@ -1027,13 +1121,14 @@ export default function teamsMcpExtension(pi: ExtensionAPI): void {
 }
 
 export {
+  authenticateInteractively,
+  registerTeamsOAuthClient,
+  exchangeCodeForTokens,
   buildAuthorizationUrl,
   ClaimsChallengeError,
   createCodeChallenge,
-  DEFAULT_CLIENT_ID,
   DEFAULT_CONFIG_FILE,
   DEFAULT_MCP_URL,
-  DEFAULT_TENANT_ID,
   extractClaimsChallenge,
   getConnectionStatusText,
   parseTokenBundle,

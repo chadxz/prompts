@@ -605,6 +605,7 @@ describe("dynamic provider discovery", () => {
       "datadog",
       "notion",
       "slack",
+      "teams",
     ]);
   });
 });
@@ -1364,7 +1365,7 @@ describe("tool rendering", () => {
     expect(findTool?.description).toContain("pass provider to limit discovery to that exact provider");
     expect(findTool?.promptSnippet).toContain("Search installed provider tools for a task");
     expect(findTool?.promptSnippet).toContain(
-      "Installed providers: cloudflare, datadog, notion, slack.",
+      "Installed providers: cloudflare, datadog, notion, slack, teams.",
     );
     expect(findTool?.promptSnippet).toContain("If you already know the provider, pass provider to search only that provider");
     expect(findTool?.promptGuidelines).toEqual(

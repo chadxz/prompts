@@ -21,9 +21,9 @@ and connection state are managed through `/mux` commands.
 ### Microsoft Teams
 
 The Teams provider connects to the hosted multi-user MCP at
-`https://teams.mcp.convergint.tech/mcp`. Each person signs into Microsoft
-Entra as themselves through authorization-code PKCE. The remote server exchanges
-that user token for Microsoft Graph access on each request, so Pi never shares a
+`https://teams.mcp.convergint.tech/mcp`. Each person signs into Microsoft Entra
+as themselves through authorization-code PKCE. The remote server exchanges that
+user token for Microsoft Graph access on each request, so Pi never shares a
 server-side user identity or OAuth cache with Codex, Claude, or another person.
 
 Run:
@@ -34,10 +34,16 @@ Run:
 
 Pi opens Microsoft sign-in in the default browser, uses an ephemeral localhost
 callback, and stores that user's access and refresh tokens with owner-only
-permissions in `~/.pi/agent/teams-mcp-config.json`. The managed tenant, public
-client registration, and MCP URL are built in. Override them with
-`TEAMS_MCP_TENANT_ID`, `TEAMS_MCP_CLIENT_ID`, and `TEAMS_MCP_URL` (or their
-matching Pi flags) only when testing another deployment. Disconnecting Pi clears
+permissions in `~/.pi/agent/teams-mcp-config.json`. Before opening sign-in, Pi
+reads the server's OAuth metadata and uses dynamic client registration (DCR) to
+register its actual callback. The response supplies the public client ID; the
+discovered authorization and token endpoints handle sign-in and refresh. You
+don't supply a client ID, tenant ID, or client secret.
+
+Use `TEAMS_MCP_URL` or `--teams-mcp-url` to test another deployment that
+supports DCR. Pi saves the registration with the user grant and discards cached
+credentials when the endpoint changes. Older caches without DCR metadata need
+one fresh sign-in through `/mux connect teams`. Disconnecting Pi clears
 process-local connection state while preserving its user grant.
 
 ## Commands

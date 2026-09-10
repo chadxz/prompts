@@ -552,6 +552,7 @@ func unitRebaseSession(stack state.Stack) *state.RebaseSession {
 }
 
 type fakeRepository struct {
+	forkPoint        string
 	currentBranch    string
 	worktrees        map[string]gitrepo.Worktree
 	heads            map[string]string
@@ -881,6 +882,53 @@ func TestRebaseRejectsFetchAndStartFailures(t *testing.T) {
 			}
 			if kind != "fetch" && store.file.Rebase == nil {
 				t.Fatal("lost recovery session")
+			}
+		})
+	}
+}
+
+func (r *fakeRepository) ForkPoint(context.Context, string, string) (string, error) {
+	if r.forkPoint == "" {
+		return "", errors.New("no reflog fork point")
+	}
+	return r.forkPoint, nil
+}
+
+func TestRebasePreflightsBoundariesBeforeMutation(t *testing.T) {
+	t.Parallel()
+	for _, recovery := range []string{"recorded", "parent", "reflog", "missing", "dry-run"} {
+		t.Run(recovery, func(t *testing.T) {
+			t.Parallel()
+			file := unitStateFile()
+			file.Stacks[0].Branches = append(file.Stacks[0].Branches, state.Branch{Name: "child", Base: "invalid"})
+			manager, repo, _, store := newUnitManager(t, file)
+			repo.heads["refs/heads/child"] = "child-head"
+			repo.worktrees["child"] = gitrepo.Worktree{Path: "/worktrees/child", Branch: "child"}
+			repo.clean["/worktrees/child"] = true
+			repo.forkPoint = "previous-parent"
+			repo.ancestorFn = func(base, head string) (bool, error) {
+				if head != "child-head" {
+					return true, nil
+				}
+				return (base == "invalid" && recovery == "recorded") ||
+					(base == "head-one" && recovery == "parent") ||
+					(base == "previous-parent" && recovery == "reflog"), nil
+			}
+			manager.SetDryRun(true)
+			err := manager.Rebase(context.Background(), RebaseOptions{StackName: "delivery"})
+			wantError := recovery == "missing" || recovery == "dry-run"
+			if (err != nil) != wantError {
+				t.Fatalf("error = %v", err)
+			}
+			if store.saves != 0 || len(repo.calls) != 0 {
+				t.Fatal("preflight mutated repository")
+			}
+			if wantError {
+				manager.SetDryRun(false)
+				err = manager.Rebase(context.Background(), RebaseOptions{StackName: "delivery"})
+				if err == nil || store.saves != 0 || len(repo.calls) != 0 {
+					t.Fatalf("invalid cascade mutated: %v", err)
+				}
 			}
 		})
 	}

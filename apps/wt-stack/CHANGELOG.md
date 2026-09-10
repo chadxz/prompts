@@ -7,6 +7,9 @@ Versioning.
 
 ### Fixed
 
+- Rebase validates saved parent boundaries before rewriting any branch and
+  recovers stale metadata only from validated parent history.
+
 - Rebase fetches its trunk explicitly, pins the target across conflict recovery,
   verifies ancestry, and distinguishes failed starts from recoverable conflicts.
 

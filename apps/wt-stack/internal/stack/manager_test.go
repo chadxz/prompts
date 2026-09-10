@@ -5,6 +5,7 @@ package stack
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -379,5 +380,62 @@ func TestRebaseFetchesTrunkOutsideConfiguredRefspec(t *testing.T) {
 	}
 	if after := fixture.output(fixture.container, "rev-parse", "feature-one"); after != before {
 		t.Fatal("branch moved after failed fetch")
+	}
+}
+
+func TestRebaseRecoversInvalidParentBoundary(t *testing.T) {
+	t.Parallel()
+	for _, expire := range []bool{false, true} {
+		t.Run(fmt.Sprint("expired=", expire), func(t *testing.T) {
+			t.Parallel()
+			fixture := newRepositoryFixture(t)
+			ctx := context.Background()
+			repo, err := gitrepo.Discover(ctx, fixture.bottomWorktree)
+			if err != nil {
+				t.Fatal(err)
+			}
+			manager := NewManager(repo, io.Discard, io.Discard)
+			if _, err := manager.Init(ctx, InitOptions{Name: "test", Trunk: "main", Branches: []string{"feature-one", "feature-two"}}); err != nil {
+				t.Fatal(err)
+			}
+			fixture.git(fixture.bottomWorktree, "commit", "--amend", "-m", "amended parent")
+			parent := fixture.output(fixture.container, "rev-parse", "feature-one")
+			if expire {
+				fixture.git(fixture.container, "reflog", "expire", "--expire=now", "--all")
+			}
+			store := state.NewStore(repo.CommonDir)
+			locked, err := store.Lock()
+			if err != nil {
+				t.Fatal(err)
+			}
+			file, err := locked.Load()
+			if err != nil {
+				t.Fatal(err)
+			}
+			file.Stacks[0].Branches[1].Base = parent
+			if err := locked.Save(file); err != nil {
+				t.Fatal(err)
+			}
+			if err := locked.Close(); err != nil {
+				t.Fatal(err)
+			}
+			before := fixture.output(fixture.container, "rev-parse", "feature-two")
+			err = manager.Rebase(ctx, RebaseOptions{StackName: "test"})
+			if expire {
+				if err == nil || !strings.Contains(err.Error(), "safe previous base") {
+					t.Fatalf("error = %v", err)
+				}
+				if fixture.output(fixture.container, "rev-parse", "feature-two") != before || fixture.output(fixture.container, "rev-parse", "feature-one") != parent {
+					t.Fatal("invalid boundary moved branches")
+				}
+			} else {
+				if err != nil {
+					t.Fatal(err)
+				}
+				if count := fixture.output(fixture.container, "rev-list", "--count", "feature-one..feature-two"); count != "1" {
+					t.Fatalf("child commits = %s", count)
+				}
+			}
+		})
 	}
 }

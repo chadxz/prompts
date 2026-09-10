@@ -22,6 +22,7 @@ type gitRepository interface {
 	WorktreeForBranch(context.Context, string) (gitrepo.Worktree, bool, error)
 	Head(context.Context, string) (string, error)
 	IsAncestor(context.Context, string, string) (bool, error)
+	ForkPoint(context.Context, string, string) (string, error)
 	IsClean(context.Context, string) (bool, error)
 	CreateWorktree(context.Context, string, string, string) error
 	Fetch(context.Context, string) error
@@ -415,6 +416,10 @@ func (m *Manager) Rebase(ctx context.Context, options RebaseOptions) error {
 	if err := m.validateCleanWorktrees(ctx, stack, active); err != nil {
 		return err
 	}
+	boundaries, err := m.rebaseBoundaries(ctx, stack, active)
+	if err != nil {
+		return err
+	}
 	if m.dryRun {
 		return nil
 	}
@@ -434,6 +439,9 @@ func (m *Manager) Rebase(ctx context.Context, options RebaseOptions) error {
 		CurrentIndex:     active[0],
 		OriginalBranches: originalBranches,
 		OriginalStack:    state.CloneStack(*stack),
+	}
+	for index, base := range boundaries {
+		stack.Branches[index].Base = base
 	}
 	if err := locked.Save(file); err != nil {
 		return err

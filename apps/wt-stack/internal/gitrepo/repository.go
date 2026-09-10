@@ -171,6 +171,16 @@ func (r *Repository) MergeBase(
 	return sha, nil
 }
 
+// ForkPoint finds a branch's former parent using the parent ref's reflog.
+// It never falls back to the ordinary merge base after rewritten history.
+func (r *Repository) ForkPoint(ctx context.Context, parent, branch string) (string, error) {
+	sha, err := r.Output(ctx, r.Container, "merge-base", "--fork-point", parent, branch)
+	if err != nil {
+		return "", fmt.Errorf("finding previous base of %s: %w", branch, err)
+	}
+	return sha, nil
+}
+
 // IsAncestor reports whether ancestor is reachable from descendant.
 func (r *Repository) IsAncestor(
 	ctx context.Context,

@@ -197,10 +197,14 @@ inside and what other worktrees exist for the repository.
 
 ## Merge Stack-owned pull requests
 
-A pull request managed through the worktree Stack workflow can't be merged with
-the regular `gh pr merge` command. That command uses GitHub's single-PR merge
-path, which doesn't support Stack merges. Use the official `gh stack` extension
-to submit an atomic Stack merge through GitHub's asynchronous Merge API:
+For a locally tracked Stack, follow the merge workflow in the
+`managing-stacked-changes` skill. Use `wt-stack` v0.6.0 or newer to preview,
+submit, and resume the merge. That skill owns branch selection, merge methods,
+and pending or queued results. Do not use `gh pr merge` for Stack-owned pull
+requests.
+
+For a remote Stack that is not tracked locally by `wt-stack`, use the official
+`gh stack` extension instead of reconstructing local Stack state just to merge:
 
 ```bash
 gh stack merge <pull-request-or-stack-number> --yes --merge-method <method>
@@ -209,8 +213,11 @@ gh stack merge <pull-request-or-stack-number> --yes --merge-method <method>
 Use `squash`, `merge`, or `rebase` for `<method>` according to repository
 policy. A pull request number merges that pull request and every unmerged pull
 request below it. A Stack number merges the entire Stack. When the base branch
-uses a merge queue, GitHub queues the Stack together and chooses the merge
-method.
+uses a merge queue, omit `--merge-method`; GitHub queues the Stack together and
+chooses the method.
+
+`gh stack` resolves a bare number as a Stack number before trying a pull request
+number. Verify that it selects the intended Stack and scope before submitting.
 
 Install the extension if `gh stack merge` isn't available:
 
@@ -218,7 +225,8 @@ Install the extension if `gh stack merge` isn't available:
 gh extension install github/gh-stack
 ```
 
-After GitHub accepts the merge, refresh the local Stack state:
+After GitHub actually merges the pull requests, refresh any locally tracked
+Stack state. An accepted or queued operation is not a completed merge:
 
 ```bash
 wt-stack --stack <stack> refresh

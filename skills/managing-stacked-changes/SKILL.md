@@ -1,11 +1,11 @@
 ---
 name: managing-stacked-changes
 description:
-  Plans, creates, updates, publishes, and retires dependent GitHub pull
+  Plans, creates, updates, publishes, merges, and retires dependent GitHub pull
   requests with wt-stack in Chad's bare sibling-worktree layout. Use for
   non-trivial implementation work with two or more ordered, independently
-  reviewable changes, stacked pull requests, dependent branches, or an existing
-  wt-stack Stack.
+  reviewable changes, stacked pull requests, dependent branches, merging a
+  Stack, or an existing wt-stack Stack.
 ---
 
 # Managing Stacked Changes
@@ -42,7 +42,7 @@ wt-stack --version
 wt-stack doctor
 ```
 
-Treat `wt-stack` as installed and use v0.4.0 or newer. If the shell reports
+Treat `wt-stack` as installed and use v0.6.0 or newer. If the shell reports
 `command not found`, or the installed version is older, install it from the
 prompts repository:
 
@@ -84,6 +84,10 @@ From that worktree, verify prerequisites and adopt the branch:
 ```console
 wt-stack init --name <stack>
 ```
+
+`init` discovers the selected remote's default branch. Use `--remote <remote>`
+to select another remote or `--base <branch>` for an intentional base override.
+If discovery fails, inspect the remote configuration instead of assuming `main`.
 
 Implement and commit the bottom review unit before creating the next branch.
 `add` bases the new branch on the current active Stack tip:
@@ -148,17 +152,67 @@ dry run and `sync` sequence to update the Stack. When the change affects an
 existing pull request description, reapply the prepared metadata with
 `gh pr edit` and verify it with `gh pr view` after synchronization.
 
-When a cascading rebase pauses, resolve and stage the conflicts in the worktree
-reported by `wt-stack`, then choose one recovery command:
+Rebases fetch and pin the trunk commit before replaying branches. Saved branch
+boundaries are validated before the cascade starts. If that validation fails,
+inspect the reported history and boundary; do not guess a fork point or edit
+Stack metadata to bypass the check. Use `wt-stack rebase --no-fetch` only when
+intentionally working from already fetched refs.
+
+When `wt-stack` reports an actual paused rebase, resolve and stage the conflicts
+in the reported worktree, then choose one recovery command. An ordinary Git or
+preflight error does not necessarily leave a rebase to continue:
 
 ```console
 wt-stack continue
 wt-stack abort
 ```
 
-`continue` resumes the recorded cascade. `abort` restores every participating
+`continue` resumes the recorded cascade against its pinned trunk commit and
+validates the remaining branch boundaries. `abort` restores every participating
 branch to its pre-rebase commit. Do not start another Stack mutation while a
 rebase is paused.
+
+## Merge a published Stack
+
+Merge only when the user requests it or the active workflow owns that action.
+Verify the selected pull requests are ready for review and satisfy repository
+review and check requirements. For a locally tracked Stack, preview and submit
+through `wt-stack`:
+
+```console
+wt-stack --dry-run --stack <stack> merge
+wt-stack --json --stack <stack> merge
+```
+
+The default selection includes all active branches through the local Stack tip.
+Add `--through <local-branch>` to both commands to merge only the prefix ending
+at that branch. This takes a local branch name, not a pull request number. The
+preflight checks published heads, bases, ancestry, worktree cleanliness, and
+remote Stack membership. Resolve discrepancies before submitting a merge.
+
+For direct merges, add `--merge-method squash`, `merge`, or `rebase` to both
+commands when repository policy calls for it. Omitting the flag uses GitHub's
+default, which is a merge commit for direct merges. Omit it for a merge queue;
+GitHub chooses the queue's method. Do not use `gh pr merge` for Stack-owned pull
+requests.
+
+Read `merge.status` in the JSON result. `merged` means the merge completed;
+`enqueued` means GitHub queued it; `pending` means the asynchronous merge is
+still unresolved. A successful exit alone does not mean the Stack merged.
+`--timeout <duration>` bounds polling, not the server operation, and does not
+cancel a merge when it expires.
+
+Preserve the returned pull request number and merge UUID for pending operations
+or polling errors. Resume observation without submitting another merge:
+
+```console
+wt-stack --json --stack <stack> merge --resume <uuid> --pr <number>
+```
+
+Do not combine `--resume` with `--through` or `--merge-method`. If GitHub
+reports an existing operation, inspect it with `--resume`; do not assume it uses
+the newly requested method. Report queued or pending work as such and wait for
+actual GitHub merge completion before cleanup.
 
 ## Finish the Stack
 
@@ -186,5 +240,7 @@ Include:
 - The Stack name and bottom-to-top branch order.
 - The worktree path for each branch created during the task.
 - Every pull request URL after publication.
+- The merge status and, when pending, the pull request number, UUID, and resume
+  command.
 - Any paused rebase and the exact worktree that needs conflict resolution.
 - Any prerequisite failure that forced the single-branch fallback.

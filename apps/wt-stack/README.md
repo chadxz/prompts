@@ -20,7 +20,7 @@ This example creates a two-branch stack named `delivery`, publishes it, handles
 updates, and finishes after the pull requests merge.
 
 Start in the worktree for the first feature branch. Confirm that GitHub
-authentication and the Stacked Pull Requests preview are available:
+authentication and the Stacked Pull Requests API are available:
 
 ```console
 wt-stack doctor
@@ -121,15 +121,15 @@ Runtime requirements:
 - Git 2.31 or newer.
 - macOS or Linux.
 - A GitHub account previously authenticated by GitHub CLI.
-- Access to GitHub's Stacked Pull Requests preview for the target repository.
+- Access to GitHub's Stacked Pull Requests API for the target repository.
 
 `wt-stack` reads GitHub CLI's existing configuration and system-keychain
 credential directly. The core `gh` binary and `gh-stack` extension do not need
 to be installed after authentication has been configured.
 
-Stacked Pull Requests is currently a private preview. The official documentation
-links to GitHub's preview waitlist and is the source of truth for GitHub-side
-feature availability and behavior.
+Run `wt-stack doctor` to check authentication and Stacks API availability for
+the selected repository. GitHub's official documentation is the source of truth
+for feature availability and behavior.
 
 `WT_STACK_GIT_BIN` may select an alternate Git executable for testing or
 diagnosis. It is trusted as executable code and should be set only to a binary
@@ -137,7 +137,7 @@ you control.
 
 GitHub.com is covered by the automated HTTP suite. GitHub Enterprise Server and
 GitHub Enterprise Cloud subdomains use their corresponding API endpoints, but
-the target host must expose the Stacks preview API. Windows is not currently
+the target host must expose the Stacks API. Windows is not currently
 supported because repository locking uses Unix file locks.
 
 ## Global options
@@ -162,8 +162,8 @@ wt-stack [--stack <name>] doctor
 ```
 
 Checks repository discovery, GitHub authentication, remote resolution, and
-Stacks preview availability. Run it before adopting the first Stack or when
-authentication and preview errors are unclear.
+Stacks API availability. Run it before adopting the first Stack or when
+authentication and capability errors are unclear.
 
 ### `init`
 
@@ -374,7 +374,7 @@ corrupting state.
 
 ## Troubleshooting and recovery
 
-Run `wt-stack doctor --json` first for authentication, repository, or preview
+Run `wt-stack doctor --json` first for authentication, repository, or capability
 errors. Reauthenticate with GitHub CLI when no usable credential is available
 for the remote host.
 

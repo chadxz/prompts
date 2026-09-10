@@ -221,10 +221,10 @@ func TestLinkChecksPreviewBeforeCreatingPullRequests(t *testing.T) {
 		false,
 	)
 	if err == nil || !strings.Contains(err.Error(), "HTTP 404") {
-		t.Fatalf("Link() error = %v, want preview 404", err)
+		t.Fatalf("Link() error = %v, want capability 404", err)
 	}
 	if writes != 0 {
-		t.Fatalf("made %d writes before checking preview", writes)
+		t.Fatalf("made %d writes before checking capability", writes)
 	}
 }
 

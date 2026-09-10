@@ -152,7 +152,7 @@ func (c *Client) Unstack(
 	return dissolved, nil
 }
 
-// StacksAvailable verifies that the repository has the Stacked PRs preview.
+// StacksAvailable verifies that the repository exposes the Stacked PRs API.
 func (c *Client) StacksAvailable(
 	ctx context.Context,
 	repository Repository,

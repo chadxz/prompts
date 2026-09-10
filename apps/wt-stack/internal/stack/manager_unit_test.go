@@ -99,7 +99,7 @@ func TestManagerRunsStackLifecycleWithFakes(t *testing.T) {
 	}
 	if checks["githubRepository"] != "example/repository" ||
 		githubClient.authentications != 1 ||
-		githubClient.previewChecks != 1 {
+		githubClient.capabilityChecks != 1 {
 		t.Fatalf("unexpected doctor result: %#v", checks)
 	}
 }
@@ -703,13 +703,13 @@ type fakeGitHubClient struct {
 	pollCalls   int
 	mergeSHA    string
 
-	pullRequests    map[string]*state.PullRequest
-	links           int
-	linkDraft       bool
-	unstacks        int
-	dissolved       bool
-	authentications int
-	previewChecks   int
+	pullRequests     map[string]*state.PullRequest
+	links            int
+	linkDraft        bool
+	unstacks         int
+	dissolved        bool
+	authentications  int
+	capabilityChecks int
 }
 
 func (c *fakeGitHubClient) Repository(
@@ -733,7 +733,7 @@ func (c *fakeGitHubClient) StacksAvailable(
 	context.Context,
 	github.Repository,
 ) error {
-	c.previewChecks++
+	c.capabilityChecks++
 	return nil
 }
 

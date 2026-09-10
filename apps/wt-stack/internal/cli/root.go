@@ -477,7 +477,7 @@ func newUnstackCommand(opts *options) *cobra.Command {
 func newDoctorCommand(opts *options) *cobra.Command {
 	return &cobra.Command{
 		Use:   "doctor",
-		Short: "Verify GitHub authentication and repository preview support",
+		Short: "Verify GitHub authentication and repository Stacks API support",
 		Args:  cobra.NoArgs,
 		RunE: func(command *cobra.Command, _ []string) error {
 			manager, err := opts.getManager(command.Context())

@@ -17,6 +17,9 @@ Versioning.
 
 ### Fixed
 
+- Documentation and doctor help describe Stacks API availability without stale
+  private-preview or waitlist claims.
+
 - Initialization uses the selected remote's default branch when `--base` is
   omitted, including read-only discovery during dry runs.
 

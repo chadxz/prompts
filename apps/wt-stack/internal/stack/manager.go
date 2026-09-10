@@ -723,7 +723,7 @@ func (m *Manager) Unstack(
 	return true, nil
 }
 
-// Doctor verifies authentication and repository preview availability.
+// Doctor verifies authentication and repository Stacks API availability.
 func (m *Manager) Doctor(
 	ctx context.Context,
 	stackName string,

@@ -226,7 +226,9 @@ wt-stack continue
 ```
 
 Continues a paused cascading rebase after conflicts have been resolved and
-staged in the reported worktree.
+staged in the reported worktree. The paused target stays pinned even if another
+tool fetches a newer trunk. Remaining branches must still be clean and have
+valid parent boundaries before the cascade can resume.
 
 ### `abort`
 

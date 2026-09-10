@@ -485,8 +485,30 @@ func (m *Manager) Continue(ctx context.Context) error {
 			stack.Name,
 		)
 	}
+	// Revalidate branches that haven't started yet; another tool may have
+	// changed their history while this cascade was paused.
+	remaining := make([]int, 0, len(stack.Branches))
+	for _, index := range activeBranchIndices(stack) {
+		if index < file.Rebase.CurrentIndex {
+			continue
+		}
+		if index == file.Rebase.CurrentIndex && m.repository.RebaseInProgress(ctx, file.Rebase.CurrentWorktree) {
+			continue
+		}
+		remaining = append(remaining, index)
+	}
+	if err := m.validateCleanWorktrees(ctx, stack, remaining); err != nil {
+		return err
+	}
+	boundaries, err := m.rebaseBoundaries(ctx, stack, remaining)
+	if err != nil {
+		return err
+	}
 	if m.dryRun {
 		return nil
+	}
+	for index, base := range boundaries {
+		stack.Branches[index].Base = base
 	}
 	return m.runCascade(
 		ctx,
@@ -862,9 +884,6 @@ func (m *Manager) runCascade(
 		}
 		file.Rebase.CurrentIndex = branchIndex
 		file.Rebase.CurrentWorktree = worktreePath
-		if err := locked.Save(file); err != nil {
-			return err
-		}
 
 		newBaseRef := m.activeBaseRef(stack, branchIndex)
 		newBaseSHA := file.Rebase.CurrentBase

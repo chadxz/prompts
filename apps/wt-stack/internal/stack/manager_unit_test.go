@@ -770,8 +770,9 @@ func (c *fakeGitHubClient) Unstack(
 }
 
 type memoryStore struct {
-	file  *state.File
-	saves int
+	saveHook func(*state.File) error
+	file     *state.File
+	saves    int
 }
 
 func (s *memoryStore) Lock() (lockedState, error) {
@@ -787,6 +788,11 @@ func (l *memoryLock) Load() (*state.File, error) {
 }
 
 func (l *memoryLock) Save(file *state.File) error {
+	if l.store.saveHook != nil {
+		if err := l.store.saveHook(file); err != nil {
+			return err
+		}
+	}
 	l.store.file = cloneStateFile(file)
 	l.store.saves++
 	return nil
@@ -1002,4 +1008,68 @@ func (c *fakeGitHubClient) StartMerge(_ context.Context, _ github.Repository, _ 
 func (c *fakeGitHubClient) PollMerge(context.Context, github.Repository, int, string) (*github.MergeResult, error) {
 	c.pollCalls++
 	return c.pollResult, c.mergeErr
+}
+
+func TestRebaseCheckpointsCurrentBranchAndTargetTogether(t *testing.T) {
+	t.Parallel()
+	file := unitStateFile()
+	file.Stacks[0].Branches = append(file.Stacks[0].Branches, state.Branch{Name: "child", Base: "head-one", Head: "child-head"})
+	manager, repo, _, store := newUnitManager(t, file)
+	repo.heads["refs/heads/child"] = "child-head"
+	repo.worktrees["child"] = gitrepo.Worktree{Path: "/worktrees/child", Branch: "child"}
+	repo.clean["/worktrees/child"] = true
+	store.saveHook = func(saved *state.File) error {
+		if saved.Rebase != nil && saved.Rebase.CurrentIndex == 1 && saved.Rebase.CurrentBase != "rebased-head" {
+			return errors.New("saved child index with stale target")
+		}
+		return nil
+	}
+	if err := manager.Rebase(context.Background(), RebaseOptions{StackName: "delivery"}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestContinueUsesPinnedTargetAfterTrunkMoves(t *testing.T) {
+	t.Parallel()
+	file := unitStateFile()
+	file.Rebase = unitRebaseSession(file.Stacks[0])
+	file.Rebase.TrunkSHA = "pinned-trunk"
+	file.Rebase.CurrentBase = "pinned-trunk"
+	manager, repo, _, store := newUnitManager(t, file)
+	repo.heads["refs/remotes/origin/main"] = "newer-trunk"
+	repo.rebaseInProgress = true
+	repo.ancestorFn = func(base, head string) (bool, error) {
+		if head == "continued-head" {
+			return base == "pinned-trunk", nil
+		}
+		return true, nil
+	}
+	if err := manager.Continue(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if store.file.Stacks[0].Branches[0].Base != "pinned-trunk" {
+		t.Fatal("continued onto moving trunk")
+	}
+}
+
+func TestContinuePreflightsRemainingBranches(t *testing.T) {
+	t.Parallel()
+	for _, dryRun := range []bool{false, true} {
+		file := unitStateFile()
+		file.Stacks[0].Branches = append(file.Stacks[0].Branches, state.Branch{Name: "child", Base: "invalid", Head: "child-head"})
+		file.Rebase = unitRebaseSession(file.Stacks[0])
+		manager, repo, _, store := newUnitManager(t, file)
+		manager.SetDryRun(dryRun)
+		repo.rebaseInProgress = true
+		repo.heads["refs/heads/child"] = "child-head"
+		repo.worktrees["child"] = gitrepo.Worktree{Path: "/worktrees/child", Branch: "child"}
+		repo.clean["/worktrees/child"] = true
+		repo.ancestorFn = func(_, head string) (bool, error) { return head != "child-head", nil }
+		if err := manager.Continue(context.Background()); err == nil {
+			t.Fatal("continued with invalid remaining boundary")
+		}
+		if len(repo.calls) != 0 || store.saves != 0 {
+			t.Fatal("invalid resume changed paused rebase")
+		}
+	}
 }

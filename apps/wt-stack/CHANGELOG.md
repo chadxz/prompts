@@ -17,6 +17,9 @@ Versioning.
 
 ### Fixed
 
+- Rebase checkpoints persist each branch and its target together, and continue
+  revalidates unstarted branches before resuming a paused cascade.
+
 - Builds use Go 1.26.6 to address standard-library vulnerabilities reported by
   the required vulnerability scan.
 

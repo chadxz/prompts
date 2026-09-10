@@ -30,9 +30,9 @@ Create a commit using Chad's personal commit structure and message contract.
 6. Apply the `writing-in-my-voice` skill to all prose sections.
 7. Check the draft against the message content contract below.
 8. Before committing, give the user a concise checkpoint confirming that the
-   draft includes the audience context, problem and impact, approach and
-   tradeoffs, validation, and every available relevant source link. State when
-   no relevant external source exists.
+   draft explains the problem, outcome, approach, and validation at a depth
+   suited to the change's complexity, with relevant context, tradeoffs, and
+   source links where applicable. State when no relevant external source exists.
 9. Stage only the files that belong in this commit.
 10. Create the commit with the generated message.
 
@@ -46,11 +46,24 @@ The reader must understand the message without inspecting the diff or opening a
 link first. Use plain language and define unfamiliar terms where they first
 appear.
 
-The `Why?` section must explain:
+Scale the description to the complexity of the change and the context needed to
+understand it. Simple changes usually need only a brief explanation in each
+section. Complex changes need a more thorough account of the background,
+reasoning, tradeoffs, and validation. Judge complexity by the reasoning and
+context a reader needs: a small diff can require substantial explanation, and a
+large mechanical change can be simple to explain.
+
+Use the contract below to choose relevant content. It isn't a requirement for a
+separate sentence or paragraph per bullet. Keep the problem, outcome, approach,
+and validation clear; include supporting details only where they help the reader
+understand or assess the change. Don't invent business stakes, alternatives, or
+unfamiliar terms to fill out the message.
+
+The `Why?` section must explain the problem and value, with relevant context:
 
 - The existing system or behavior and the background needed to understand it.
-- The concrete problem and its impact on the business: cost, risk, delay,
-  lost revenue, support load, or a capability the company cannot offer yet.
+- The concrete problem and its impact on the business: cost, risk, delay, lost
+  revenue, support load, or a capability the company cannot offer yet.
 - The value this change creates: who is unblocked, what we can ship or operate
   after this that we could not before, and why that matters now.
 - Any unfamiliar project, tool, or domain term used in the explanation.
@@ -65,7 +78,8 @@ fail the contract even when they are factually true. Name the operational or
 business outcome instead. Links still belong in `Why?` as supporting sources;
 they do not replace the value explanation.
 
-The `How?` section must explain:
+The `How?` section must explain the approach and validation, with relevant
+implementation detail:
 
 - The chosen approach and the responsibilities of the important components.
 - Meaningful tradeoffs or alternatives that affected the implementation.
@@ -162,4 +176,5 @@ leaving a placeholder.
 - Title: maximum 50 characters.
 - Body: line length must not exceed 72 characters.
 - Preserve the template's section structure unless the ticket handling rules say
-  to remove the `Related to` line.
+  to remove the `Related to` line or the `creating-pull-requests` skill adds a
+  frontend `Demo` section to the prepared PR body.

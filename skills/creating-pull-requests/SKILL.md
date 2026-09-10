@@ -96,10 +96,19 @@ of a pull request:
 
 ## Pull Request Body
 
-The PR body must use the commit template's visible structure and satisfy the
-message content contract in `creating-commits`. The template is a structural
-skeleton; the skills are the authoritative source for authoring requirements.
-Correct headings alone are not evidence that the description complies.
+The PR body must use the commit template's visible structure, with the frontend
+`Demo` addition below, and satisfy the message content contract in the
+`creating-commits` skill. The template is a structural skeleton; the skills are
+the authoritative source for authoring requirements. Correct headings alone are
+not evidence that the description complies.
+
+Scale the description to the change's complexity and the context reviewers need.
+Simple changes usually need a brief explanation of why, how, and what was
+validated. Complex changes need more thorough background, reasoning, tradeoffs,
+and validation detail. Diff size doesn't determine complexity: a small change
+can carry substantial context, and a large mechanical change can be simple to
+explain. Apply the checklist at that depth; don't add prose just to give each
+item its own sentence or paragraph.
 
 Apply two presentation changes:
 
@@ -107,15 +116,34 @@ Apply two presentation changes:
    naturally.
 2. Apply the `writing-in-my-voice` skill to all prose.
 
+### Frontend demos
+
+For changes that include frontend work, add `Demo` as the third section after
+`Why?` and `How?`, before the separator and any ticket footer. Match the
+template's heading style.
+
+Include screenshots for static content and videos for interactions or multi-step
+workflows. Include both when the change needs both kinds of evidence. Capture
+the implemented result and embed or link the media in the PR body so reviewers
+can view it, with a short caption explaining what it shows. Local file paths and
+promises to add media later don't satisfy this requirement. Verify the media is
+accessible from the live PR. If capture or upload is blocked, report the blocker
+and the missing demo explicitly.
+
+Omit the `Demo` section when the change has no frontend work.
+
 ## Publication Checklist
 
 Before creating or updating the pull request, verify all of the following:
 
 - The body is written for a junior software engineer with no prior context.
-- `Why?` supplies the necessary background, the business problem and its
-  impact, the value the change creates, plain-language definitions, and every
-  available relevant source link. It never treats a ticket, plan, ADR, RFC, or
-  "the user asked" as the reason the work exists.
+- The explanation scales to the change's complexity and necessary context,
+  independent of diff size. Simple changes stay brief; complex changes provide
+  the detail reviewers need to assess them.
+- `Why?` supplies the necessary background, the business problem and its impact,
+  the value the change creates, plain-language definitions, and every available
+  relevant source link. It never treats a ticket, plan, ADR, RFC, or "the user
+  asked" as the reason the work exists.
 - `How?` explains the chosen approach, component responsibilities, meaningful
   tradeoffs, validation commands and results, why that evidence matters, and
   every available relevant implementation or third-party source link.
@@ -123,6 +151,9 @@ Before creating or updating the pull request, verify all of the following:
   replacing the explanation.
 - The body is unwrapped for GitHub while preserving intentional Markdown
   structure.
+- Frontend changes include a third `Demo` section after `Why?` and `How?`, with
+  accessible screenshots for static content and videos for interactions or
+  multi-step workflows.
 - Every newly created pull request is in draft unless the user explicitly asked
   to open it ready for review.
 - The ticket footer is exact when a ticket exists and absent when one does not.

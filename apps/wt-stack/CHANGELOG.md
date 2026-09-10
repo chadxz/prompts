@@ -17,6 +17,9 @@ Versioning.
 
 ### Fixed
 
+- Builds use Go 1.26.6 to address standard-library vulnerabilities reported by
+  the required vulnerability scan.
+
 - Documentation and doctor help describe Stacks API availability without stale
   private-preview or waitlist claims.
 

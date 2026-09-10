@@ -5,6 +5,13 @@ Versioning.
 
 ## Unreleased
 
+### Added
+
+- Non-interactive async Stack merging with prefix selection, expected head
+  checks, read-only dry runs, bounded polling, and request resumption.
+- Structured merge results distinguish pending, merged, enqueued, and failed
+  operations while preserving request identifiers on polling errors.
+
 ### Fixed
 
 - Initialization uses the selected remote's default branch when `--base` is

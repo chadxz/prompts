@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/chadxz/prompts/apps/wt-stack/internal/github"
 	"github.com/chadxz/prompts/apps/wt-stack/internal/gitrepo"
 	stackmanager "github.com/chadxz/prompts/apps/wt-stack/internal/stack"
 	"github.com/chadxz/prompts/apps/wt-stack/internal/state"
@@ -692,3 +693,7 @@ func (m *fakeCommandManager) Doctor(
 }
 
 var _ commandManager = (*fakeCommandManager)(nil)
+
+func (m *fakeCommandManager) Merge(context.Context, stackmanager.MergeOptions) (*github.MergeResult, error) {
+	return &github.MergeResult{Status: "enqueued", PullRequest: 42}, nil
+}

@@ -695,6 +695,14 @@ func (r *fakeRepository) PushStack(
 }
 
 type fakeGitHubClient struct {
+	mergeResult *github.MergeResult
+	pollResult  *github.MergeResult
+	mergeErr    error
+	scopeErr    error
+	mergeCalls  int
+	pollCalls   int
+	mergeSHA    string
+
 	pullRequests    map[string]*state.PullRequest
 	links           int
 	linkDraft       bool
@@ -981,4 +989,17 @@ func TestInitResolvesDefaultOnSelectedRemote(t *testing.T) {
 	if _, err := manager.Init(context.Background(), InitOptions{}); err == nil || store.saves != 0 {
 		t.Fatal("default discovery failure ignored")
 	}
+}
+
+func (c *fakeGitHubClient) ValidateMergeScope(context.Context, github.Repository, []state.PullRequest) error {
+	return c.scopeErr
+}
+func (c *fakeGitHubClient) StartMerge(_ context.Context, _ github.Repository, _ int, sha, _ string) (*github.MergeResult, error) {
+	c.mergeCalls++
+	c.mergeSHA = sha
+	return c.mergeResult, c.mergeErr
+}
+func (c *fakeGitHubClient) PollMerge(context.Context, github.Repository, int, string) (*github.MergeResult, error) {
+	c.pollCalls++
+	return c.pollResult, c.mergeErr
 }

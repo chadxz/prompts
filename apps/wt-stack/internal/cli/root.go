@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/chadxz/prompts/apps/wt-stack/internal/github"
 	"github.com/chadxz/prompts/apps/wt-stack/internal/gitrepo"
 	stackmanager "github.com/chadxz/prompts/apps/wt-stack/internal/stack"
 	"github.com/chadxz/prompts/apps/wt-stack/internal/state"
@@ -21,6 +22,7 @@ var version = "dev"
 
 type commandManager interface {
 	SetDryRun(bool)
+	Merge(context.Context, stackmanager.MergeOptions) (*github.MergeResult, error)
 	Init(context.Context, stackmanager.InitOptions) (*state.Stack, error)
 	Add(context.Context, stackmanager.AddOptions) (*state.Branch, error)
 	WorktreeForBranch(
@@ -48,6 +50,7 @@ type options struct {
 }
 
 type commandResult struct {
+	Merge         *github.MergeResult    `json:"merge,omitempty"`
 	Schema        int                    `json:"schemaVersion"`
 	Status        string                 `json:"status"`
 	Command       string                 `json:"command"`
@@ -62,14 +65,15 @@ type commandResult struct {
 }
 
 type errorResult struct {
-	Schema   int    `json:"schemaVersion"`
-	Status   string `json:"status"`
-	Error    string `json:"error"`
-	Branch   string `json:"branch,omitempty"`
-	Stack    string `json:"stack,omitempty"`
-	Worktree string `json:"worktree,omitempty"`
-	Continue string `json:"continue,omitempty"`
-	Abort    string `json:"abort,omitempty"`
+	Merge    *github.MergeResult `json:"merge,omitempty"`
+	Schema   int                 `json:"schemaVersion"`
+	Status   string              `json:"status"`
+	Error    string              `json:"error"`
+	Branch   string              `json:"branch,omitempty"`
+	Stack    string              `json:"stack,omitempty"`
+	Worktree string              `json:"worktree,omitempty"`
+	Continue string              `json:"continue,omitempty"`
+	Abort    string              `json:"abort,omitempty"`
 }
 
 // Execute runs the CLI and returns its process exit code.
@@ -120,6 +124,7 @@ func newRootCommand(opts *options) *cobra.Command {
 		newRefreshCommand(opts),
 		newSubmitCommand(opts),
 		newSyncCommand(opts),
+		newMergeCommand(opts),
 		newUnstackCommand(opts),
 		newDoctorCommand(opts),
 	)
@@ -549,6 +554,10 @@ func (o *options) printError(err error) int {
 		Schema: schemaVersion,
 		Status: "error",
 		Error:  err.Error(),
+	}
+	var mergeErr *mergeCommandError
+	if errors.As(err, &mergeErr) {
+		result.Merge = mergeErr.result
 	}
 	var conflict *stackmanager.RebaseConflictError
 	if errors.As(err, &conflict) {

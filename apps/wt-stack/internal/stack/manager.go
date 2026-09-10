@@ -49,6 +49,9 @@ type githubClient interface {
 	) (*state.PullRequest, error)
 	Link(context.Context, github.Repository, string, []string, bool) error
 	Unstack(context.Context, github.Repository, []int) (bool, error)
+	ValidateMergeScope(context.Context, github.Repository, []state.PullRequest) error
+	StartMerge(context.Context, github.Repository, int, string, string) (*github.MergeResult, error)
+	PollMerge(context.Context, github.Repository, int, string) (*github.MergeResult, error)
 }
 
 type lockedState interface {

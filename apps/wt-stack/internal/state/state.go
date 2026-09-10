@@ -40,11 +40,13 @@ type Branch struct {
 
 // PullRequest records the remote pull request associated with a branch.
 type PullRequest struct {
-	Number int    `json:"number"`
-	URL    string `json:"url"`
-	Base   string `json:"base"`
-	State  string `json:"state"`
-	Merged bool   `json:"merged"`
+	HeadSHA string `json:"headSha,omitempty"`
+	Draft   bool   `json:"draft,omitempty"`
+	Number  int    `json:"number"`
+	URL     string `json:"url"`
+	Base    string `json:"base"`
+	State   string `json:"state"`
+	Merged  bool   `json:"merged"`
 }
 
 // RebaseSession stores enough information to continue or abort a cascade.

@@ -41,7 +41,8 @@
             "submit",
             "sync",
             "unstack",
-            "doctor"
+            "doctor",
+            "merge"
           ]
         },
         "stack": {
@@ -73,6 +74,9 @@
         },
         "remoteRemoved": {
           "type": "boolean"
+        },
+        "merge": {
+          "$ref": "#/$defs/merge"
         }
       },
       "additionalProperties": true
@@ -111,6 +115,9 @@
         },
         "abort": {
           "type": "string"
+        },
+        "merge": {
+          "$ref": "#/$defs/merge"
         }
       },
       "additionalProperties": true
@@ -191,6 +198,12 @@
         },
         "merged": {
           "type": "boolean"
+        },
+        "headSha": {
+          "type": "string"
+        },
+        "draft": {
+          "type": "boolean"
         }
       },
       "additionalProperties": true
@@ -249,6 +262,41 @@
             },
             "additionalProperties": true
           }
+        }
+      },
+      "additionalProperties": true
+    },
+    "merge": {
+      "type": "object",
+      "required": [
+        "status",
+        "pullRequest"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "planned",
+            "pending",
+            "merged",
+            "enqueued",
+            "failed"
+          ]
+        },
+        "pullRequest": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "uuid": {
+          "type": "string"
+        },
+        "headSha": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "existing": {
+          "type": "boolean"
         }
       },
       "additionalProperties": true

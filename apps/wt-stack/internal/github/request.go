@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -70,6 +71,15 @@ func (c *Client) request(
 	requestBody any,
 	responseBody any,
 ) (http.Header, error) {
+	return c.requestWithStatuses(ctx, repository, method, path, requestBody, responseBody, nil)
+}
+
+// requestWithStatuses decodes documented non-2xx result bodies for operations
+// such as async merge, while retaining the normal authentication/retry policy.
+func (c *Client) requestWithStatuses(
+	ctx context.Context, repository Repository, method, path string,
+	requestBody, responseBody any, accepted []int,
+) (http.Header, error) {
 	if err := validateAPIHost(repository); err != nil {
 		return nil, err
 	}
@@ -111,14 +121,17 @@ func (c *Client) request(
 			}
 			continue
 		}
-		if response.StatusCode < http.StatusOK ||
-			response.StatusCode >= http.StatusMultipleChoices {
+		if (response.StatusCode < http.StatusOK ||
+			response.StatusCode >= http.StatusMultipleChoices) && !slices.Contains(accepted, response.StatusCode) {
 			return nil, decodeAPIError(response.StatusCode, path, response.Body)
 		}
 		if responseBody != nil && len(response.Body) > 0 {
 			if err := json.Unmarshal(response.Body, responseBody); err != nil {
 				return nil, fmt.Errorf("decoding GitHub API response: %w", err)
 			}
+		}
+		if slices.Contains(accepted, response.StatusCode) {
+			return response.Header, &APIError{StatusCode: response.StatusCode, Path: path}
 		}
 		return response.Header, nil
 	}

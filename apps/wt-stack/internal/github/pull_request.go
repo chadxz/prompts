@@ -12,6 +12,7 @@ import (
 )
 
 type pullRequestWire struct {
+	Draft    bool    `json:"draft"`
 	Number   int     `json:"number"`
 	State    string  `json:"state"`
 	MergedAt *string `json:"merged_at"`
@@ -20,6 +21,7 @@ type pullRequestWire struct {
 		Ref string `json:"ref"`
 	} `json:"base"`
 	Head struct {
+		SHA string `json:"sha"`
 		Ref string `json:"ref"`
 	} `json:"head"`
 }
@@ -149,10 +151,12 @@ func pullRequestState(pullRequest *pullRequestWire) *state.PullRequest {
 		stateName = "merged"
 	}
 	return &state.PullRequest{
-		Number: pullRequest.Number,
-		URL:    pullRequest.URL,
-		Base:   pullRequest.Base.Ref,
-		State:  stateName,
-		Merged: pullRequest.MergedAt != nil,
+		HeadSHA: pullRequest.Head.SHA,
+		Draft:   pullRequest.Draft,
+		Number:  pullRequest.Number,
+		URL:     pullRequest.URL,
+		Base:    pullRequest.Base.Ref,
+		State:   stateName,
+		Merged:  pullRequest.MergedAt != nil,
 	}
 }

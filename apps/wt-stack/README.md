@@ -70,6 +70,16 @@ wt-stack continue
 Use `wt-stack abort` instead to stop the cascade and restore every branch to its
 pre-rebase commit.
 
+When the pull requests are ready for review and their checks pass, merge the
+published Stack through its tip:
+
+```console
+wt-stack --stack delivery merge --merge-method squash
+```
+
+GitHub either merges the selected prefix together or admits it to the merge
+queue. An `enqueued` result means it's waiting in the queue, not merged yet.
+
 After GitHub merges each pull request, refresh local metadata:
 
 ```console
@@ -270,6 +280,51 @@ Use it for routine publication after committing branch changes.
 
 - `--draft` creates missing pull requests as drafts during submission. Existing
   pull requests keep their current draft or ready-for-review state.
+
+### `merge`
+
+```console
+wt-stack [--stack <name>] merge [--through <branch>] \
+  [--merge-method <merge|squash|rebase>] [--timeout <duration>]
+wt-stack [--stack <name>] merge --pr <number> --resume <uuid> \
+  [--timeout <duration>]
+```
+
+Merges published branches through the selected branch using GitHub's async
+merge API. It defaults to the last branch recorded in the local Stack. The
+command checks the selected PRs' state, bases, head commits, and remote Stack
+membership against the local branch chain. Selected active worktrees must be
+clean. Sync first if published heads, branch order, or PR bases differ.
+
+- `--through <branch>` selects a prefix ending at that local branch. Branches
+  above it aren't part of this merge.
+- `--merge-method` requests a method for direct merging. When omitted, GitHub's
+  API defaults to a merge commit for direct merges. Omit this option when the
+  base uses a merge queue; the queue controls the merge method.
+- `--timeout` bounds polling, defaults to `2m`, and must be positive. Reaching
+  the timeout returns `pending`, together with the PR number and request UUID.
+- `--resume <uuid> --pr <number>` polls an existing request without submitting
+  another merge. It can't be combined with `--through` or `--merge-method`.
+
+A pending request can finish after the command exits. Save its UUID and PR
+number from human or JSON output and resume to inspect the outcome. GitHub
+retains results for 24 hours after their last update. If submission returns an
+existing request (HTTP 409), wt-stack reports it without polling automatically;
+its options may differ from the attempted submission. Inspect it with `--resume`.
+An uncertain submission can be checked by retrying: GitHub returns an existing
+pending operation instead of starting a second concurrent one.
+
+The API chooses direct merging or queue admission from repository rules.
+`merged`, `enqueued`, and `failed` are distinct terminal results for the merge
+request. `enqueued` doesn't imply the PRs have landed; use `refresh` after the
+queue completes. Branch protection and repository rules still apply. A failed
+merge exits with code `1`; a pending or enqueued operation exits with code `0`
+and retains its actual state in `merge.status`.
+
+Dry-run validates a new merge without submitting it. Dry-run with `--resume`
+reads the existing result once. Neither form changes branches or local state.
+Merge errors with a known operation retain its identifiers in the JSON error's
+`merge` field. A 404 may indicate an unavailable API or expired operation.
 
 ### `unstack`
 

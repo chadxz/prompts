@@ -5,6 +5,8 @@ Versioning.
 
 ## Unreleased
 
+## 0.6.0 - 2026-09-10
+
 ### Added
 
 - Human-readable status includes full pull request URLs without requiring

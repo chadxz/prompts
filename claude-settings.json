@@ -13,6 +13,7 @@
     ],
     "defaultMode": "auto"
   },
+  "enableWorkflows": false,
   "statusLine": {
     "type": "command",
     "command": "bash ~/.claude/statusline-command.sh"
@@ -32,10 +33,19 @@
     }
   },
   "effortLevel": "medium",
+  "modelSettings": {
+    "claude-fable-5-1": {
+      "effortLevel": "medium"
+    }
+  },
   "autoUpdatesChannel": "latest",
   "tui": "fullscreen",
   "autoMemoryEnabled": false,
   "autoDreamEnabled": false,
   "skipDangerousModePermissionPrompt": true,
-  "verbose": true
+  "verbose": true,
+  "remoteControlAtStartup": true,
+  "inputNeededNotifEnabled": true,
+  "agentPushNotifEnabled": true,
+  "model": "claude-fable-5-1[1m]"
 }

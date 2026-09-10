@@ -7,6 +7,9 @@ Versioning.
 
 ### Added
 
+- Human-readable status includes full pull request URLs without requiring
+  terminal hyperlink support.
+
 - Non-interactive async Stack merging with prefix selection, expected head
   checks, read-only dry runs, bounded polling, and request resumption.
 - Structured merge results distinguish pending, merged, enqueued, and failed

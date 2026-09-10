@@ -629,6 +629,9 @@ func printHumanStatus(writer io.Writer, stacks []stackmanager.Status) {
 			if branch.Worktree != "" {
 				_, _ = fmt.Fprintf(writer, "    %s\n", branch.Worktree)
 			}
+			if branch.PullRequest != nil && branch.PullRequest.URL != "" {
+				_, _ = fmt.Fprintf(writer, "    %s\n", branch.PullRequest.URL)
+			}
 		}
 	}
 }

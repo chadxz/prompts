@@ -697,3 +697,21 @@ var _ commandManager = (*fakeCommandManager)(nil)
 func (m *fakeCommandManager) Merge(context.Context, stackmanager.MergeOptions) (*github.MergeResult, error) {
 	return &github.MergeResult{Status: "enqueued", PullRequest: 42}, nil
 }
+
+func TestHumanStatusIncludesPlainPullRequestURLs(t *testing.T) {
+	t.Parallel()
+	for _, merged := range []bool{false, true} {
+		var out bytes.Buffer
+		statuses := []stackmanager.Status{{Name: "delivery", Branches: []stackmanager.BranchStatus{{Name: "feature", PullRequest: &state.PullRequest{Number: 42, URL: "https://github.com/example/repository/pull/42", Merged: merged}}}}}
+		printHumanStatus(&out, statuses)
+		if !strings.Contains(out.String(), "https://github.com/example/repository/pull/42") || strings.Contains(out.String(), "\x1b") {
+			t.Fatalf("output = %q", out.String())
+		}
+		statuses[0].Branches[0].PullRequest.URL = ""
+		out.Reset()
+		printHumanStatus(&out, statuses)
+		if strings.Contains(out.String(), "https://") {
+			t.Fatal("old state invented a URL")
+		}
+	}
+}

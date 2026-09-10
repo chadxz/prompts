@@ -25,6 +25,7 @@ type gitRepository interface {
 	IsClean(context.Context, string) (bool, error)
 	CreateWorktree(context.Context, string, string, string) error
 	Fetch(context.Context, string) error
+	FetchBranch(context.Context, string, string) error
 	ConfigureRerere(context.Context) error
 	RebaseOnto(context.Context, string, string, string) error
 	ContinueRebase(context.Context, string) error
@@ -207,7 +208,7 @@ func (m *Manager) Init(ctx context.Context, options InitOptions) (*state.Stack, 
 	}
 
 	if !m.dryRun {
-		if err := m.repository.Fetch(ctx, options.Remote); err != nil {
+		if err := m.repository.FetchBranch(ctx, options.Remote, options.Trunk); err != nil {
 			return nil, err
 		}
 	}
@@ -399,9 +400,13 @@ func (m *Manager) Rebase(ctx context.Context, options RebaseOptions) error {
 		return fmt.Errorf("rebase for stack %s must be continued or aborted", file.Rebase.StackName)
 	}
 	if options.Fetch && !m.dryRun {
-		if err := m.repository.Fetch(ctx, stack.Remote); err != nil {
+		if err := m.repository.FetchBranch(ctx, stack.Remote, stack.Trunk); err != nil {
 			return err
 		}
+	}
+	trunkSHA, err := m.repository.Head(ctx, gitrepo.RemoteRef(stack.Remote, stack.Trunk))
+	if err != nil {
+		return err
 	}
 	active := activeBranchIndices(stack)
 	if len(active) == 0 {
@@ -424,6 +429,7 @@ func (m *Manager) Rebase(ctx context.Context, options RebaseOptions) error {
 		originalBranches[branch.Name] = head
 	}
 	file.Rebase = &state.RebaseSession{
+		TrunkSHA:         trunkSHA,
 		StackName:        stack.Name,
 		CurrentIndex:     active[0],
 		OriginalBranches: originalBranches,
@@ -845,10 +851,23 @@ func (m *Manager) runCascade(
 		}
 
 		newBaseRef := m.activeBaseRef(stack, branchIndex)
-		newBaseSHA, err := m.repository.Head(ctx, newBaseRef)
-		if err != nil {
+		newBaseSHA := file.Rebase.CurrentBase
+		if !continueCurrent || branchIndex != startIndex || newBaseSHA == "" {
+			if newBaseRef == gitrepo.RemoteRef(stack.Remote, stack.Trunk) && file.Rebase.TrunkSHA != "" {
+				newBaseSHA = file.Rebase.TrunkSHA
+			} else {
+				var err error
+				newBaseSHA, err = m.repository.Head(ctx, newBaseRef)
+				if err != nil {
+					return err
+				}
+			}
+		}
+		file.Rebase.CurrentBase = newBaseSHA
+		if err := locked.Save(file); err != nil {
 			return err
 		}
+		var err error
 		if continueCurrent && branchIndex == startIndex &&
 			m.repository.RebaseInProgress(ctx, worktreePath) {
 			err = m.repository.ContinueRebase(ctx, worktreePath)
@@ -864,6 +883,9 @@ func (m *Manager) runCascade(
 			if saveErr := locked.Save(file); saveErr != nil {
 				return errors.Join(err, saveErr)
 			}
+			if !m.repository.RebaseInProgress(ctx, worktreePath) {
+				return fmt.Errorf("rebasing %s: %w; run wt-stack abort to restore the stack", branch.Name, err)
+			}
 			return &RebaseConflictError{
 				StackName: stack.Name,
 				Branch:    branch.Name,
@@ -875,12 +897,31 @@ func (m *Manager) runCascade(
 		if err != nil {
 			return err
 		}
+		if err := m.requireAncestor(ctx, newBaseSHA, head, branch.Name); err != nil {
+			return err
+		}
 		branch.Base = newBaseSHA
 		branch.Head = head
 		continueCurrent = false
 		if err := locked.Save(file); err != nil {
 			return err
 		}
+	}
+	// Verify the whole chain again before declaring success.
+	parent := file.Rebase.TrunkSHA
+	for _, index := range active {
+		branch := stack.Branches[index]
+		if parent == "" {
+			parent = branch.Base
+		} // Sessions saved by older versions.
+		head, err := m.repository.Head(ctx, "refs/heads/"+branch.Name)
+		if err != nil {
+			return err
+		}
+		if err := m.requireAncestor(ctx, parent, head, branch.Name); err != nil {
+			return err
+		}
+		parent = head
 	}
 	file.Rebase = nil
 	return locked.Save(file)
@@ -1009,4 +1050,15 @@ func worktreeSlug(branch string) string {
 		candidate = unsafePathCharacters.ReplaceAllString(candidate, "-")
 	}
 	return candidate
+}
+
+func (m *Manager) requireAncestor(ctx context.Context, base, head, branch string) error {
+	ancestor, err := m.repository.IsAncestor(ctx, base, head)
+	if err != nil {
+		return err
+	}
+	if !ancestor {
+		return fmt.Errorf("branch %s does not contain expected base %s; run wt-stack abort to restore the stack", branch, base)
+	}
+	return nil
 }

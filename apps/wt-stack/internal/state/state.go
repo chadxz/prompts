@@ -49,6 +49,8 @@ type PullRequest struct {
 
 // RebaseSession stores enough information to continue or abort a cascade.
 type RebaseSession struct {
+	TrunkSHA         string            `json:"trunkSha,omitempty"`
+	CurrentBase      string            `json:"currentBase,omitempty"`
 	StackName        string            `json:"stackName"`
 	CurrentIndex     int               `json:"currentIndex"`
 	CurrentWorktree  string            `json:"currentWorktree,omitempty"`

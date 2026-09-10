@@ -5,6 +5,11 @@ Versioning.
 
 ## Unreleased
 
+### Fixed
+
+- Rebase fetches its trunk explicitly, pins the target across conflict recovery,
+  verifies ancestry, and distinguishes failed starts from recoverable conflicts.
+
 ## 0.5.0 - 2026-08-10
 
 ### Added

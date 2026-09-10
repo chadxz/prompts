@@ -223,6 +223,15 @@ func (r *Repository) Fetch(ctx context.Context, remote string) error {
 	return nil
 }
 
+// FetchBranch refreshes one remote-tracking branch regardless of fetch configuration.
+func (r *Repository) FetchBranch(ctx context.Context, remote, branch string) error {
+	refspec := "+refs/heads/" + branch + ":" + RemoteRef(remote, branch)
+	if err := r.Run(ctx, r.Container, "fetch", remote, refspec); err != nil {
+		return fmt.Errorf("fetching trunk %s/%s: %w", remote, branch, err)
+	}
+	return nil
+}
+
 // ConfigureRerere enables reuse and automatic staging of conflict resolutions.
 func (r *Repository) ConfigureRerere(ctx context.Context) error {
 	for key, value := range map[string]string{

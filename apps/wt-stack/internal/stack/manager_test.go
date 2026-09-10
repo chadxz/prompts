@@ -348,3 +348,36 @@ func (f *repositoryFixture) output(dir string, arguments ...string) string {
 	}
 	return strings.TrimSpace(string(output))
 }
+
+func TestRebaseFetchesTrunkOutsideConfiguredRefspec(t *testing.T) {
+	t.Parallel()
+	fixture := newRepositoryFixture(t)
+	ctx := context.Background()
+	repo, err := gitrepo.Discover(ctx, fixture.bottomWorktree)
+	if err != nil {
+		t.Fatal(err)
+	}
+	manager := NewManager(repo, io.Discard, io.Discard)
+	if _, err := manager.Init(ctx, InitOptions{Name: "test", Trunk: "main", Branches: []string{"feature-one", "feature-two"}}); err != nil {
+		t.Fatal(err)
+	}
+	fixture.git(fixture.seed, "branch", "side")
+	fixture.git(fixture.seed, "push", "origin", "side")
+	fixture.git(fixture.container, "config", "remote.origin.fetch", "+refs/heads/side:refs/remotes/origin/side")
+	fixture.writeAndCommit(fixture.seed, "trunk.txt", "new trunk\n", "advance trunk")
+	fixture.git(fixture.seed, "push", "origin", "main")
+	latest := fixture.output(fixture.seed, "rev-parse", "main")
+	if err := manager.Rebase(ctx, RebaseOptions{StackName: "test", Fetch: true}); err != nil {
+		t.Fatal(err)
+	}
+	fixture.git(fixture.container, "merge-base", "--is-ancestor", latest, "feature-two")
+	// Deleting a trunk must fail before creating a recovery session or moving branches.
+	before := fixture.output(fixture.container, "rev-parse", "feature-one")
+	fixture.git(fixture.remote, "update-ref", "-d", "refs/heads/main")
+	if err := manager.Rebase(ctx, RebaseOptions{StackName: "test", Fetch: true}); err == nil {
+		t.Fatal("accepted deleted trunk")
+	}
+	if after := fixture.output(fixture.container, "rev-parse", "feature-one"); after != before {
+		t.Fatal("branch moved after failed fetch")
+	}
+}

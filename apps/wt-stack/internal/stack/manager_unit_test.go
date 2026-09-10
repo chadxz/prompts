@@ -31,7 +31,7 @@ func TestManagerInitializesAndAddsBranches(t *testing.T) {
 	if stack.Name != "delivery" || store.saves != 1 {
 		t.Fatalf("unexpected initialized stack: %#v, saves=%d", stack, store.saves)
 	}
-	if !slices.Contains(repository.calls, "fetch:origin") ||
+	if !slices.Contains(repository.calls, "fetch-branch:origin:main") ||
 		!slices.Contains(repository.calls, "configure-rerere") {
 		t.Fatalf("initialization calls = %v", repository.calls)
 	}
@@ -394,6 +394,7 @@ func TestManagerRebaseRecordsOnlyActiveBranchesForRecovery(t *testing.T) {
 	)
 	manager, repository, _, store := newUnitManager(t, file)
 	repository.rebaseErr = errors.New("conflict")
+	repository.rebaseInProgress = true
 
 	err := manager.Rebase(context.Background(), RebaseOptions{
 		StackName: "delivery",
@@ -558,6 +559,8 @@ type fakeRepository struct {
 	rebaseInProgress bool
 	rebaseErr        error
 	calls            []string
+	fetchErr         error
+	ancestorFn       func(string, string) (bool, error)
 }
 
 func (r *fakeRepository) CurrentBranch(context.Context) (string, error) {
@@ -584,10 +587,11 @@ func (r *fakeRepository) Head(_ context.Context, revision string) (string, error
 }
 
 func (r *fakeRepository) IsAncestor(
-	context.Context,
-	string,
-	string,
+	_ context.Context, base string, head string,
 ) (bool, error) {
+	if r.ancestorFn != nil {
+		return r.ancestorFn(base, head)
+	}
 	return true, nil
 }
 
@@ -832,4 +836,52 @@ func newUnitManager(
 		container:  container,
 	}
 	return manager, repository, githubClient, store
+}
+
+func (r *fakeRepository) FetchBranch(_ context.Context, remote, branch string) error {
+	r.calls = append(r.calls, "fetch-branch:"+remote+":"+branch)
+	return r.fetchErr
+}
+
+func TestRebaseRejectsFetchAndStartFailures(t *testing.T) {
+	t.Parallel()
+	for _, kind := range []string{"fetch", "start", "ancestry", "no-fetch"} {
+		t.Run(kind, func(t *testing.T) {
+			t.Parallel()
+			manager, repo, _, store := newUnitManager(t, unitStateFile())
+			switch kind {
+			case "fetch":
+				repo.fetchErr = errors.New("network unavailable")
+			case "start":
+				repo.rebaseErr = errors.New("invalid rebase option")
+			case "ancestry":
+				repo.ancestorFn = func(_, head string) (bool, error) { return head != "rebased-head", nil }
+			}
+			err := manager.Rebase(context.Background(), RebaseOptions{StackName: "delivery", Fetch: kind != "no-fetch"})
+			if kind == "no-fetch" {
+				if err != nil {
+					t.Fatal(err)
+				}
+				for _, call := range repo.calls {
+					if strings.HasPrefix(call, "fetch") {
+						t.Fatal(call)
+					}
+				}
+				return
+			}
+			if err == nil {
+				t.Fatal("expected failure")
+			}
+			var conflict *RebaseConflictError
+			if errors.As(err, &conflict) {
+				t.Fatalf("non-conflict classified as conflict: %v", err)
+			}
+			if kind == "fetch" && store.saves != 0 {
+				t.Fatal("saved session on failed fetch")
+			}
+			if kind != "fetch" && store.file.Rebase == nil {
+				t.Fatal("lost recovery session")
+			}
+		})
+	}
 }

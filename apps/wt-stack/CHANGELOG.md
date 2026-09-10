@@ -7,6 +7,9 @@ Versioning.
 
 ### Fixed
 
+- Initialization uses the selected remote's default branch when `--base` is
+  omitted, including read-only discovery during dry runs.
+
 - Rebase validates saved parent boundaries before rewriting any branch and
   recovers stale metadata only from validated parent history.
 

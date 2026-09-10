@@ -19,6 +19,7 @@ var unsafePathCharacters = regexp.MustCompile(`[^A-Za-z0-9._-]+`)
 
 type gitRepository interface {
 	CurrentBranch(context.Context) (string, error)
+	DefaultBranch(context.Context, string) (string, error)
 	WorktreeForBranch(context.Context, string) (gitrepo.Worktree, bool, error)
 	Head(context.Context, string) (string, error)
 	IsAncestor(context.Context, string, string) (bool, error)
@@ -178,7 +179,11 @@ func (m *Manager) Init(ctx context.Context, options InitOptions) (*state.Stack, 
 		options.Remote = "origin"
 	}
 	if options.Trunk == "" {
-		options.Trunk = "main"
+		trunk, err := m.repository.DefaultBranch(ctx, options.Remote)
+		if err != nil {
+			return nil, err
+		}
+		options.Trunk = trunk
 	}
 	if options.Name == "" {
 		options.Name = options.Branches[0]

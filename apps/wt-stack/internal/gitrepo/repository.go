@@ -225,6 +225,31 @@ func (r *Repository) CreateWorktree(
 	return nil
 }
 
+// DefaultBranch reads the selected remote's symbolic HEAD without changing refs.
+func (r *Repository) DefaultBranch(ctx context.Context, remote string) (string, error) {
+	output, err := r.Output(ctx, r.Container, "ls-remote", "--symref", remote, "HEAD")
+	if err != nil {
+		return "", fmt.Errorf("discovering default branch of %s: %w; specify --base", remote, err)
+	}
+	branch, err := parseDefaultBranch(output)
+	if err != nil {
+		return "", fmt.Errorf("discovering default branch of %s: %w; specify --base", remote, err)
+	}
+	return branch, nil
+}
+
+func parseDefaultBranch(output string) (string, error) {
+	for _, line := range strings.Split(output, "\n") {
+		fields := strings.Fields(line)
+		if len(fields) == 3 && fields[0] == "ref:" && fields[2] == "HEAD" {
+			if branch, ok := strings.CutPrefix(fields[1], "refs/heads/"); ok && branch != "" {
+				return branch, nil
+			}
+		}
+	}
+	return "", errors.New("remote HEAD does not identify a branch")
+}
+
 // Fetch refreshes the selected remote and prunes deleted remote branches.
 func (r *Repository) Fetch(ctx context.Context, remote string) error {
 	if err := r.Run(ctx, r.Container, "fetch", "--prune", remote); err != nil {

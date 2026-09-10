@@ -170,7 +170,7 @@ no branch is provided, `init` adopts the current branch.
   name.
 - `--remote <remote>` selects the Git remote. It defaults to `origin`.
 - `--base <branch>` selects the trunk branch on the remote. It defaults to
-  `main`.
+  the selected remote's default branch. If discovery fails, specify `--base`.
 
 Successful initialization enables Git rerere for the repository and writes the
 Stack to shared state.

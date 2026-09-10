@@ -157,7 +157,7 @@ func newInitCommand(opts *options) *cobra.Command {
 	}
 	command.Flags().StringVar(&name, "name", "", "stack name")
 	command.Flags().StringVar(&remote, "remote", "origin", "Git remote")
-	command.Flags().StringVar(&trunk, "base", "main", "trunk branch")
+	command.Flags().StringVar(&trunk, "base", "", "trunk branch (defaults to the selected remote default branch)")
 	return command
 }
 

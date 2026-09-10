@@ -552,6 +552,9 @@ func unitRebaseSession(stack state.Stack) *state.RebaseSession {
 }
 
 type fakeRepository struct {
+	defaultBranch    string
+	defaultRemote    string
+	defaultErr       error
 	forkPoint        string
 	currentBranch    string
 	worktrees        map[string]gitrepo.Worktree
@@ -931,5 +934,51 @@ func TestRebasePreflightsBoundariesBeforeMutation(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func (r *fakeRepository) DefaultBranch(_ context.Context, remote string) (string, error) {
+	r.defaultRemote = remote
+	if r.defaultErr != nil {
+		return "", r.defaultErr
+	}
+	if r.defaultBranch == "" {
+		return "main", nil
+	}
+	return r.defaultBranch, nil
+}
+
+func TestInitResolvesDefaultOnSelectedRemote(t *testing.T) {
+	t.Parallel()
+	for _, base := range []string{"", "release"} {
+		t.Run("base="+base, func(t *testing.T) {
+			t.Parallel()
+			manager, repo, _, store := newUnitManager(t, &state.File{})
+			repo.defaultBranch = "develop"
+			repo.heads["refs/remotes/upstream/develop"] = "trunk-head"
+			repo.heads["refs/remotes/upstream/release"] = "release-head"
+			manager.SetDryRun(true)
+			stack, err := manager.Init(context.Background(), InitOptions{Remote: "upstream", Trunk: base})
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := base
+			if want == "" {
+				want = "develop"
+				if repo.defaultRemote != "upstream" {
+					t.Fatal("wrong remote")
+				}
+			} else if repo.defaultRemote != "" {
+				t.Fatal("explicit base performed discovery")
+			}
+			if stack.Trunk != want || store.saves != 0 || len(repo.calls) != 0 {
+				t.Fatalf("unexpected init: %#v", stack)
+			}
+		})
+	}
+	manager, repo, _, store := newUnitManager(t, &state.File{})
+	repo.defaultErr = errors.New("remote HEAD missing; specify --base")
+	if _, err := manager.Init(context.Background(), InitOptions{}); err == nil || store.saves != 0 {
+		t.Fatal("default discovery failure ignored")
 	}
 }

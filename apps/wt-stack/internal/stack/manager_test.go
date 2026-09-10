@@ -439,3 +439,23 @@ func TestRebaseRecoversInvalidParentBoundary(t *testing.T) {
 		})
 	}
 }
+
+func TestInitUsesRemoteDefaultWithLocalMainPresent(t *testing.T) {
+	t.Parallel()
+	fixture := newRepositoryFixture(t)
+	fixture.git(fixture.remote, "branch", "develop", "main")
+	fixture.git(fixture.remote, "symbolic-ref", "HEAD", "refs/heads/develop")
+	ctx := context.Background()
+	repo, err := gitrepo.Discover(ctx, fixture.bottomWorktree)
+	if err != nil {
+		t.Fatal(err)
+	}
+	manager := NewManager(repo, io.Discard, io.Discard)
+	initialized, err := manager.Init(ctx, InitOptions{Name: "test", Branches: []string{"feature-one"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if initialized.Trunk != "develop" {
+		t.Fatalf("trunk = %s", initialized.Trunk)
+	}
+}

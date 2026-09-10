@@ -83,3 +83,18 @@ func TestRemoteRef(t *testing.T) {
 		t.Fatalf("remote ref = %q", got)
 	}
 }
+
+func TestParseDefaultBranch(t *testing.T) {
+	t.Parallel()
+	for _, branch := range []string{"main", "master", "develop", "release/stable"} {
+		got, err := parseDefaultBranch("ref: refs/heads/" + branch + "\tHEAD\n1234\tHEAD")
+		if err != nil || got != branch {
+			t.Fatalf("got %q, %v", got, err)
+		}
+	}
+	for _, output := range []string{"", "1234\tHEAD", "ref: refs/tags/v1\tHEAD", "ref: refs/heads/\tHEAD"} {
+		if _, err := parseDefaultBranch(output); err == nil {
+			t.Fatalf("accepted %q", output)
+		}
+	}
+}

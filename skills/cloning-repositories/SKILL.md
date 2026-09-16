@@ -83,14 +83,52 @@ After cloning, confirm the root `.git` directory is a bare repository before
 adding worktrees:
 
 ```bash
-git --git-dir=<repo>/.git config --get core.bare
+git -C <repo> rev-parse --is-bare-repository
 ```
 
 The command should print `true`. If it prints `false`, or if
-`git -C <repo>
-worktree add main` reports that `main` is already used by the
+`git -C <repo> worktree add main` reports that `main` is already used by the
 root checkout, the repository was cloned with raw Git. Remove the bad clone and
 repeat the clone with the explicit bare form.
+
+## Where `core.bare` Lives
+
+The wrapper finishes a clone by enabling `extensions.worktreeConfig` and moving
+`core.bare = true` out of the shared `<repo>/.git/config` into the container's
+own `<repo>/.git/config.worktree`. Git reads that file only for the container,
+so the container stays bare while every worktree is a normal work tree.
+
+This matters because Git applies a shared `core.bare = true` to every linked
+worktree once `extensions.worktreeConfig` is enabled, and tools such as
+Codex.app and Claude Code enable that extension on their own when they create
+worktrees. In a container that still keeps `core.bare` in the shared config,
+that flip makes `git status` in every worktree fail with "this operation must be
+run in a work tree" until each worktree gets its own `core.bare = false`.
+
+When using the explicit bare clone form without the wrapper, apply the same
+layout by hand:
+
+```bash
+git -C <repo> config extensions.worktreeConfig true
+git -C <repo> config --worktree core.bare true
+git -C <repo> config --unset core.bare
+```
+
+### Repairing An Existing Container
+
+If worktrees in an existing container report `true` from
+`git rev-parse --is-bare-repository`, or `git status` fails there with "this
+operation must be run in a work tree", check where `core.bare` is set:
+
+```bash
+git -C <repo> config --show-origin --get-all core.bare
+```
+
+If the only origin is `<repo>/.git/config`, run the three commands above. The
+container keeps reporting bare, the worktrees recover immediately, and fresh
+`git worktree add` calls need no per-worktree override. Do not fix this by
+unsetting `extensions.worktreeConfig`; the next tool that creates a worktree
+turns it back on and reintroduces the failure.
 
 ## First Worktree
 

@@ -219,6 +219,20 @@ else
   bare_target="$target_dir/.git"
 fi
 
+# Linked worktrees inherit core.bare=true from the shared config once
+# extensions.worktreeConfig is enabled, and tools such as Codex.app and Claude
+# Code enable that extension on their own. Enable it up front and keep
+# core.bare=true in the container's own config.worktree so the container stays
+# bare while every worktree, existing or new, is treated as a normal work tree.
+isolate_bare_flag() {
+  local git_dir="$1"
+
+  "$real_git" --git-dir="$git_dir" config extensions.worktreeConfig true
+  "$real_git" --git-dir="$git_dir" config --worktree core.bare true
+  "$real_git" --git-dir="$git_dir" config --unset core.bare
+}
+
 echo "git clone override: cloning bare repository into $bare_target" >&2
-exec "$real_git" "${global_args[@]}" clone --bare \
+"$real_git" "${global_args[@]}" clone --bare \
   "${prefix_args[@]}" "$repo" "$bare_target"
+isolate_bare_flag "$bare_target"

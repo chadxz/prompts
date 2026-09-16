@@ -66,10 +66,9 @@
 - Use `linctl` to look up Linear ticket details. Run `linctl docs` when usage
   guidance is needed.
 
-- Safari is my primary web browser. For browser UI tasks that require computer
-  use, prefer Codex Computer Use with Safari. Do not use Chrome or
-  Chrome-extension-driven browser control unless I explicitly request it or
-  Safari Computer Use cannot complete the required workflow.
+- For browser UI tasks that require computer use, use Codex Computer Use with
+  Chrome. Use Safari only if I explicitly request it or Chrome cannot complete
+  the required workflow.
 
 ## Personal Context
 

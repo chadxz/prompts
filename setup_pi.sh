@@ -11,6 +11,7 @@ source "$PROMPTS_DIR/setup-common.sh"
 
 mkdir -p "$PI_DIR"
 
+link_path "$PROMPTS_DIR/.gitconfig" "$HOME/.gitconfig"
 setup_global_gitignore "$PROMPTS_DIR/.gitignore_global"
 setup_git_commit_template "$PROMPTS_DIR/.git_commit_template"
 setup_git_clone_override "$PROMPTS_DIR/bin"

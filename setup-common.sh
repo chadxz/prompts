@@ -99,7 +99,7 @@ setup_global_gitignore() {
 
   link_path "$source" "$target"
 
-  configured_path="$(git config --global --get core.excludesfile || true)"
+  configured_path="$(git config --global --path --get core.excludesfile || true)"
   if [[ "$configured_path" != "$target" ]]; then
     git config --global core.excludesfile "$target"
     echo "Configured git core.excludesfile -> $target"
@@ -115,7 +115,7 @@ setup_git_commit_template() {
 
   link_path "$source" "$target"
 
-  configured_path="$(git config --global --get commit.template || true)"
+  configured_path="$(git config --global --path --get commit.template || true)"
   if [[ "$configured_path" != "$target" ]]; then
     git config --global commit.template "$target"
     echo "Configured git commit.template -> $target"

@@ -8,6 +8,7 @@ COMMANDS_DIR="$CURSOR_DIR/commands"
 # shellcheck source=./setup-common.sh
 source "$SCRIPT_DIR/setup-common.sh"
 
+link_path "$SCRIPT_DIR/.gitconfig" "$HOME/.gitconfig"
 setup_global_gitignore "$SCRIPT_DIR/.gitignore_global"
 setup_git_commit_template "$SCRIPT_DIR/.git_commit_template"
 setup_git_clone_override "$SCRIPT_DIR/bin"

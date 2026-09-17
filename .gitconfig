@@ -1,0 +1,46 @@
+[user]
+	name = Chad McElligott
+	email = chad.mcelligott@convergint.com
+	signingkey = 440E2E4F0DFEB00D
+[push]
+	autoSetupRemote = true
+[pull]
+	rebase = true
+[credential]
+	helper = osxkeychain
+[commit]
+	gpgsign = true
+	template = ~/.git_commit_template
+	verbose = true
+[init]
+	defaultBranch = main
+[diff]
+	renameLimit = 36539
+	algorithm = histogram
+	noprefix = false
+	mnemonicprefix = false
+[merge]
+	conflictstyle = zdiff3
+[branch]
+	sort = -committerdate
+[core]
+	excludesfile = ~/.gitignore_global
+	ignorecase = false
+	autocrlf = input
+[push]
+	autoSetupRemote = true
+[rerere]
+	enabled = true
+[rebase]
+	autosquash = true
+[credential "https://github.com"]
+	helper =
+	helper = !/opt/homebrew/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper =
+	helper = !/opt/homebrew/bin/gh auth git-credential
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true

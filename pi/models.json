@@ -1,10 +1,9 @@
 {
   "providers": {
     "omlx": {
-      "baseUrl": "http://127.0.0.1:8010/v1",
+      "baseUrl": "http://127.0.0.1:8000/v1",
       "api": "openai-completions",
       "apiKey": "omlx",
-      "authHeader": true,
       "compat": {
         "supportsDeveloperRole": false,
         "supportsReasoningEffort": false,
@@ -23,20 +22,6 @@
           "maxTokens": 32768
         },
         {
-          "id": "Ornith-1.5-35B-A3B-oQ8e-fixed-mtp",
-          "name": "Ornith 1.5 35B A3B (oQ8 + Vision + MTP)",
-          "reasoning": true,
-          "input": [
-            "text",
-            "image"
-          ],
-          "contextWindow": 131072,
-          "maxTokens": 32768,
-          "compat": {
-            "thinkingFormat": "qwen"
-          }
-        },
-        {
           "id": "Qwen3.8-27B-oQ8-mtp",
           "name": "Qwen 3.8 27B (oQ8 + MTP)",
           "reasoning": true,
@@ -48,19 +33,6 @@
           "maxTokens": 32768,
           "compat": {
             "thinkingFormat": "qwen-chat-template"
-          }
-        },
-        {
-          "id": "Qwen3.6-27B-UD-MLX-6bit",
-          "reasoning": true,
-          "input": [
-            "text",
-            "image"
-          ],
-          "contextWindow": 131072,
-          "maxTokens": 12288,
-          "compat": {
-            "thinkingFormat": "qwen"
           }
         },
         {
@@ -77,54 +49,7 @@
           }
         },
         {
-          "id": "Qwen3.6-35B-A3B-MLX-8bit",
-          "reasoning": true,
-          "input": [
-            "text",
-            "image"
-          ],
-          "contextWindow": 131072,
-          "maxTokens": 12228,
-          "compat": {
-            "thinkingFormat": "qwen"
-          }
-        },
-        {
-          "id": "Qwen3.6-35B-A3B-UD-MLX-4bit",
-          "reasoning": true,
-          "input": [
-            "text",
-            "image"
-          ],
-          "contextWindow": 131072,
-          "maxTokens": 12288,
-          "compat": {
-            "thinkingFormat": "qwen"
-          }
-        },
-        {
-          "id": "gemma-4-26B-A4B-it-MLX-4bit",
-          "input": [
-            "text",
-            "image"
-          ]
-        },
-        {
           "id": "gemma-4-26B-A4B-it-MLX-6bit",
-          "input": [
-            "text",
-            "image"
-          ]
-        },
-        {
-          "id": "gemma-4-26B-A4B-it-MLX-8bit",
-          "input": [
-            "text",
-            "image"
-          ]
-        },
-        {
-          "id": "gemma-4-31B-it-MLX-4bit",
           "input": [
             "text",
             "image"

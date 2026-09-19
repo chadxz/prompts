@@ -1,14 +1,14 @@
 {
   "lastChangelogVersion": "0.79.3",
   "defaultProvider": "omlx",
-  "defaultModel": "Ornith-1.5-35B-A3B-oQ8e-fixed-mtp",
+  "defaultModel": "Qwen3.8-27B-oQ8-mtp",
   "defaultThinkingLevel": "high",
   "enabledModels": [
     "omlx/Qwen3.8-27B-oQ8-mtp",
-    "omlx/Ornith-1.5-35B-A3B-oQ8e-fixed-mtp",
-    "openai-codex/gpt-5.5",
-    "openai-codex/gpt-5.4",
-    "omlx/*"
+    "omlx/Qwen3.6-35B-A3B-6bit",
+    "omlx/Muse-Glimmer-30B-4bit",
+    "omlx/gemma-4-26B-A4B-it-MLX-6bit",
+    "omlx/gemma-4-31B-it-MLX-6bit"
   ],
   "hideThinkingBlock": false,
   "terminal": {

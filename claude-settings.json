@@ -43,6 +43,7 @@
   "autoMemoryEnabled": false,
   "autoDreamEnabled": false,
   "skipDangerousModePermissionPrompt": true,
+  "theme": "auto",
   "verbose": true,
   "remoteControlAtStartup": true,
   "inputNeededNotifEnabled": true,

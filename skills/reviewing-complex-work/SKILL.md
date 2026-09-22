@@ -81,11 +81,17 @@ CLI. Prefer a different provider:
 - Cursor host: prefer the direct CLI from another provider.
 - Other hosts: choose the strongest available independent alternative.
 
-Discover the current models rather than preserving model IDs here. Use the
-newest permitted flagship or coding model and the highest supported single-agent
-thinking level, commonly `max` or `xhigh`. Pin the exact model identifier the
-CLI reports; do not pass a short alias that may resolve to a different tier
-later. Do not use a mode that adds delegation unless the user asked for a panel.
+For Claude-family reviewers, default to Opus 5.5 with `high` effort. Prefer this
+combination over Fable, including when selecting a Claude model through Cursor.
+Honor an explicit user choice of model or effort.
+
+Discover the CLI's exact identifier for the chosen model. For other model
+families, use the newest permitted flagship or coding model and the highest
+supported single-agent thinking level, commonly `max` or `xhigh`. Pin the exact
+model identifier the CLI reports; don't pass a short alias that may resolve to a
+different tier later. If Opus 5.5 or `high` effort isn't available, report that
+limitation before choosing an available alternative. Don't use a mode that adds
+delegation unless the user asked for a panel.
 
 Never lower the model or thinking level to make a review fit a waiting window.
 If reviews are not finishing, fix the waiting mechanism described below. A

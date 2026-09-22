@@ -3,6 +3,14 @@
 Read this when the peer reviewer is Claude Code. Flags and event shapes here
 were verified against `claude` 2.1.223.
 
+## Select the Model
+
+Default to Opus 5.5 with `high` effort, honoring an explicit user override.
+Discover its full identifier in the installed CLI and set `MODEL` to that
+identifier. Don't use the `opus` alias or substitute Fable by default; aliases
+can remap to another model. If Opus 5.5 isn't available, report the limitation
+before choosing an available alternative.
+
 ## Invoke
 
 Run Claude as the foreground process in the caller's managed persistent command
@@ -13,7 +21,7 @@ yield so the caller receives a session handle while Claude keeps running:
 cd "$WORKTREE"
 exec claude -p \
   --model "$MODEL" \
-  --effort max \
+  --effort high \
   --permission-mode bypassPermissions \
   --tools Read,Grep,Glob,Bash,WebSearch,WebFetch \
   --add-dir "$HOME/tmp" \
@@ -29,10 +37,6 @@ session ID. Do not add `nohup`, `&`, `disown`, or a PID file: the command runner
 can terminate shell-backgrounded descendants as soon as the wrapper returns.
 `exec` makes Claude the managed process, so its eventual exit status remains
 available through the same session handle.
-
-Discover the model rather than assuming one. `--model` accepts an alias such as
-`opus` or a full identifier; pass the full identifier so a later alias remapping
-cannot silently change the tier.
 
 ## Tools
 

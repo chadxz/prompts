@@ -11,12 +11,15 @@ List the account catalog and pin an exact identifier:
 cursor-agent models
 ```
 
-Prefer the newest permitted flagship or coding model at the highest supported
-single-agent thinking level. Current catalogs often expose that as a full slug
-such as `claude-opus-5-thinking-xhigh` or `claude-opus-5-thinking-max`.
-Parameterized models also accept quoted bracket overrides, for example
-`'claude-opus-4-8[context=1m,effort=high,fast=false]'`. Do not pass a short
-alias that may remap later.
+For a Claude-family reviewer, default to Opus 5.5 with `high` effort rather than
+Fable. Honor an explicit user choice of model or effort. Select the exact
+identifier and effort syntax reported by the catalog, and set `MODEL` to that
+value. If Opus 5.5 or `high` effort isn't available, report the limitation
+before choosing an available alternative.
+
+For other model families, prefer the newest permitted flagship or coding model
+at the highest supported single-agent thinking level. Don't pass a short alias
+that may remap later.
 
 Cursor exposes several providers, so it is a useful peer when the host and the
 other installed CLI share a provider.

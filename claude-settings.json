@@ -23,13 +23,20 @@
     "codex@openai-codex": true,
     "dependabot-auto-review@convergint-ai": true,
     "platform-onboarding@convergint-ai": true,
-    "rust-analyzer-lsp@claude-plugins-official": true
+    "rust-analyzer-lsp@claude-plugins-official": true,
+    "trajectory@trajectory": true
   },
   "extraKnownMarketplaces": {
     "openai-codex": {
       "source": {
         "source": "github",
         "repo": "openai/codex-plugin-cc"
+      }
+    },
+    "trajectory": {
+      "source": {
+        "source": "directory",
+        "path": "/Users/chad/.trajectory/claude-marketplace"
       }
     }
   },

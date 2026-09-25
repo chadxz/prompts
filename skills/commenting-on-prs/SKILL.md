@@ -20,11 +20,21 @@ literal backslash-n text.
 
 ## Comment Placement
 
-Start every new comment as a review thread attached to the relevant changed line
-or file. Never leave a top-level pull request comment, including for overall
-feedback, status updates, or feedback that doesn't apply to a specific line.
-When there isn't a useful line target, attach a file-level comment to the most
-relevant file.
+When initiating a feedback topic, start a review thread attached to the relevant
+changed line or file. Never start new feedback as a top-level pull request
+comment, including overall feedback, status updates, or feedback that doesn't
+apply to a specific line. When there isn't a useful line target, attach a
+file-level comment to the most relevant file.
+
+When responding to existing feedback, follow the original comment's location.
+Reply to an inline or file-level review comment in its existing review thread.
+Respond to a top-level pull request conversation comment or the body of a
+submitted review (approval, changes requested, or comment) with a top-level pull
+request conversation comment. Mention the author and reference the original
+comment when needed for context. This rule takes precedence over the preference
+for review threads: never move a response to top-level feedback onto a file or
+changed line to make it resolvable. Top-level comments have no review thread to
+resolve.
 
 Keep each new review thread unresolved until the pull request owner replies and
 acknowledges it. A code change without a reply isn't an acknowledgement. Treat
@@ -40,10 +50,12 @@ required to finish the work on the current pull request. A request that only
 asks whether comments are worth addressing remains read-only unless Chad also
 asks to act.
 
-Use this workflow for all unresolved feedback in scope:
+Use this workflow for all feedback in scope that needs a response or thread
+resolution:
 
-1. Fetch thread-aware review state and include relevant pull request-level bot
-   feedback. Don't treat a flat comment list as complete.
+1. Fetch thread-aware review state, top-level pull request conversation
+   comments, and review summaries, including relevant bot feedback. Don't treat
+   a flat comment list as complete.
 2. Evaluate each comment against the current code and group duplicates that
    describe the same underlying problem.
 3. Implement valid feedback, run the relevant checks, and push the verified
@@ -51,21 +63,23 @@ Use this workflow for all unresolved feedback in scope:
 4. Leave the code unchanged when a comment is incorrect or isn't appropriate for
    the pull request. Reply with the concrete reason so later readers can
    understand the decision.
-5. Reply in-thread to every handled non-Datadog comment and resolve it. A
-   decision not to change the code still counts as handled after the rationale
-   is posted.
-6. Fetch the thread state again and confirm that the intended threads are
-   resolved and no actionable feedback was missed.
+5. Respond to every handled non-Datadog comment where it was left. Reply in and
+   resolve review threads; post top-level responses to top-level comments and
+   review summaries. A decision not to change the code still counts as handled
+   after the rationale is posted.
+6. Fetch the feedback state again and confirm that the intended review threads
+   are resolved, top-level responses are posted, and no actionable feedback was
+   missed.
 
 Leave a non-Datadog thread unresolved only when clarification is still needed,
 the work is incomplete, or Chad explicitly asks to leave it open.
 
 ### Datadog-only exception
 
-Datadog bot review comments are the only comments left for automatic
-re-evaluation. Every other handled comment requires an in-thread reply and
-manual thread resolution, even when its author re-evaluates the pull request
-after a push.
+Datadog bot review comments are the only review threads left for automatic
+re-evaluation. Every other handled review thread requires an in-thread reply and
+manual resolution, even when its author re-evaluates the pull request after a
+push.
 
 Don't reply to or manually resolve review comments from Datadog bots. Fix valid
 findings in the code. For a false positive, add a narrow exclusion to the
@@ -74,18 +88,24 @@ when that repository supports exclusions. Push the change and let Datadog
 re-evaluate and resolve its own comment. Confirm the resulting check or thread
 state when practical.
 
-## Replying and Resolving Threads
+## Responding to PR Feedback
 
-When responding to inline PR feedback, reply to the existing review comment
-thread and then resolve that review thread. Use thread-aware data from GitHub
-GraphQL or the GitHub comment helper scripts to map both IDs involved:
+First identify whether the original feedback is a review thread, a top-level
+pull request conversation comment, or a review summary. For a review thread,
+reply to the existing thread and then resolve it when addressed. Use
+thread-aware data from GitHub GraphQL or the GitHub comment helper scripts to
+map both IDs involved:
 
 - the review comment REST ID for the reply endpoint
 - the review thread GraphQL ID for `resolveReviewThread`
 
-Treat a user request to respond to PR feedback as permission to reply in-thread
-and resolve the thread once the feedback has been addressed. A reply that asks
-for clarification leaves the thread unresolved until the answer is available.
+For a top-level conversation comment or review summary, post a new top-level
+pull request conversation comment. GitHub does not provide a review thread for
+these comments, so do not use a review-comment endpoint or try to resolve one.
+Treat a user request to respond to PR feedback as permission to post the
+response in the right location and resolve an addressed review thread. A reply
+that asks for clarification leaves its review thread unresolved until the answer
+is available.
 
 Common patterns:
 
@@ -113,6 +133,12 @@ EOF
 gh api repos/{owner}/{repo}/pulls/{pr}/comments/{id}/replies \
   -F body=@- <<'EOF'
 <comment>
+EOF
+
+# Respond to a top-level PR comment or review summary
+gh api --method POST repos/{owner}/{repo}/issues/{pr}/comments \
+  -F body=@- <<'EOF'
+@reviewer <response with enough context to identify the original feedback>
 EOF
 
 # Resolve the review thread after replying

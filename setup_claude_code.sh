@@ -17,3 +17,4 @@ link_path "$PROMPTS_DIR/AGENTS.md" "$HOME/.claude/CLAUDE.md"
 link_path "$PROMPTS_DIR/claude-settings.json" "$HOME/.claude/settings.json"
 link_path_if_present "$PROMPTS_DIR/commands" "$HOME/.claude/commands"
 link_path "$PROMPTS_DIR/skills" "$HOME/.claude/skills"
+"$PROMPTS_DIR/bin/claude-remote-control-agent" install

@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.10.6",
+  "checkpoint_id": "01M3DM1J5MX4X6T46424ASKMZH",
+  "strategy": "manual-commit",
+  "branch": "agent/claude-remote-control-agent",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "bin/claude-remote-control-agent",
+    "setup_claude_code.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 64,
+    "cache_creation_tokens": 133301,
+    "cache_read_tokens": 3319002,
+    "output_tokens": 16691,
+    "api_call_count": 32
+  }
+}

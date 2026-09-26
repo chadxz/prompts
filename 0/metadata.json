@@ -1,0 +1,117 @@
+{
+  "cli_version": "0.10.6",
+  "checkpoint_id": "01M3DM1J5MX4X6T46424ASKMZH",
+  "session_id": "8b9aac8b-f405-448e-a4af-3dc6def1d6f5",
+  "strategy": "manual-commit",
+  "created_at": "2026-09-26T01:07:33.428629Z",
+  "branch": "agent/claude-remote-control-agent",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "bin/claude-remote-control-agent",
+    "setup_claude_code.sh"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "37584e8d0924",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 64,
+    "cache_creation_tokens": 133301,
+    "cache_read_tokens": 3319002,
+    "output_tokens": 16691,
+    "api_call_count": 32
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_015jkQQatZeNpzykrucB4Mmw",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "using-git-worktrees"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "37584e8d0924",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 70,
+        "end": 71,
+        "entry_ids": [
+          "583b973e-5005-4301-8e83-f7493f250d66"
+        ],
+        "tool_use_id": "toolu_015jkQQatZeNpzykrucB4Mmw"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_015jkQQatZeNpzykrucB4Mmw"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: using-git-worktrees",
+        "default_collapsed": true
+      }
+    },
+    {
+      "id": "claude-skill-toolu_0189Dcn1YtvJrGnNtieDkczz",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "creating-commits"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "37584e8d0924",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 226,
+        "end": 227,
+        "entry_ids": [
+          "d5d5f687-f006-4b62-9d3a-bbfbd785f691"
+        ],
+        "tool_use_id": "toolu_0189Dcn1YtvJrGnNtieDkczz"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_0189Dcn1YtvJrGnNtieDkczz"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: creating-commits",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "initial_attribution": {
+    "calculated_at": "2026-09-26T01:07:33.400992Z",
+    "agent_lines": 140,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 140,
+    "total_lines_changed": 140,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 327,
+      "user_lines_removed": 11,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        "cli-config.json": 28,
+        "skills/.trash/1790310545565-39464-zuc22h/writing-in-my-voice/SKILL.md": 299
+      },
+      "user_removed_per_file": {
+        "cli-config.json": 11
+      }
+    }
+  ]
+}

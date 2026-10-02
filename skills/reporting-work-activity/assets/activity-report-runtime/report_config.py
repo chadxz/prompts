@@ -14,6 +14,7 @@ NOTION_SNAPSHOT_FILE = DATA_DIR / "notion_pages.json"
 DATADOG_SNAPSHOT_FILE = DATA_DIR / "datadog_activity.json"
 PERSONAL_REPORT_SNAPSHOT_FILE = DATA_DIR / "personal_report.json"
 REFRESH_MANIFEST_FILE = DATA_DIR / "refresh_manifest.json"
+AGENT_SESSIONS_FILE = DATA_DIR / "agent_sessions.json"
 REPORT_TIMEZONE = ZoneInfo(os.environ.get("REPORT_TIMEZONE", "America/Chicago"))
 REPORT_DATE = date.fromisoformat(
     os.environ.get("REPORT_DATE", datetime.now(REPORT_TIMEZONE).date().isoformat())
@@ -44,4 +45,5 @@ REQUIRED_DATA_FILES = [
     "datadog_activity.json",
     "personal_report.json",
     "refresh_manifest.json",
+    "agent_sessions.json",
 ]

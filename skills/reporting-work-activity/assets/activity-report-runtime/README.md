@@ -87,8 +87,8 @@ That writes these report inputs:
 The fetch step also refreshes `data/linear_team_dumps/` so we've got the
 per-team Linear samples that feed the deduped issue export.
 
-Slack, Notion, scoped Datadog evidence, and the current personal narrative are
-refreshed separately through the Codex skill at
+Slack, Notion, scoped Datadog evidence, agent sessions, and the current personal
+narrative are refreshed separately through the Codex skill at
 [reporting-work-activity](../../SKILL.md). If `tracked_sources.json` is missing,
 first run:
 
@@ -107,6 +107,12 @@ pass, and then reruns the report. When the runtime requires
 `data/datadog_activity.json`, keep that snapshot scoped to the selected report
 mode. Personal reports should use Datadog as evidence for Chad's workstreams,
 not as a broad org feed.
+
+Write `data/agent_sessions.json` after checking Codex, Claude, and Cursor for
+the exact report window. Record coverage gaps separately for each agent,
+corroborate completed work, deduplicate shared outcomes, and label exploration.
+The runtime validates timestamps, statuses, and completion evidence, and creates
+an agent evidence page with paraphrases and artifact links.
 
 Treat `tracked_sources.json` as the starting point for a refresh, not as the
 complete ceiling of what the report is allowed to include. The skill should
@@ -134,9 +140,9 @@ fails when its start and end dates do not match the window selected in
 narrative is current.
 
 The refresh manifest includes the same window, a refresh timestamp, and a
-receipt for GitHub, Linear, Slack, Notion, and Datadog. The renderer rejects a
-missing receipt. `confirmed_current` is reserved for a run where the user
-explicitly approved preserved cache.
+receipt for GitHub, Linear, Slack, Notion, Datadog, and agent sessions. The
+renderer rejects a missing receipt. `confirmed_current` is reserved for a run
+where the user explicitly approved preserved cache.
 
 ## Common workflow
 

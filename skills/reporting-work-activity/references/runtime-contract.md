@@ -163,6 +163,15 @@ The refresh receipt is a local evidence snapshot:
 
 - `data/refresh_manifest.json`
 
+Cross-agent evidence is a curated local snapshot:
+
+- `data/agent_sessions.json`
+
+Read `agent-session-evidence.md` for its schema and source discovery rules. The
+runtime validates its exact window, activity timestamps, per-agent coverage,
+explicit work status, and corroboration for completed outcomes. Its evidence
+page uses paraphrases and artifact links; session IDs stay in local research.
+
 The personal report narrative is a local evidence-backed snapshot:
 
 - `data/personal_report.json`
@@ -227,7 +236,8 @@ digest.
 
 - `window`: exact ISO `start`, `end`, and IANA `timezone` values
 - `refreshed_at`: ISO timestamp for the completed evidence pass
-- `sources`: receipts for `github`, `linear`, `slack`, `notion`, and `datadog`
+- `sources`: receipts for `github`, `linear`, `slack`, `notion`, `datadog`, and
+  `agent_sessions`
 
 Each receipt has a `status` of `refreshed`. Use `confirmed_current` only when
 the user explicitly approved preserved cache. A short `detail` may describe the
@@ -248,7 +258,8 @@ Example:
     "linear": { "status": "refreshed" },
     "slack": { "status": "refreshed" },
     "notion": { "status": "refreshed" },
-    "datadog": { "status": "refreshed" }
+    "datadog": { "status": "refreshed" },
+    "agent_sessions": { "status": "refreshed" }
   }
 }
 ```
@@ -260,11 +271,13 @@ Example:
 - `discussion`: one decision or discussion callout with evidence links
 - `workstreams`: current personal bodies of work with proof and evidence links
 - `lowlights`: current risks or unfinished edges
+- `exploration`: optional significant topics with explicit unfinished status
 - `methodology`: notes that state the window, scope, refresh, and discovery
   coverage
 
-Write this snapshot after GitHub, Linear, Slack, Notion, and Datadog are
-current. Do not copy the prior report narrative forward as a starting point.
+Write this snapshot after GitHub, Linear, Slack, Notion, Datadog, and agent
+sessions are current. Do not copy the prior report narrative forward as a
+starting point.
 
 Example window field:
 
@@ -308,6 +321,9 @@ because its file was touched or the renderer was rerun.
   scoped Datadog evidence before reporting the output as complete.
 - `data/refresh_manifest.json` is required. Every source receipt and its exact
   window must pass before the renderer accepts the report.
+- `data/agent_sessions.json` is required. Missing capture can be recorded as
+  partial or unavailable coverage; it must not turn into an unsupported claim
+  that no work occurred. Completed outcomes require concrete corroboration.
 - `data/personal_report.json` is required for personal reports. If it is missing
   or invalid, rebuild the conclusions from the current evidence instead of
   falling back to hard-coded prose.

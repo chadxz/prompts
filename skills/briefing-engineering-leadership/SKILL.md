@@ -24,11 +24,20 @@ Reuse relevant research already gathered for the same reporting window, then
 fill gaps in team outcomes, attribution, and engineering-wide context.
 
 1. Lock the requested reporting window.
-2. Research relevant GitHub, Linear, Slack, Notion, and Datadog activity for
-   that window. Identify evidence-backed candidates for:
+2. Research relevant GitHub, Linear, Slack, Notion, and Datadog activity, plus
+   Chad's Codex, Claude, and Cursor sessions, for that window. Read
+   `references/agent-session-evidence.md` before using session evidence. Check
+   all three archives and record gaps. Reuse a current activity report's session
+   snapshot when its window and coverage match, then fill any gaps. Identify
+   evidence-backed candidates for:
    - what Chad personally accomplished and why it matters
    - what his team accomplished and why it matters
    - topics, trends, or highlights worth surfacing from across engineering
+
+   Use sessions primarily to corroborate completed work and Chad's role in it.
+   Also consider significant topics he explored that haven't become completed
+   work. Label those as exploration, proposals, or open questions; don't count
+   them as outcomes. Exclude the current report's own compilation sessions.
 3. After the research, ask Chad up to six concise questions in one batch. Base
    every question on observed activity and use it to resolve a meaningful gap in
    attribution, impact, significance, or sensitivity. Do not ask for facts the
@@ -63,6 +72,13 @@ fill gaps in team outcomes, attribution, and engineering-wide context.
      engineering signal without claiming the earlier delivery happened now.
    - Organize around outcomes rather than tools or activity counts. State why
      each included item matters.
+   - Use session evidence to clarify decisions, implementation, and attribution.
+     Verify completion against concrete artifacts or successful action results.
+     An agent's final claim, a closed chat, or a test pass alone doesn't prove
+     that a change merged or deployed. Deduplicate work across agents.
+   - Put significant exploratory topics in Engineering signals when they matter
+     to the reader, with explicit unfinished status. A completed research
+     artifact can be an outcome; the capability it proposes remains a proposal.
    - Do not add a "no decision needed" or similar filler callout. If there is no
      request for leadership, omit the callout entirely.
 6. Write the brief in exactly three sections: My outcomes, Team outcomes, and
@@ -88,6 +104,9 @@ fill gaps in team outcomes, attribution, and engineering-wide context.
    - Prefer durable, audience-accessible sources such as pull requests, current
      capability documentation, announcements, demos, live prototypes, and
      dashboards.
+   - Keep private session IDs and transcript excerpts in the research record.
+     Use an accessible artifact for the PDF link. Paraphrase session-only
+     exploration and state its status without exposing private transcripts.
    - Link a Slack or Teams conversation when the conversation itself is material
      and the intended reader can access it. Prefer a durable source when one
      covers the same evidence.

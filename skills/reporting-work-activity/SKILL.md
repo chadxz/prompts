@@ -4,8 +4,9 @@ description:
   Builds, refreshes, or visually redesigns the bundled Convergint activity
   report runtime under `assets/activity-report-runtime`. Locks an explicit
   current reporting window, refreshes GitHub, Linear, Slack, Notion, and
-  Datadog evidence, rebuilds the snapshot-backed narrative, verifies the
-  generated HTML and required one-page PDF, and serves it locally. Use for
+  Datadog evidence plus Codex, Claude, and Cursor sessions, rebuilds the
+  snapshot-backed narrative, verifies the generated HTML and required
+  one-page PDF, and serves it locally. Use for
   weekly activity reports, personal or organization scope, stale report data,
   a new UI, a redesign, a retheme, a coat of paint, or requests for a
   distinctly different look.
@@ -35,6 +36,12 @@ Decide the report scope before refreshing or rewriting conclusions.
 For personal reports, GitHub and Linear should be filtered to Chad's own
 activity first. Slack, Notion, and Datadog should support the story instead of
 becoming broad digest sections.
+
+Include Chad's Codex, Claude, and Cursor sessions in every personal evidence
+pass. Read `references/agent-session-evidence.md` for discovery, timestamp
+filtering, corroboration, attribution, and exploration rules. Use sessions
+primarily to support completed work. They can also surface significant topics
+Chad explored without implying that a proposal, draft, or conversation shipped.
 
 ## Lock the reporting window
 
@@ -82,6 +89,8 @@ Activity report refresh progress:
 - [ ] Write `data/slack_channels.json`
 - [ ] Write `data/notion_pages.json`
 - [ ] Confirm any required Datadog snapshot matches the selected scope
+- [ ] Inspect Codex, Claude, and Cursor sessions for the same window
+- [ ] Write `data/agent_sessions.json` with per-agent coverage and evidence
 - [ ] Write `data/refresh_manifest.json` with a receipt for every source
 - [ ] Write `data/personal_report.json` from the refreshed evidence
 - [ ] Run `mise run report` to build HTML and the required one-page PDF
@@ -139,9 +148,14 @@ Activity report refresh progress:
     it anchor the weekly conclusions or copy its prose into the new report.
 16. If discovery finds a durable source, append it to the local
     `tracked_sources.json` before finishing.
-17. Write `data/refresh_manifest.json` after every evidence pass. Its exact
-    window, timezone, refresh timestamp, and GitHub, Linear, Slack, Notion, and
-    Datadog receipts are required. Use `confirmed_current` only when the user
+17. Inspect Codex, Claude, and Cursor sessions with the same window. Write
+    `data/agent_sessions.json` using the session evidence reference. Check all
+    three sources even when one archive is thin or unavailable; record that
+    coverage honestly. Exclude this report's own compilation sessions. Write
+    `data/refresh_manifest.json` after every evidence pass. Its exact window,
+    timezone, refresh timestamp, and GitHub, Linear, Slack, Notion, and Datadog
+    receipts are required, along with an `agent_sessions` receipt and coverage
+    for Codex, Claude, and Cursor. Use `confirmed_current` only when the user
     explicitly approved preserved cache.
 18. For a personal report, write `data/personal_report.json` only after every
     evidence pass is complete. Rebuild the lede, discussion, workstreams,
@@ -184,6 +198,9 @@ The report is current only when all of these are true:
 - Notion's page body, last-edited time, and any "as of" date are checked. Older
   pages may provide context but cannot anchor a current-week conclusion.
 - Datadog queries use the same bounds and selected personal or org scope.
+- Agent evidence uses in-window turn and action timestamps, including resumed
+  sessions. Completion claims have concrete results; exploratory topics are
+  labeled and excluded from delivery counts. Coverage names all three agents.
 - Every statement in the hero, discussion callout, workstreams, lowlights, and
   methodology was synthesized after the fresh evidence pass.
 - `mise run verify-report` passes against the selected window.
@@ -259,6 +276,7 @@ Default execution:
 - Run the bounded discovery pass and include newly relevant Slack channels or
   Notion pages that it surfaces.
 - Write `data/slack_channels.json`. `data/notion_pages.json`.
+- Inspect all three agent archives and write `data/agent_sessions.json`.
 - Write `data/refresh_manifest.json` with every source receipt.
 - Write `data/personal_report.json` after all evidence is current.
 - Run `mise run report` to build HTML and the required one-page PDF.
@@ -280,6 +298,11 @@ Default execution:
   counts as evidence, not as the main structure.
 - Personal reports may cite PRs not authored by Chad only when they explain
   Chad's workstream, support, or decision-making.
+- Agent sessions supplement the relevant workstream; they aren't a separate
+  productivity score. Deduplicate forks, subagents, copied context, and the same
+  work across agents. Prefer durable evidence links over private transcripts.
+- Significant unfinished ideas belong under clearly labeled exploration or
+  discussion. Don't turn a session's final answer into proof of delivery.
 - If a project is demo-worthy or should be discussed this week, make it visually
   visible in the report and link the direct evidence.
 - `mise run fetch` only owns GitHub and Linear. It does not refresh Slack or

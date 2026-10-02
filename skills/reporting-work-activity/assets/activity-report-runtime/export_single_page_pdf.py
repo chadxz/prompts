@@ -16,91 +16,24 @@ CHROME_CANDIDATES = [
 ]
 
 EXPORT_CSS = """
-@page {
-  margin: 0;
-}
-
-html {
-  scroll-behavior: auto !important;
-}
-
-body,
-body * {
+@page { margin: 0; }
+html { scroll-behavior: auto !important; }
+body, body * {
   -webkit-print-color-adjust: exact !important;
   print-color-adjust: exact !important;
 }
-
-body::before {
-  position: absolute !important;
-}
-
-.skip-link {
-  display: none !important;
-}
-
-.shell {
-  padding-left: 0 !important;
-}
-
-.sticky-nav {
-  position: static !important;
-  inset: auto !important;
-  width: calc(100% - 96px) !important;
-  height: auto !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  margin: 48px auto 0 !important;
-  padding: 16px 22px !important;
-  border: 1px solid var(--line) !important;
-}
-
-.rail-brand {
-  min-width: 200px !important;
-  margin: 0 30px 0 0 !important;
-}
-
-.rail-label,
-.rail-status {
-  display: none !important;
-}
-
-.sticky-nav a,
-.sticky-nav a:last-of-type {
-  padding: 14px 18px !important;
-  border: 0 !important;
-  border-left: 1px solid var(--line) !important;
-}
-
-.table-wrap {
-  overflow: visible !important;
-}
-
-.metric-table {
-  min-width: 0 !important;
-  table-layout: fixed !important;
-}
-
-.metric-table th,
-.metric-table td {
-  overflow-wrap: anywhere !important;
-}
-
-.hero,
-section,
-.body-card,
-.lowlight-card,
-.discussion-card,
-.table-wrap,
-.method-list li {
+body::before { position: absolute !important; }
+.skip-link, .mute-button, .mute-feedback { display: none !important; }
+.sticky-nav { position: static !important; }
+.table-wrap { overflow: visible !important; }
+.metric-table { min-width: 0 !important; table-layout: fixed !important; }
+.metric-table th, .metric-table td { overflow-wrap: anywhere !important; }
+.demo-ribbon { position: static !important; grid-column: 2 !important;
+  margin-bottom: 12px !important; }
+.hero, .body-card, .lowlight-card, .discussion-card, .table-wrap, .method-list li {
   break-inside: avoid !important;
 }
-
-*,
-*::before,
-*::after {
-  animation: none !important;
-  transition: none !important;
-}
+*, *::before, *::after { animation: none !important; transition: none !important; }
 """
 
 

@@ -9,7 +9,9 @@ from urllib.parse import unquote, urlsplit
 
 from pypdf import PdfReader
 
+from agent_session_evidence import validate_agent_sessions
 from report_config import (
+    AGENT_SESSIONS_FILE,
     DATA_DIR,
     END,
     OUTPUT_DIR,
@@ -30,6 +32,7 @@ EXPECTED_OUTPUT_FILES = [
     "personal-github-prs-merged.html",
     "personal-linear-issues.html",
     "personal-datadog-evidence.html",
+    "personal-agent-sessions.html",
     SINGLE_PAGE_PDF_FILE.name,
 ]
 
@@ -168,7 +171,7 @@ def validate_refresh_manifest(
     if not isinstance(sources, dict):
         return errors + ["Refresh manifest requires a `sources` object."]
     allowed_statuses = {"refreshed", "confirmed_current"}
-    for source in ["github", "linear", "slack", "notion", "datadog"]:
+    for source in ["github", "linear", "slack", "notion", "datadog", "agent_sessions"]:
         receipt = sources.get(source)
         if not isinstance(receipt, dict) or receipt.get("status") not in allowed_statuses:
             errors.append(f"Refresh manifest requires a current `{source}` receipt.")
@@ -294,14 +297,19 @@ def verify_report() -> list[str]:
     narrative, narrative_load_errors = load_json_object(PERSONAL_REPORT_SNAPSHOT_FILE)
     refresh_manifest, manifest_load_errors = load_json_object(REFRESH_MANIFEST_FILE)
     summary, summary_load_errors = load_json_object(OUTPUT_DIR / "summary.json")
+    agent_sessions, agent_load_errors = load_json_object(AGENT_SESSIONS_FILE)
     errors.extend(narrative_load_errors)
     errors.extend(manifest_load_errors)
     errors.extend(summary_load_errors)
+    errors.extend(agent_load_errors)
     if errors:
         return errors
 
     narrative_errors = validate_narrative(narrative, WINDOW_START, WINDOW_END)
     errors.extend(narrative_errors)
+    errors.extend(
+        validate_agent_sessions(agent_sessions, WINDOW_START, WINDOW_END, REPORT_TIMEZONE.key)
+    )
     errors.extend(
         validate_refresh_manifest(
             refresh_manifest,
@@ -318,6 +326,8 @@ def verify_report() -> list[str]:
         errors.append("Generated summary narrative does not match personal_report.json.")
     if summary.get("refresh_manifest") != refresh_manifest:
         errors.append("Generated summary receipt does not match refresh_manifest.json.")
+    if summary.get("agent_sessions") != agent_sessions:
+        errors.append("Generated agent evidence does not match agent_sessions.json.")
 
     pages, page_errors = parse_html_pages(OUTPUT_DIR)
     errors.extend(page_errors)

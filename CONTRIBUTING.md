@@ -32,6 +32,11 @@
 - Before changing files in a Git repository, work from a task-specific Git
   worktree and use the `using-git-worktrees` skill when available.
 
+- For `chadxz/prompts`, create user-level symlinks to its instructions, skills,
+  tools, and configuration only from its `main` worktree. Verify the source
+  checkout is on `main`; never point these links at a task worktree or another
+  branch, even for testing.
+
 - In local sessions, commit or push only when explicitly requested. In cloud
   implementation tasks, commit and push without asking separately when doing so
   is part of delivering the requested change. Never run `terraform apply`

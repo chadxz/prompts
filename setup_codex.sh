@@ -4,6 +4,7 @@
 #
 # This installs the shared prompts checkout, AGENTS.md, and personal skills
 # into CODEX_HOME so Codex can discover them.
+# It also installs and trusts the desktop idle compaction hooks.
 
 set -euo pipefail
 
@@ -12,6 +13,11 @@ CODEX_DIR="${CODEX_HOME:-$HOME/.codex}"
 
 # shellcheck source=./setup-common.sh
 source "$PROMPTS_DIR/setup-common.sh"
+
+if ! command -v uv >/dev/null 2>&1; then
+  echo "Error: uv is required to install the Codex idle compaction hooks" >&2
+  exit 1
+fi
 
 mkdir -p "$CODEX_DIR"
 mkdir -p "$CODEX_DIR/skills"
@@ -25,6 +31,9 @@ install_wt_stack "$PROMPTS_DIR"
 link_path "$PROMPTS_DIR" "$CODEX_DIR/prompts"
 link_path "$PROMPTS_DIR/AGENTS.md" "$CODEX_DIR/AGENTS.md"
 link_path "$PROMPTS_DIR/skills" "$CODEX_DIR/skills/personal"
+
+uv run --no-project --script "$PROMPTS_DIR/codex/idle_compaction.py" \
+  --codex-dir "$CODEX_DIR" install
 
 LEGACY_COMMANDS_DIR="$CODEX_DIR/skills/personal-commands"
 if [[ -L "$LEGACY_COMMANDS_DIR" ]]; then

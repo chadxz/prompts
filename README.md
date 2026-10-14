@@ -14,5 +14,8 @@ contains [Pi extensions](pi/extensions) and [wt-stack](apps/wt-stack), a tool
 for managing stacked changes across sibling Git worktrees. The setup scripts
 reflect my machines and preferences, so read them before running them.
 
+The Codex setup also installs [idle compaction hooks](codex) to compact large,
+unarchived desktop chats before their prompt cache expires.
+
 Unless a directory says otherwise, the repository is available under the
 [MIT License](LICENSE).

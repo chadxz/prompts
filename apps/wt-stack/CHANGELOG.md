@@ -5,6 +5,11 @@ Versioning.
 
 ## Unreleased
 
+### Fixed
+
+- Builds use Go 1.26.9 to address nine standard-library vulnerabilities reported
+  by the required vulnerability scan.
+
 ## 0.6.0 - 2026-09-10
 
 ### Added

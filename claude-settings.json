@@ -13,7 +13,6 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "opus[1m]",
   "enableWorkflows": false,
   "statusLine": {
     "type": "command",

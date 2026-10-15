@@ -22,10 +22,10 @@
   "steering": true,
   "rewind": false,
   "model": {
-    "modelId": "gpt-5.5",
-    "displayModelId": "gpt-5.5",
-    "displayName": "GPT-5.5 272K Medium",
-    "displayNameShort": "GPT-5.5 272K Medium",
+    "modelId": "claude-opus-5-5",
+    "displayModelId": "claude-opus-5-5",
+    "displayName": "Claude Opus 5.5 300K High",
+    "displayNameShort": "Claude Opus 5.5 300K High",
     "aliases": [],
     "maxMode": false
   },
@@ -57,18 +57,29 @@
         "id": "fast",
         "value": "false"
       }
-    ]
-  },
-  "selectedModel": {
-    "modelId": "gpt-5.5",
-    "parameters": [
+    ],
+    "claude-fable-5-1": [
       {
-        "id": "context",
-        "value": "272k"
+        "id": "thinking",
+        "value": "false"
       },
       {
-        "id": "reasoning",
-        "value": "medium"
+        "id": "context",
+        "value": "300k"
+      },
+      {
+        "id": "effort",
+        "value": "high"
+      }
+    ],
+    "claude-opus-5-5": [
+      {
+        "id": "context",
+        "value": "300k"
+      },
+      {
+        "id": "effort",
+        "value": "high"
       },
       {
         "id": "fast",
@@ -76,6 +87,27 @@
       }
     ]
   },
+  "selectedModel": {
+    "modelId": "claude-opus-5-5",
+    "parameters": [
+      {
+        "id": "context",
+        "value": "300k"
+      },
+      {
+        "id": "effort",
+        "value": "high"
+      },
+      {
+        "id": "fast",
+        "value": "false"
+      }
+    ]
+  },
+  "modelSelectionHistory": [
+    "claude-opus-5-5",
+    "claude-fable-5-1"
+  ],
   "exploreSubagentModel": "default",
   "network": {
     "useHttp1ForAgent": false

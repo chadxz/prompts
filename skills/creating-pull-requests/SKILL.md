@@ -116,6 +116,27 @@ Apply two presentation changes:
    naturally.
 2. Apply the `writing-in-my-voice` skill to all prose.
 
+### Scope each description to its pull request
+
+Keep every description focused on the problem this PR solves and the changes it
+introduces, including within a Stack. `Why?` should explain the relevant
+existing behavior, the specific gap, and its impact. `How?` should describe this
+PR's implementation and validation.
+
+Don't recap earlier or later PRs, narrate progress through the Stack, or carry
+over unrelated background from neighboring layers. This includes implicit
+callbacks to their implementation details even when no PR number or link
+appears. Mention another PR only when a concrete dependency, contract, or review
+constraint is necessary to understand or assess the current change. Keep that
+reference brief and explain why it matters here. This scope rule also limits the
+inherited `creating-commits` skill's source-link requirements.
+
+For a PR adding artifact release tags to application metrics, a focused `Why?`
+is: "We can't filter Mule application metrics in Datadog by the artifact release
+that produced them, which makes release regression investigations harder." Omit
+endpoint separation and publication timing unless they affect that tagging
+problem.
+
 ### Frontend demos
 
 For changes that include frontend work, add `Demo` as the third section after
@@ -168,6 +189,9 @@ Before creating or updating the pull request, verify all of the following:
 - The explanation scales to the change's complexity and necessary context,
   independent of diff size. Simple changes stay brief; complex changes provide
   the detail reviewers need to assess them.
+- The description stays within this PR's scope. References to other Stack
+  layers, including implicit recaps, appear only when they explain a necessary
+  dependency, contract, or review constraint.
 - `Why?` supplies the necessary background, the business problem and its impact,
   the value the change creates, plain-language definitions, and every available
   relevant source link. It never treats a ticket, plan, ADR, RFC, or "the user

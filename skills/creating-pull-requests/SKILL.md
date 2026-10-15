@@ -137,6 +137,47 @@ that produced them, which makes release regression investigations harder." Omit
 endpoint separation and publication timing unless they affect that tagging
 problem.
 
+### Diagram legibility
+
+Apply these checks whenever creating or updating a diagram in a PR description.
+
+For Mermaid flowcharts, default to SVG text labels to avoid browser-specific
+clipping of HTML labels, including in Safari at non-default zoom. Put this
+frontmatter before the diagram definition; keep the nested setting for Mermaid
+versions that use the older configuration:
+
+```yaml
+---
+config:
+  htmlLabels: false
+  flowchart:
+    htmlLabels: false
+---
+```
+
+Keep node labels, edge labels, and container titles concise. Wrap long labels
+with explicit line breaks and retain actual workflow, activity, and API names
+when they matter. Move explanations into surrounding prose or split a crowded
+diagram instead of shrinking text until it fits. Include a clear legend when
+colors, shapes, or arrow styles carry meaning; don't rely on color alone.
+
+Let GitHub select the light or dark theme. When assigning a custom fill, set the
+text and border colors explicitly and check their contrast together. For
+example, a pale blue box can use `fill:#e8f1ff,stroke:#3567aa,color:#172b3a`. A
+custom light fill with inherited light text becomes unreadable in dark mode.
+Check edge labels, container titles, arrows, and the legend as well as node
+labels.
+
+Before publishing, render every diagram in both light and dark themes at a width
+comparable to GitHub's PR description column. Check at 80%, 100%, and 125% zoom
+for clipped or truncated text, overlapping labels, and poor contrast. Parsing
+successfully isn't a visual check. Fix rendering issues before publishing.
+
+After publishing, read back the saved body with `gh` and inspect GitHub's
+rendered diagrams when browser access is available. If that inspection is
+unavailable, use local previews in both themes and state the verification limit.
+Don't describe a local preview as verified GitHub rendering.
+
 ### Frontend demos
 
 For changes that include frontend work, add `Demo` as the third section after
@@ -203,6 +244,10 @@ Before creating or updating the pull request, verify all of the following:
   replacing the explanation.
 - The body is unwrapped for GitHub while preserving intentional Markdown
   structure.
+- Every included diagram has readable labels, titles, and a clear legend where
+  needed. Mermaid flowcharts use SVG text labels by default. Rendering checks
+  cover PR column width, light and dark themes, and multiple zoom levels; any
+  limitation on inspecting the live GitHub rendering is reported.
 - Frontend changes include a third `Demo` section after `Why?` and `How?`, with
   accessible screenshots for static content and videos for interactions or
   multi-step workflows.

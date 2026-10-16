@@ -29,8 +29,8 @@ drafting and apply the PR overrides below.
 4. At the publication boundary, re-read this skill and the `creating-commits`
    skill if the conversation was compacted or the user redirected the task after
    either skill was read.
-5. Draft the complete, unwrapped PR body and check it against the publication
-   checklist below.
+5. Check the implementation's scope as described below. Draft the complete,
+   unwrapped PR body and check it against the publication checklist.
 6. Create the commit from that prepared title and body through the
    `creating-commits` skill, hard-wrapping only the commit body.
 7. Push the branch.
@@ -115,6 +115,19 @@ Apply two presentation changes:
 1. Remove hard line breaks so GitHub's markdown renderer can wrap text
    naturally.
 2. Apply the `writing-in-my-voice` skill to all prose.
+
+### Keep the implementation tied to the outcome
+
+Before publication, review the actual diff using the scope guidance in the
+`using-git-worktrees` skill. Each changed component must be needed for the
+requested behavior or its safety and compatibility. Remove unnecessary
+implementation scope before polishing the description, and keep optional
+migrations, cleanup, and platform improvements separate.
+
+Validate the behavior that failed using existing checks and focused evidence.
+Avoid adding a test harness that only repeats configuration or implementation
+structure. Prefer changes that reduce the behavior reviewers and operators have
+to understand while preserving required correctness and validation.
 
 ### Scope each description to its pull request
 
@@ -233,6 +246,8 @@ Before creating or updating the pull request, verify all of the following:
 - The description stays within this PR's scope. References to other Stack
   layers, including implicit recaps, appear only when they explain a necessary
   dependency, contract, or review constraint.
+- Each changed component is necessary for the requested outcome. Optional
+  migrations, cleanup, and platform improvements haven't become prerequisites.
 - `Why?` supplies the necessary background, the business problem and its impact,
   the value the change creates, plain-language definitions, and every available
   relevant source link. It never treats a ticket, plan, ADR, RFC, or "the user

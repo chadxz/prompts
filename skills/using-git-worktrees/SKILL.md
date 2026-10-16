@@ -99,6 +99,30 @@ rebase, merge, or overwrite it. Treat its state as user-owned and report why a
 safe fast-forward was not possible. Base new work on the fetched remote default
 branch when that lets the task continue without modifying the blocked worktree.
 
+## Choose the necessary scope
+
+Before choosing branches, state the observed failure and the behavior the user
+needs after the fix. Find the boundary responsible for that failure and check
+its existing configuration and supported interfaces first.
+
+Choose the smallest safe change that delivers that behavior. For each proposed
+migration, abstraction, helper script, release change, test harness, or
+operating procedure, ask whether the requested fix would still work without it.
+Leave out work that isn't needed for the outcome. Keep prerequisites required
+for correctness, safety, or compatibility in scope and explain why they're
+needed.
+
+A dependency bot that can't look up a private Terraform provider may only need a
+registry URL override and scoped credentials. Changing the application's
+provider source, installation workflow, state, and release pipeline requires a
+separate reason; sharing the same provider doesn't make those changes necessary.
+
+If a narrow fix starts requiring a migration guide, a new wrapper, or several
+layers of validation scaffolding, reconsider the boundary before adding more.
+Prefer existing validation commands and a focused check of the failed behavior.
+Complete the requested fix and surface useful broader improvements separately;
+don't make them prerequisites or create follow-up work without a request.
+
 ## Choose the review topology
 
 Decide how reviewers should receive the work before creating the first task

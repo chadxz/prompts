@@ -84,7 +84,24 @@
   improvements as considerations, but do not gate application work on them; I
   can drive those improvements separately.
 
-- I'm an admin in the Convergint Cloudflare account.
+- I'm an admin for Convergint's Cloudflare account, Azure subscriptions and
+  Entra tenant, GitHub enterprise and organization, Datadog, 1Password, and
+  Temporal Cloud.
+
+- My team, Engineering Enablement, owns the Convergint Engineering Platform
+  and its shared infrastructure and developer capabilities. Application teams
+  own their applications, access, data, and application on-call coverage.
+
+- Start platform investigations in `convergint/ee-monorepo` and the
+  [Platform documentation][platform-docs] in Notion. The usual public HTTP
+  request path is Cloudflare -> AKS edge load balancers -> Kubernetes ingress
+  -> F5 NGINX ingress -> application.
+
+- Use connected service tools and source configuration to investigate systems
+  in my scope before suggesting a handoff. Verify tool availability and actual
+  configuration, and label unverified causes as hypotheses.
+
+[platform-docs]: https://www.notion.so/1e45f445bd3180deace1e7b125d83aa1
 
 ## Code Style
 

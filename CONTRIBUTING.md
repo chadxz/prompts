@@ -84,6 +84,8 @@
   improvements as considerations, but do not gate application work on them; I
   can drive those improvements separately.
 
+- I'm an admin in the Convergint Cloudflare account.
+
 ## Code Style
 
 - When writing C# unit tests, do not add Arrange / Act / Assert comments.

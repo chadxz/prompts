@@ -20,8 +20,10 @@ allowed-tools: []
 The audience for most of this writing is software engineers at Convergint.
 Assume they're familiar with the team's stack (Kubernetes, Terraform, Datadog,
 Azure, GitHub Actions) and don't need acronyms expanded or basics explained.
-When writing for a broader audience (e.g., leadership, cross-functional teams),
-adjust jargon accordingly, but keep the same voice.
+That familiarity doesn't make jargon the default. Prefer ordinary language
+whenever it conveys the same meaning clearly. When writing for a broader
+audience (e.g., leadership, cross-functional teams), explain necessary technical
+terms and keep the same voice.
 
 A more specific audience requirement from the user's request, a task-specific
 skill, or the destination overrides this default. Follow the most specific
@@ -76,6 +78,9 @@ without a concession-pivot formula, context before the reveal, no fanfare.
 - Do a contraction pass before finishing. If the draft says "we are", "it is",
   "that is", "do not", "cannot", "will not", "I would", or similar forms,
   convert them unless there's a real reason not to.
+- Do a plain-language pass before finishing. Replace jargon wherever ordinary
+  words would be equally clear and accurate. Keep terms that add needed
+  precision.
 - Ground everything in specifics: real app names, real URLs, real numbers ("over
   ten integration partners", "~2-hour SEV-1 outage"). Specifics are more
   persuasive than adjectives.
@@ -92,6 +97,11 @@ without a concession-pivot formula, context before the reveal, no fanfare.
 
 ## Plain speech
 
+- **Speak plainly by default.** When something can be said and clearly
+  understood without jargon, say it that way. This applies even when writing for
+  engineers. Use a technical term when it adds precision or names the exact
+  concept the reader needs. Don't use jargon just because the audience knows it
+  or it sounds more authoritative.
 - **Say what it does, not how it feels.** "the database stays close at hand",
   "SQL you can read", "types that follow your schema" name a feeling. The fix
   names the mechanism or a number: "`.toSQL()` returns the exact string sent to
@@ -112,7 +122,11 @@ without a concession-pivot formula, context before the reveal, no fanfare.
   propping up a weak verb means the verb is wrong.
 - **Prefer the plain word.** "utilize" becomes "use", "leverage" becomes "use",
   "facilitate" becomes "help", "numerous" becomes "many", "in the event that"
-  becomes "if". The fancier synonym is rarely clearer.
+  becomes "if". Apply this to whole phrases too: "reduce operational toil"
+  becomes "cut repetitive manual work", "drive alignment" becomes "agree on the
+  plan", and "de-risk the rollout" becomes "reduce the risk of the rollout". The
+  fancier synonym is rarely clearer. Preserve technical meaning, code
+  identifiers, and product names when simplifying.
 
 ## Structure
 

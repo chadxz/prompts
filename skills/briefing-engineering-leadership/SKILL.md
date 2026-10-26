@@ -38,6 +38,9 @@ fill gaps in team outcomes, attribution, and engineering-wide context.
    Also consider significant topics he explored that haven't become completed
    work. Label those as exploration, proposals, or open questions; don't count
    them as outcomes. Exclude the current report's own compilation sessions.
+
+   Read the earlier briefs Chad shared in his direct messages with his manager.
+   Note what they already covered before selecting this week's stories.
 3. After the research, ask Chad up to six concise questions in one batch. Base
    every question on observed activity and use it to resolve a meaningful gap in
    attribution, impact, significance, or sensitivity. Do not ask for facts the
@@ -53,9 +56,14 @@ fill gaps in team outcomes, attribution, and engineering-wide context.
 5. Select and attribute the stories before writing:
    - Put each story in the single section where it best belongs. Do not repeat
      one outcome in both Chad's outcomes and an engineering signal.
+   - Don't repeat an item from an earlier brief. Drop it, or reframe it as
+     genuinely new progress, such as moving from staging last week to production
+     this week.
    - Credit the project leader and implementers by name. Distinguish Chad's role
      precisely, such as leading a cutover, steering a design, sponsoring work,
      or contributing implementation.
+   - Mention Chad's AI bots only generally, as bots doing specific tasks. Don't
+     name them individually.
    - Explain the consequence of technical steering: choosing supported upstream
      capabilities, investing in a maintainable deployment path, or avoiding a
      one-off workaround. Credit an accepted upstream contribution to its
@@ -84,6 +92,13 @@ fill gaps in team outcomes, attribution, and engineering-wide context.
 6. Write the brief in exactly three sections: My outcomes, Team outcomes, and
    Engineering signals. Do not prefix these headings with numbers such as 01,
    02, or 03.
+   - Spell out vendor tool acronyms and internal shorthand, or describe the tool
+     plainly by what it does. The reader may not know Oracle BICC, Oracle
+     Integration Cloud (OIC), FSM, SCM, or AKS. Standard technical terms and
+     their acronyms are fine, such as SFTP, CVE, WAF, MCP, DNS, P1/P2, SEV-0,
+     and PR.
+   - Keep every sentence about the item it sits under. Cut tangential add-ons,
+     such as an alert-noise aside on an unrelated incident-routing item.
    - Include a compact "By the numbers" strip above the three sections by
      default. Select three or four interesting, evidence-backed statistics for
      Chad and/or his team. Keep the stories organized around outcomes.

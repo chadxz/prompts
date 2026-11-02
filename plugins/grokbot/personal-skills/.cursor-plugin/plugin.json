@@ -1,0 +1,15 @@
+{
+  "name": "personal-skills",
+  "displayName": "Personal Skills",
+  "version": "0.1.0",
+  "description": "Skills for Chad's personal bots only: complex feature workflow, idea card enrichment, leadership briefs, activity reports, expense reports, and bot retrospectives.",
+  "author": {
+    "name": "Chad McElligott"
+  },
+  "repository": "https://github.com/chadxz/prompts",
+  "license": "MIT",
+  "keywords": [
+    "grok-bot",
+    "personal"
+  ]
+}

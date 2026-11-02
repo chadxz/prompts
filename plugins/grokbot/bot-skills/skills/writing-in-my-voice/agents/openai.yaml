@@ -1,0 +1,4 @@
+interface:
+  display_name: "Write in My Voice"
+  short_description: "Write prose in Chad's voice"
+  default_prompt: "Use $writing-in-my-voice to rewrite this message in Chad's voice."

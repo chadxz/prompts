@@ -1,0 +1,27 @@
+{
+  "name": "chadxz-grokbot",
+  "owner": {
+    "name": "Chad McElligott"
+  },
+  "metadata": {
+    "description": "Preliminary Cursor plugins that organize skills for Chad's Grok Bot team and the cloud agents it launches.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "bot-skills",
+      "source": "./plugins/grokbot/bot-skills",
+      "description": "Orchestration skills shared by all of Chad's Grok Bot bots, including team bots in Slack: Linear tracking, writing in Chad's voice, PR shepherding and review routing, Notion tool choice, and the cloud agent brief checklist."
+    },
+    {
+      "name": "coding-skills",
+      "source": "./plugins/grokbot/coding-skills",
+      "description": "Coding skills for the Cursor cloud agents Chad's bots launch: creating commits and pull requests to Chad's conventions."
+    },
+    {
+      "name": "personal-skills",
+      "source": "./plugins/grokbot/personal-skills",
+      "description": "Skills for Chad's personal bots only: complex feature workflow, idea card enrichment, leadership briefs, activity reports, expense reports, and bot retrospectives."
+    }
+  ]
+}

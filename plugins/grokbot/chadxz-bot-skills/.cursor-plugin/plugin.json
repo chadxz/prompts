@@ -1,0 +1,18 @@
+{
+  "name": "chadxz-bot-skills",
+  "displayName": "Chad's Bot Skills",
+  "version": "0.1.0",
+  "description": "Orchestration skills shared by all of Chad's Grok Bot bots, including team bots in Slack: Linear tracking, writing in Chad's voice, PR shepherding and review routing, Notion tool choice, and the cloud agent brief checklist. Chad's personal bot plugin, not team-approved tooling.",
+  "author": {
+    "name": "Chad McElligott"
+  },
+  "repository": "https://github.com/chadxz/prompts",
+  "license": "MIT",
+  "keywords": [
+    "grok-bot",
+    "orchestration",
+    "linear",
+    "github",
+    "notion"
+  ]
+}

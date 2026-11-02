@@ -1,0 +1,17 @@
+{
+  "name": "chadxz-coding-skills",
+  "displayName": "Chad's Coding Skills",
+  "version": "0.1.0",
+  "description": "Coding skills for the Cursor cloud agents Chad's bots launch: creating commits and pull requests to Chad's conventions. Chad's personal bot plugin, not team-approved tooling.",
+  "author": {
+    "name": "Chad McElligott"
+  },
+  "repository": "https://github.com/chadxz/prompts",
+  "license": "MIT",
+  "keywords": [
+    "cursor-cloud-agents",
+    "git",
+    "github",
+    "pull-requests"
+  ]
+}

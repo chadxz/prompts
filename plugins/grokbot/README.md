@@ -1,4 +1,4 @@
-# Grok Bot plugins
+# Chad's bot setup
 
 > [!NOTE]
 > These plugins are preliminary. The names, the split between plugins, and the
@@ -7,28 +7,37 @@
 These Cursor plugins organize the skills for my Grok Bot team: the bots that
 orchestrate my work, and the Cursor cloud agents they launch to do the coding.
 The repository root's `.cursor-plugin/marketplace.json` lists all three, so the
-whole repository imports as one team marketplace.
+whole repository imports as one team marketplace, named `chads-bot-setup`
+(Chad's bot setup).
+
+## Not team tooling
+
+These are my personal bot plugins, not team-approved tooling. Every plugin is
+Default Off, so nothing installs for anyone automatically, and the `chadxz-`
+prefix on each name marks it as mine. If you're a teammate browsing the team
+marketplace, don't install them. They encode my voice, my Linear board habits,
+and my bots' routing rules, and they change without notice.
 
 ## Which plugin is for whom
 
-| Plugin            | Install on                              |
-| ----------------- | --------------------------------------- |
-| `bot-skills`      | Every bot, including team bots in Slack |
-| `coding-skills`   | Cursor cloud agents that bots launch    |
-| `personal-skills` | My personal bots only, never team bots  |
+| Plugin                   | Install on                              |
+| ------------------------ | --------------------------------------- |
+| `chadxz-bot-skills`      | Every bot, including team bots in Slack |
+| `chadxz-coding-skills`   | Cursor cloud agents that bots launch    |
+| `chadxz-personal-skills` | My personal bots only, never team bots  |
 
-`bot-skills` holds the orchestration skills every bot shares: tracking work in
-Linear, writing in my voice, shepherding pull requests, routing PR review
-requests to Slack, choosing Notion tools, and the checklist every brief to a
-cloud agent has to carry. Team bots in Slack can only see plugin skills and
+`chadxz-bot-skills` holds the orchestration skills every bot shares: tracking
+work in Linear, writing in my voice, shepherding pull requests, routing PR
+review requests to Slack, choosing Notion tools, and the checklist every brief
+to a cloud agent has to carry. Team bots in Slack can only see plugin skills and
 their own team skills, so anything they need has to live here.
 
-`coding-skills` holds the skills cloud agents use while coding: creating commits
-and creating pull requests. Cloud agents install team marketplace plugins when
-they start, so these are written for cloud VMs. The parts that only work on my
-Mac are conditional.
+`chadxz-coding-skills` holds the skills cloud agents use while coding: creating
+commits and creating pull requests. Cloud agents install team marketplace
+plugins when they start, so these are written for cloud VMs. The parts that only
+work on my Mac are conditional.
 
-`personal-skills` holds skills that only make sense for my personal bots:
+`chadxz-personal-skills` holds skills that only make sense for my personal bots:
 building complex features, enriching idea cards, briefing engineering
 leadership, reporting work activity, creating DATABASICS expense reports, and
 running bot retrospectives. Add it only to personal bots.
@@ -52,9 +61,10 @@ agent to pick up an update.
 
 ## First step: a throwaway test
 
-Before rolling anything out, add `bot-skills` to one team bot, Samwise, and
-start a Slack turn with it. Confirm the `bot-skills` skills show up in that
-turn. If they don't, fix the import before adding plugins to any other bot.
+Before rolling anything out, add `chadxz-bot-skills` to one team bot, Samwise,
+and start a Slack turn with it. Confirm the `chadxz-bot-skills` skills show up
+in that turn. If they don't, fix the import before adding plugins to any other
+bot.
 
 ## Changing a plugin skill
 

@@ -1,0 +1,16 @@
+{
+  "slack_channels": [
+    {
+      "channel": "#example-channel",
+      "url": "https://app.slack.com/client/T00000000/C00000000",
+      "focus": "Replace with why this channel matters for the report."
+    }
+  ],
+  "notion_pages": [
+    {
+      "title": "Example page",
+      "url": "https://www.notion.so/example",
+      "focus": "Replace with what the report should pull from this page."
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Choosing Notion Tools"
+  short_description: "Choose between Notion MCP and the ntn CLI"
+  default_prompt: >-
+    Use $choosing-notion-tools to choose the right Notion interface for this
+    task.

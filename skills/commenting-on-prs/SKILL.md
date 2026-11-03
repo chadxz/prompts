@@ -71,6 +71,23 @@ resolution:
    are resolved, top-level responses are posted, and no actionable feedback was
    missed.
 
+### Turn feedback into a rule
+
+For every valid piece of feedback, whether from a person or a bot, ask whether
+it points at a mistake an agent could make again. If it does, write it down as a
+rule at the narrowest level that covers it, so the same mistake isn't made
+twice:
+
+- An agent rule in the subdirectory of the repository it applies to, such as
+  that directory's `AGENTS.md`.
+- A repository-wide agent rule, in the repository's root agent instruction file.
+- A rule for the bot or agent that made the mistake, in its own memory or skill.
+- A global bot rule, when every bot or cloud agent could make it.
+
+Add repository rules to the same pull request when they fit its scope, or open a
+follow-up. Tell Chad about any new bot or global bot rule rather than adding it
+silently. Skip this for one-off typos and feedback that doesn't generalize.
+
 Leave a non-Datadog thread unresolved only when clarification is still needed,
 the work is incomplete, or Chad explicitly asks to leave it open.
 

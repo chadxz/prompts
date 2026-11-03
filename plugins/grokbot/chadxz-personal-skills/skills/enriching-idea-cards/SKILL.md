@@ -15,6 +15,11 @@ reshaping the team's template.
 
 - Never change a card's Status (or other triage properties); only the owner
   does. To prioritize an idea, strengthen its content and evidence.
+- Keep cards slim and focused on the details. No meta commentary: no "revised to
+  match" notes, interpretation caveats, pointer lines to other sections,
+  struck-through answered questions, or process narration. When the owner
+  decides something, fold it into the content as fact and delete the answered
+  question.
 - Never reshape the existing card template. Don't edit, reorder or remove
   existing headings or content. Add exactly one new section at the very bottom
   of the card.

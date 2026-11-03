@@ -38,6 +38,9 @@ Don't open one for:
   instead.
 - Work for later, meaning work you aren't starting right now. Send it to Marty
   instead.
+- Work in the `chadxz/prompts` repository, including its PRs. It's Chad's
+  personal repo, not work, so it never gets a Linear ticket, and its PRs don't
+  need one linked. Don't send it to Marty either.
 
 **Ticket first.** Open or find the ticket before you brief a cloud agent or open
 a PR, never after. Put the ticket ID in the brief and tell the agent to
@@ -97,9 +100,9 @@ the author, the same way Linear does.
 - Use `bot:` plus your name in lowercase with hyphens for spaces: `bot:cully`,
   `bot:doc-brown`, `bot:samwise`, `bot:soxy`, `bot:coach-lasso`, `bot:kaizen`,
   `bot:scotty`, `bot:marty`, `bot:mrs-frizzle`, or `bot:scooby`.
-- Before you open a PR or launch the cloud agent that will, check the PR has a
-  ticket (see "Ticket first" above). If it doesn't, create or find the ticket
-  first.
+- Before you open a PR or launch the cloud agent that will (except in
+  `chadxz/prompts`, which never gets a ticket), check the PR has a ticket (see
+  "Ticket first" above). If it doesn't, create or find the ticket first.
 - This covers PRs opened by a cloud agent you launch. Put the label requirement
   in the cloud agent's instructions, and check the live PR afterward.
 - Add the label when the PR is created, or right after with

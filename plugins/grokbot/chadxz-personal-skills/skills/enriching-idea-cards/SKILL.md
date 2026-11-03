@@ -13,6 +13,8 @@ reshaping the team's template.
 
 ## Rules
 
+- Never change a card's Status (or other triage properties); only the owner
+  does. To prioritize an idea, strengthen its content and evidence.
 - Never reshape the existing card template. Don't edit, reorder or remove
   existing headings or content. Add exactly one new section at the very bottom
   of the card.

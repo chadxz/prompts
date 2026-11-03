@@ -100,6 +100,10 @@ matches the inventory count for each repo.
   them.
 - Read the description, every existing comment, review and inline thread from
   people and bots, and the diff.
+- **Review checklist** (spell these out in any brief that hands a review to
+  another agent, since it won't share your memory): flag leftover dual-mode or
+  optional code for an approach the team dropped, so only the chosen path
+  remains.
 - **Never repeat a finding someone else already raised, even in different
   words.** Only post new findings. If an existing finding needs emphasis, a
   short +1 reply on its thread is enough. If there's nothing new, post nothing.

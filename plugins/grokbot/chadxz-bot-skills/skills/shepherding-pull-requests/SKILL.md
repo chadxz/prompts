@@ -52,6 +52,10 @@ matches the inventory count for each repo.
   those.
 - Obvious mistakes in an agent's own work, like an inaccurate comment or doc:
   have the agent fix them, then mention it.
+- Review feedback on any PR: when it points at a mistake that could happen
+  again, make sure it becomes a rule at the narrowest level that fits (a
+  subdirectory agent rule, a repo-wide agent rule, a bot rule, or a global bot
+  rule), following "Turn feedback into a rule" in the `commenting-on-prs` skill.
 - Review triggers: one initial bot-review round per PR. Post a follow-up round
   only after substantial changes.
 - **Review requests in Slack:** when the owner's ready PRs are waiting on a

@@ -15,7 +15,6 @@ jobs:
         env:
           WEBHOOK_URL: ${{ vars.GROKBOT_PUSH_WEBHOOK_URL }}
           WEBHOOK_KEY: ${{ secrets.GROKBOT_PUSH_WEBHOOK_KEY }}
-          EVENT_PATH: ${{ github.event_path }}
         run: |
           payload=$(jq -c '{
             repo: .repository.full_name,
@@ -25,7 +24,7 @@ jobs:
             pusher: .pusher.name,
             compare: .compare,
             commits: [.commits[] | {id, message, author: .author.name}]
-          }' "$EVENT_PATH")
+          }' "$GITHUB_EVENT_PATH")
           curl --fail-with-body -sS -X POST "$WEBHOOK_URL" \
             -H "Authorization: Bearer $WEBHOOK_KEY" \
             -H "Content-Type: application/json" \

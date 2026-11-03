@@ -1,0 +1,32 @@
+name: Notify Grok Bot of pushes
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Send push details to the Grok Bot review routine
+        env:
+          WEBHOOK_URL: ${{ vars.GROKBOT_PUSH_WEBHOOK_URL }}
+          WEBHOOK_KEY: ${{ secrets.GROKBOT_PUSH_WEBHOOK_KEY }}
+          EVENT_PATH: ${{ github.event_path }}
+        run: |
+          payload=$(jq -c '{
+            repo: .repository.full_name,
+            ref: .ref,
+            before: .before,
+            after: .after,
+            pusher: .pusher.name,
+            compare: .compare,
+            commits: [.commits[] | {id, message, author: .author.name}]
+          }' "$EVENT_PATH")
+          curl --fail-with-body -sS -X POST "$WEBHOOK_URL" \
+            -H "Authorization: Bearer $WEBHOOK_KEY" \
+            -H "Content-Type: application/json" \
+            -d "$payload"

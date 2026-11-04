@@ -78,10 +78,10 @@ matches the inventory count for each repo.
   Don't approve PRs the owner is already discussing or questioning, or ones that
   go against the team's precedent. When you approve a teammate's PR, leave a
   short, warm approval message in the owner's voice (a sentence of genuine
-  thanks or praise for something specific) and, when it fits, one fun, work-safe
-  GIF embedded as Markdown from a GIPHY media URL you've checked loads. Keep it
-  clean and light, vary the GIFs, and skip the GIF on serious or sensitive
-  changes. If your comments aren't blockers, approve anyway, but post every
+  thanks or praise for something specific) and, by default, one fun, work-safe
+  GIF (the owner likes them; skip only on serious or sensitive changes)
+  embedded as Markdown from a GIPHY media URL you've checked loads. Keep it
+  clean and light, and vary the GIFs. If your comments aren't blockers, approve anyway, but post every
   comment you want addressed as its own inline or file-level comment (never only
   in the review summary) so the author has to resolve it before merging. Skip
   feedback a bot or someone else already left.
@@ -159,6 +159,10 @@ only.
    the repo allows: check `allow_squash_merge`, `allow_merge_commit` and
    `allow_rebase_merge` on `repos/{owner}/{repo}` first, because repos differ
    (for example, one repo may allow only merge commits while another squashes).
+   First confirm the stack is a native GitHub stack: a PR whose base is just
+   another PR's branch (a plain stacked branch) is not one, and merge-async on
+   its top PR only merges it into the branch below, not into the default
+   branch. For plain stacks, merge bottom-up into the default branch.
    **Merge from as far up the stack as is ready**: find the highest PR whose own
    PR and every PR below it are all ready (section 5 rules applied to each), and
    merge-async that one; it merges everything below it in one step, which is

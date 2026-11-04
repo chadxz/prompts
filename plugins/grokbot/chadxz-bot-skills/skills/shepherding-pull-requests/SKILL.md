@@ -142,11 +142,16 @@ This applies to the owner's PRs and automation PRs (dependency and release bots)
 only.
 
 1. Read the full description and every comment and thread.
-2. Review the diff yourself if you haven't reviewed this head.
-3. Use judgment, and merge only when it's clearly ready: approved, all checks
+2. **Check for holds outside GitHub.** A hold is often said in chat, not on the
+   PR. Search Slack for the PR's URL and for `#<number>` with the repo name, and
+   check any shared team memory, for a "hold", "don't merge" or "wait" from the
+   owner or the team that hasn't been lifted. If you find one, don't merge;
+   report it.
+3. Review the diff yourself if you haven't reviewed this head.
+4. Use judgment, and merge only when it's clearly ready: approved, all checks
    green, no unresolved threads, no open questions, no "don't merge yet" or
    pending manual steps, and the change looks correct and safe.
-4. Merge in stack order. Never bypass branch protection or use admin merge.
+5. Merge in stack order. Never bypass branch protection or use admin merge.
    GitHub rejects `gh pr merge` and the plain merge endpoint for PRs in a native
    stack; use `PUT repos/{owner}/{repo}/pulls/{n}/merge-async` with
    `merge_method`, `merge_action: direct_merge`, the expected head `sha` and
@@ -159,7 +164,7 @@ only.
    merge-async that one; it merges everything below it in one step, which is
    faster than merging bottom-up. Never merge an upper PR if any PR below it
    isn't ready.
-5. When in doubt, don't merge. Report what gave you pause.
+6. When in doubt, don't merge. Report what gave you pause.
 
 ## 6. After every merge
 

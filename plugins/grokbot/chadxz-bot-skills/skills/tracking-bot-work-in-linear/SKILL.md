@@ -55,16 +55,21 @@ When you want a ticket for work you aren't planning to do right now, don't
 create it yourself. Send the details to Marty, the EE backlog bot (agent id
 c55f687f-6f56-465a-b270-de34b0f2bd8b): title, description, context and links,
 and which bot asked for it. Marty creates the ticket, attributes it to the
-requesting bot with that bot's label, ranks it against the rest of the EE Todo
+requesting bot with a "Filed by <bot>." line at the end of the description
+(not the bot's label), leaves it unassigned, ranks it against the rest of the EE Todo
 work, and drags it into the right place in the list. Tickets for work you're
 starting right away you still create yourself.
 
 ## How to fill it in
 
 - Team: EE (Engineering Enablement).
-- Assignee: Chad McElligott. The work is his, even when a bot is doing it.
-- Labels: pick your own name from the `bot` label group (Cully, Doc Brown,
-  Samwise, Soxy, Coach Lasso, Kaizen, Scotty, Marty, Mrs. Frizzle, or Scooby).
+- Assignee: Chad McElligott, set when a bot starts the ticket (moves it to In
+  Progress), including tickets created for work starting right away. The work
+  is his, even when a bot is doing it. Tickets filed for later stay unassigned.
+- Labels: when you start the ticket, add your own name from the `bot` label
+  group (Cully, Doc Brown, Samwise, Soxy, Coach Lasso, Kaizen, Scotty, Marty,
+  Mrs. Frizzle, or Scooby). Tickets filed for later get no bot label, since a
+  label reads like an assignment.
   Add `waiting-on-chad` only under the rules in "The waiting-on-chad label"
   below.
 - Title: a plain description of the outcome, not the task chatter.
@@ -72,14 +77,16 @@ starting right away you still create yourself.
   - What the work is and why.
   - What done looks like.
   - A link back to where it started: the Slack thread, the chat, or the PR.
-  - Which bot owns it.
+  - Which bot filed it, as one last line: "Filed by Kaizen during a repo
+    garden run."
 
 ## Moving it along
 
 Use the EE team's existing statuses only:
 
-- Todo: you've picked it up, but haven't started yet. Tickets for later work
-  come from Marty, who places them in the Todo list.
+- Todo: not started yet, unlabeled and unassigned. Tickets for later work
+  come from Marty, who places them in the Todo list. If you move a ticket back
+  to Todo unfinished, remove your bot label and unassign Chad.
 - In Progress: you're actively working on it.
 - In Review: there's a PR or draft waiting for someone to review it.
 - Ready to Close: you're finished. Never move a ticket to Done or close it
@@ -129,7 +136,8 @@ The Linear connector posts as Chad, so every comment, description, and title you
 write shows up under his name. Write in Chad's first person ("I looked into
 this"). Never sign it or introduce yourself as a bot ("Scotty here"), and never
 refer to Chad in the third person. The bot label on the ticket already shows
-which bot did the work. Never cite the bots' own rules or instructions in
+which bot did the work. The one exception is the single "Filed by <bot>." line
+in a ticket's description. Never cite the bots' own rules or instructions in
 anything outside the bots' chats ("Chad's simplicity rule", "per the global
 rule", "as Chad asked"); state the reason itself, such as "I kept this to the
 smallest change that works."

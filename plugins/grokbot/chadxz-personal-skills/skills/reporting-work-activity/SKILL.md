@@ -331,7 +331,7 @@ Default execution:
 
 ## After the PDF (week-in-review handoff)
 
-When this skill runs as Chad’s Thursday personal week-in-review, the PDF is not the end of the cadence. Next, run [product-announcement-videos](sand-workflow:product-announcement-videos) for announceable features shipped in the **same** reporting window (standing creative decisions live in that skill: first frame = banner, unique upbeat music bed per video, VO pronunciation pins, `op://` examples, watch-before-Notion). If nothing announceable shipped, say so in one line and skip.
+When this skill runs as Chad’s Thursday personal week-in-review, the PDF is not the end of the cadence. Next, run [product-announcement-videos](sand-workflow:product-announcement-videos) for announceable features shipped in the **same** reporting window (standing creative decisions live in that skill: first frame = banner, unique upbeat music bed per video, unique VO voice per video, unique visual theme per video (like week-in-review design rotation), VO pronunciation pins, `op://` examples, watch-before-Notion). If nothing announceable shipped, say so in one line and skip.
 
 Do not treat the week-in-review as complete until that handoff has either delivered videos or explicitly skipped.
 

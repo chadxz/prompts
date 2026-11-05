@@ -103,6 +103,19 @@ matches the inventory count for each repo.
   for the other engineers reading the PR, not the bot: never address the bot
   ("thanks, Renovate!"). Keep it plain and useful to a human reviewer, such as
   what you checked and why the bump is safe, or leave the approval empty.
+- **Datadog PRs are ours.** In the routine's repos, especially ee-monorepo and
+  bizops-monorepo, treat PRs authored by Datadog apps (for example
+  `app/datadog-convergint`, Bits AI, or Code Security SAST fixes) as owned by
+  us, not as a colleague's PR to leave alone or an automation PR to just
+  approve. Datadog never merges or manages them, so nobody else will. Fix
+  failing CI, conflicts and review feedback on the PR's branch with a cloud
+  agent, or ask Datadog to update it, but the outcome stays with us. When the
+  change is a real fix, such as a security or code-quality finding, land it
+  (section 5). Merging isn't required every time, but when a PR shouldn't merge,
+  don't just close or ignore it: change something in Datadog (dismiss or
+  suppress the finding, or adjust the rule or repo config) so it doesn't reopen
+  the PR, then close it. Any comment you leave follows the no-cute-comments rule
+  above.
 - **Renovate PRs need hands-on help.** In these repos Renovate runs only once a
   day and won't rebase or fix its PRs in between, so don't wait for it. When a
   Renovate PR has a conflict (often `pnpm-lock.yaml` after another bump merges),
@@ -150,8 +163,8 @@ matches the inventory count for each repo.
 
 ## 5. Merging
 
-This applies to the owner's PRs and automation PRs (dependency and release bots)
-only.
+This applies to the owner's PRs, Datadog PRs (section 4) and automation PRs
+(dependency and release bots) only.
 
 1. Read the full description and every comment and thread.
 2. **Check for holds outside GitHub.** A hold is often said in chat, not on the
@@ -214,7 +227,9 @@ Report only what happened or needs the owner: merges, each with a one-line
 review verdict (automation merges never get a GIF); fixes started; reviews
 posted; human colleagues' PRs you approved, each with the exact approval message
 you posted (and the GIF link, if any); PRs you'd approve but left for the owner;
-broken CI and its cause; review requests sent or drafted, by channel; decisions
+broken CI and its cause; Datadog PRs you took over, fixed, merged or
+deliberately didn't merge, with the Datadog-side change that keeps an unmerged
+one from reopening; review requests sent or drafted, by channel; decisions
 needed; PRs held for Chad's LGTM by the `requires-review-by-chad` label; and the
 owner's PRs that have waited more than a workday for approval, with who could
 review. Use a numbered list. Refer to work by descriptive names with labeled

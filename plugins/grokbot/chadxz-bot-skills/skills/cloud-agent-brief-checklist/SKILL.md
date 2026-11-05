@@ -36,3 +36,8 @@ means the agent will guess, and its guess shows up under Chad's name.
 8. **Carry review rules.** When the brief delegates a review, copy the caller's
    review rules into it: what to check, what not to repeat, where to post, and
    whose voice to use.
+9. **ADR PRs.** When the work is an ADR or documents a major feature or
+   architectural decision, tell the agent the PR must contain only the ADR, with
+   no implementation bundled in, and must carry the `requires-review-by-chad`
+   label. It never merges that PR; babysitting stops once the PR is ready for
+   Chad's LGTM.

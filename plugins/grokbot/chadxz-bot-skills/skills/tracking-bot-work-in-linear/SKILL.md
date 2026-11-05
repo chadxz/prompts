@@ -119,6 +119,9 @@ the author, the same way Linear does.
   GitHub's add-labels API (a cloud agent's PR label tool does this) creates it
   on the fly, and that's fine. It doesn't need a description. Don't stop and ask
   about a missing label.
+- ADR and architecture-decision PRs also get the `requires-review-by-chad`
+  label. Put that requirement in the cloud agent's brief. Don't treat those PRs
+  as ready to merge from your side until Chad posts LGTM.
 - When a cloud agent opens a PR for you, always tell it in its brief to babysit
   its pull request after opening it: keep watching CI and review comments and
   fix what comes up until the PR is ready to merge. Also tell it that the PR

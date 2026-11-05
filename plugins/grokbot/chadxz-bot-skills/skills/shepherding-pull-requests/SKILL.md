@@ -70,9 +70,10 @@ matches the inventory count for each repo.
   at most once every 2 business days, and weekdays only. Include the owner's PRs
   in other org repos as well, found with
   `gh search prs --owner <org> --author <owner> --state open --draft=false`.
-- Merge when ready (see section 5). Infrastructure-as-code or PRs with manual
-  steps: diff the live state against main and the branch, check other open PRs,
-  and ask the owner if anything differs.
+- Merge when ready (see section 5). A `requires-review-by-chad` label holds the
+  merge until Chad posts LGTM. Infrastructure-as-code or PRs with manual steps:
+  diff the live state against main and the branch, check other open PRs, and ask
+  the owner if anything differs.
 
 ## 4. Other people's PRs
 
@@ -158,11 +159,16 @@ only.
    check any shared team memory, for a "hold", "don't merge" or "wait" from the
    owner or the team that hasn't been lifted. If you find one, don't merge;
    report it.
-3. Review the diff yourself if you haven't reviewed this head.
-4. Use judgment, and merge only when it's clearly ready: approved, all checks
+3. **Never merge a PR labeled `requires-review-by-chad` until Chad has posted an
+   LGTM comment or approval on it.** Treat the label as a hold even when checks
+   are green and other reviews are in. A comment a bot posted under Chad's
+   account (it ends with a `<!-- bot:<label> -->` marker) doesn't count. Report
+   these PRs as waiting on Chad's LGTM.
+4. Review the diff yourself if you haven't reviewed this head.
+5. Use judgment, and merge only when it's clearly ready: approved, all checks
    green, no unresolved threads, no open questions, no "don't merge yet" or
    pending manual steps, and the change looks correct and safe.
-5. Merge in stack order. Never bypass branch protection or use admin merge.
+6. Merge in stack order. Never bypass branch protection or use admin merge.
    GitHub rejects `gh pr merge` and the plain merge endpoint for PRs in a native
    stack; use `PUT repos/{owner}/{repo}/pulls/{n}/merge-async` with
    `merge_method`, `merge_action: direct_merge`, the expected head `sha` and
@@ -179,7 +185,7 @@ only.
    merge-async that one; it merges everything below it in one step, which is
    faster than merging bottom-up. Never merge an upper PR if any PR below it
    isn't ready.
-6. When in doubt, don't merge. Report what gave you pause.
+7. When in doubt, don't merge. Report what gave you pause.
 
 ## 6. After every merge
 
@@ -209,9 +215,10 @@ review verdict (automation merges never get a GIF); fixes started; reviews
 posted; human colleagues' PRs you approved, each with the exact approval message
 you posted (and the GIF link, if any); PRs you'd approve but left for the owner;
 broken CI and its cause; review requests sent or drafted, by channel; decisions
-needed; and the owner's PRs that have waited more than a workday for approval,
-with who could review. Use a numbered list. Refer to work by descriptive names
-with labeled links. Say nothing when nothing is actionable.
+needed; PRs held for Chad's LGTM by the `requires-review-by-chad` label; and the
+owner's PRs that have waited more than a workday for approval, with who could
+review. Use a numbered list. Refer to work by descriptive names with labeled
+links. Say nothing when nothing is actionable.
 
 ## 9. Feedback
 

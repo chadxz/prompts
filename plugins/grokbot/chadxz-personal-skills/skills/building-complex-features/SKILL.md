@@ -21,7 +21,15 @@ never skip research, docs, review, or verification.
    docs and decisions. _Why:_ most rework comes from building on a wrong
    assumption about how the system already works.
 
-2. **Write a simple, high-level plan.** Capture requirements and research
+2. **Document major features and architectural decisions as an ADR first.** Open
+   the ADR in its own pull request, with no implementation in it, and label it
+   `requires-review-by-chad` (see the `creating-pull-requests` skill). Don't
+   start implementation until Chad posts LGTM on the ADR, unless he explicitly
+   says to proceed without it. _Why:_ Chad reviews major decisions before
+   they're built, and a standalone ADR is quick to review and easy to find
+   later.
+
+3. **Write a simple, high-level plan.** Capture requirements and research
    findings, not implementation details. Keep both the plan and the intended
    implementation simple, with no over-engineering, and make it legible to peer
    agents and humans. Use the `building-implementation-plans` skill if it is
@@ -29,27 +37,27 @@ never skip research, docs, review, or verification.
    to the simple version and build that. _Why:_ a short plan is easy to review
    and hard to hide complexity in.
 
-3. **Get independent plan reviews.** Ask several strong models, from different
+4. **Get independent plan reviews.** Ask several strong models, from different
    model families where possible, to review the plan. Tell reviewers explicitly
    not to over-engineer and to protect simplicity. If only one model is
    available, say so in the plan. _Why:_ different models catch different blind
    spots; unconstrained reviewers tend to add scope.
 
-4. **Evaluate the feedback once.** Incorporate only what you agree with, and
+5. **Evaluate the feedback once.** Incorporate only what you agree with, and
    record what you declined and why (in the plan or PR description). Don't
    request another review round. _Why:_ you own the design; repeated rounds
    drift toward complexity.
 
-5. **Build it, docs included.** Implement the plan, update user and developer
+6. **Build it, docs included.** Implement the plan, update user and developer
    docs, and add any new pattern to the agent rules at the right repo level.
    _Why:_ undocumented features and patterns get rediscovered or broken by the
    next contributor.
 
-6. **Ship a working example.** The pull request includes a working example or
+7. **Ship a working example.** The pull request includes a working example or
    demo of the feature. _Why:_ reviewers can see it work instead of inferring it
    from the diff.
 
-7. **Request bot reviews, as the human.** Ask the code-review bots used in the
+8. **Request bot reviews, as the human.** Ask the code-review bots used in the
    repo to review the PR by commenting with each bot's trigger phrase. Post
    those trigger comments (and any other PR comment that needs posting)
    automatically from the human owner's own GitHub account, through their GitHub
@@ -57,14 +65,15 @@ never skip research, docs, review, or verification.
    time. _Why:_ cheap, fast extra eyes before human review; review bots often
    ignore triggers from bot accounts and skip draft PRs.
 
-8. **Babysit the PR.** Watch CI and address every bot comment and failing check
+9. **Babysit the PR.** Watch CI and address every bot comment and failing check
    until checks pass and every comment has a fix or a reply explaining why it
    doesn't apply. _Why:_ a red or noisy PR wastes reviewer time.
 
-9. **Verify end to end.** Exercise the feature as a user would, in a real
-   environment (a realistic one only if real is impossible, and say which). If
-   testing is blocked, report the problem to the human instead of guessing or
-   claiming success. _Why:_ passing checks are not proof that the feature works.
+10. **Verify end to end.** Exercise the feature as a user would, in a real
+    environment (a realistic one only if real is impossible, and say which). If
+    testing is blocked, report the problem to the human instead of guessing or
+    claiming success. _Why:_ passing checks are not proof that the feature
+    works.
 
 ## Principles
 

@@ -39,13 +39,29 @@ apply the PR overrides below.
    use the run's pull request tool. Elsewhere, use
    `gh pr create --draft --title <title> --body <body>`, never `--fill`. Open it
    ready for review only when explicitly asked.
-8. Apply the labels from the brief, such as `bot:<label>`.
+8. Apply the labels from the brief, such as `bot:<label>`, plus
+   `requires-review-by-chad` on ADR pull requests (see below).
 9. Read the live PR with `gh pr view <url> --json isDraft,title,body,labels,url`
    and compare it with the requested draft state, prepared title, body, labels,
    and publication checklist before reporting success.
 10. If the brief asks you to babysit the PR, keep watching CI and review
     comments and fix what comes up, including merge conflicts, until it's ready
     to merge. Never merge it yourself unless explicitly asked.
+
+## ADR Pull Requests
+
+Major features and architectural decisions get documented as an ADR
+(architecture decision record). This applies to any PR whose sole or primary
+deliverable is an ADR or the documentation of a major feature or architectural
+decision.
+
+- Keep the PR standalone: ADR content only. Don't bundle the implementation of
+  that decision into it; implementation goes in a later PR.
+- Add the `requires-review-by-chad` label in addition to any `bot:<label>`. If
+  the repository doesn't have it yet, adding it through the PR labels API
+  creates it, the same as bot labels.
+- Leave it unmerged until Chad posts LGTM, even with green checks and other
+  approvals. Babysitting ends when the PR is ready for Chad's LGTM.
 
 ## Stacked pull request workflow
 
@@ -272,6 +288,8 @@ Before creating or updating the pull request, verify all of the following:
 - Every newly created pull request is in draft unless explicitly asked to open
   it ready for review.
 - The PR carries the bot label from the brief, when one was given.
+- An ADR PR contains only the ADR and carries the `requires-review-by-chad`
+  label.
 - The ticket footer is exact when a ticket exists and absent when one does not.
 
 Do not claim the PR follows the message contract until the live body has been

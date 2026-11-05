@@ -81,21 +81,27 @@ matches the inventory count for each repo.
   correct and safe and isn't worth the owner's attention, then list it in the
   report. Otherwise list the ones you'd approve and why they need the owner.
   Don't approve PRs the owner is already discussing or questioning, or ones that
-  go against the team's precedent. When you approve a teammate's PR, leave a
-  short, warm approval message in the owner's voice (a sentence of genuine
+  go against the team's precedent. When you approve a human teammate's PR, leave
+  a short, warm approval message in the owner's voice (a sentence of genuine
   thanks or praise for something specific) and, by default, one fun, work-safe
-  GIF (the owner likes them; skip only on serious or sensitive changes)
-  embedded as Markdown from a GIPHY media URL you've checked loads. Keep it
-  clean and light, and vary the GIFs. If your comments aren't blockers, approve anyway, but post every
-  comment you want addressed as its own inline or file-level comment (never only
-  in the review summary) so the author has to resolve it before merging. Skip
-  feedback a bot or someone else already left.
+  GIF (the owner likes them; skip only on serious or sensitive changes) embedded
+  as Markdown from a GIPHY media URL you've checked loads. Keep it clean and
+  light, and vary the GIFs. The warm message and GIF are for human teammates
+  only, never automation PRs. If your comments aren't blockers, approve anyway,
+  but post every comment you want addressed as its own inline or file-level
+  comment (never only in the review summary) so the author has to resolve it
+  before merging. Skip feedback a bot or someone else already left.
 - **Automation PRs** (Renovate, Dependabot, release-daemon release PRs, other
   bot-authored dependency or release bumps): if the owner allows it, don't hold
   off. After your own review finds the change clean and safe, approve it as the
   owner, merge it (section 5), and tell the owner afterward with a one-line
   verdict per PR. Anything with manual steps, skipped deploy jobs or
   infrastructure-as-code still follows section 3's check-and-ask rule.
+- **No cute comments or GIFs on automation PRs.** Don't leave jokes, playful
+  remarks or GIFs on bot-authored PRs. Any approval text or comment you leave is
+  for the other engineers reading the PR, not the bot: never address the bot
+  ("thanks, Renovate!"). Keep it plain and useful to a human reviewer, such as
+  what you checked and why the bump is safe, or leave the approval empty.
 - **Renovate PRs need hands-on help.** In these repos Renovate runs only once a
   day and won't rebase or fix its PRs in between, so don't wait for it. When a
   Renovate PR has a conflict (often `pnpm-lock.yaml` after another bump merges),
@@ -199,13 +205,13 @@ can triage the test.
 ## 8. Report
 
 Report only what happened or needs the owner: merges, each with a one-line
-review verdict; fixes started; reviews posted; colleague PRs you approved, each
-with the exact approval message you posted (and the GIF link, if any); PRs you'd
-approve but left for the owner; broken CI and its cause; review requests sent or
-drafted, by channel; decisions needed; and the owner's PRs that have waited more
-than a workday for approval, with who could review. Use a numbered list. Refer
-to work by descriptive names with labeled links. Say nothing when nothing is
-actionable.
+review verdict (automation merges never get a GIF); fixes started; reviews
+posted; human colleagues' PRs you approved, each with the exact approval message
+you posted (and the GIF link, if any); PRs you'd approve but left for the owner;
+broken CI and its cause; review requests sent or drafted, by channel; decisions
+needed; and the owner's PRs that have waited more than a workday for approval,
+with who could review. Use a numbered list. Refer to work by descriptive names
+with labeled links. Say nothing when nothing is actionable.
 
 ## 9. Feedback
 

@@ -35,6 +35,11 @@ matches the inventory count for each repo.
   requests, and CODEOWNERS for the changed paths. A required code owner team
   that hasn't approved is a different blocker from a stale approval or a missing
   review. Name the exact team.
+- **Trust live mergeability.** After a rebase or restack, do not invent a
+  "needs fresh approval" requirement. Read GitHub's current `reviewDecision`,
+  `mergeable`/`mergeStateStatus`, and checks. Only treat approval as a blocker
+  when those fields say so; if the PR is APPROVED and mergeable with green
+  checks, it is mergeable.
 - When the owner posts LGTM on their own PR, they're telling other reviewers
   they've reviewed it themselves. Don't point out that it doesn't count as a
   review.

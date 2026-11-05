@@ -329,6 +329,12 @@ Default execution:
 - Do not reuse the old summary as content. It is only there to help recover the
   private source list and remind you of the expected JSON shape.
 
+## After the PDF (week-in-review handoff)
+
+When this skill runs as Chad’s Thursday personal week-in-review, the PDF is not the end of the cadence. Next, run [product-announcement-videos](sand-workflow:product-announcement-videos) for announceable features shipped in the **same** reporting window (standing creative decisions live in that skill: first frame = banner, unique upbeat music bed per video, VO pronunciation pins, `op://` examples, watch-before-Notion). If nothing announceable shipped, say so in one line and skip.
+
+Do not treat the week-in-review as complete until that handoff has either delivered videos or explicitly skipped.
+
 ## Failure handling
 
 - Say exactly which connector read failed or which tracked source was

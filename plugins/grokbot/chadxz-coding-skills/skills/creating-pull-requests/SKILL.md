@@ -1,7 +1,7 @@
 ---
 name: creating-pull-requests
 description: >-
-  Creates single or stacked pull requests, new ones left in draft by default,
+  Creates single or stacked pull requests, opened ready for review by default,
   using Chad's commit template, PR conventions, and writing voice. Use when
   asked to create, open, write, format, or publish a pull request, including
   GitHub alert callouts, GitHub native stacked pull requests, or a commit and PR
@@ -10,9 +10,9 @@ description: >-
 
 # Creating Pull Requests
 
-Create and publish either a single pull request or a stack of them. Leave every
-newly created pull request in draft unless the user or brief explicitly asks to
-open it ready for review.
+Create and publish either a single pull request or a stack of them. Open every
+newly created pull request ready for review. Use a draft only when the user or
+brief explicitly asks for one.
 
 The PR title and body show up under Chad's GitHub account, so write them in
 Chad's first person and never name Chad in the third person.
@@ -36,9 +36,9 @@ apply the PR overrides below.
    `creating-commits` skill, hard-wrapping only the commit body.
 6. Push the branch.
 7. Open the PR with the prepared title and body. In a Cursor cloud agent run,
-   use the run's pull request tool. Elsewhere, use
-   `gh pr create --draft --title <title> --body <body>`, never `--fill`. Open it
-   ready for review only when explicitly asked.
+   use the run's pull request tool and open it ready for review. Elsewhere, use
+   `gh pr create --title <title> --body <body>`, never `--fill`. Pass `--draft`
+   only when the user or brief explicitly asks for a draft.
 8. Apply the labels from the brief, such as `bot:<label>`, plus
    `requires-review-by-chad` on ADR pull requests (see below).
 9. Read the live PR with `gh pr view <url> --json isDraft,title,body,labels,url`
@@ -76,7 +76,8 @@ Use GitHub's native stacked pull requests through the `gh stack` extension
 3. Commit each unit through the `creating-commits` skill.
 4. Push the branches and create or link the stack:
    - With local tracking: `gh stack init`, `gh stack add <branch>` per layer,
-     then `gh stack submit --auto` (drafts unless you pass `--open`).
+     then `gh stack submit --auto --open` (ready for review; omit `--open` only
+     when the user or brief asks for drafts).
    - Without local tracking, such as when the environment's PR tool opened the
      PRs: open each PR with its base set to the branch below it, then run
      `gh stack link <bottom> ... <top>` with the branch names or PR URLs in
@@ -245,8 +246,8 @@ repository working tree.
   through the run's PR tool, which uploads them and rewrites the links to stable
   URLs.
 - **Chad's Mac:** use Codex Computer Use with Chrome to upload the media through
-  GitHub's PR description editor. Create the draft PR with `gh` first, attach
-  the files with the editor's attachment control, wait for each upload, add
+  GitHub's PR description editor. Create the PR with `gh` first, attach the
+  files with the editor's attachment control, wait for each upload, add
   captions, and save. Preserve that markup in later `gh pr edit` updates.
 
 Either way, read the saved body with `gh pr view <url> --json body,url` and
@@ -285,8 +286,8 @@ Before creating or updating the pull request, verify all of the following:
 - Frontend changes include a third `Demo` section after `Why?` and `How?`, with
   accessible screenshots for static content and videos for interactions or
   multi-step workflows, absent from the Git commit.
-- Every newly created pull request is in draft unless explicitly asked to open
-  it ready for review.
+- Every newly created pull request is ready for review unless explicitly asked
+  for a draft.
 - The PR carries the bot label from the brief, when one was given.
 - An ADR PR contains only the ADR and carries the `requires-review-by-chad`
   label.

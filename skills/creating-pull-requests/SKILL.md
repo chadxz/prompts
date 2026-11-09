@@ -1,19 +1,19 @@
 ---
 name: creating-pull-requests
 description:
-  Creates draft single pull requests or publishes existing wt-stack Stacks
-  with new pull requests left in draft, using Chad's commit template, PR
-  conventions, and writing voice. Use when the user asks to create, open,
-  write, format, or publish a pull request, including GitHub alert callouts,
-  stacked pull requests, or a commit and PR together.
+  Creates single pull requests or publishes existing wt-stack Stacks with new
+  pull requests opened ready for review by default, using Chad's commit
+  template, PR conventions, and writing voice. Use when the user asks to
+  create, open, write, format, or publish a pull request, including GitHub
+  alert callouts, stacked pull requests, or a commit and PR together.
 user-invocable: true
 ---
 
 # Creating Pull Requests
 
-Create and publish either a single pull request or an existing Stack. Leave
-every newly created pull request in draft unless the user explicitly asks to
-open it ready for review.
+Create and publish either a single pull request or an existing Stack. Open every
+newly created pull request ready for review. Use a draft only when the user
+explicitly asks for one.
 
 The `creating-commits` skill owns the message content contract, commit
 mechanics, staging, voice, and the `linctl` ticket commands. Read it before
@@ -34,9 +34,8 @@ drafting and apply the PR overrides below.
 6. Create the commit from that prepared title and body through the
    `creating-commits` skill, hard-wrapping only the commit body.
 7. Push the branch.
-8. Open the PR with `gh pr create --draft --title` and `--body`. Do not use
-   `--fill`. Omit `--draft` only when the user explicitly asks to open the PR
-   ready for review.
+8. Open the PR with `gh pr create --title` and `--body`. Do not use `--fill`.
+   Pass `--draft` only when the user explicitly asks for a draft.
 9. Read the live PR with `gh pr view <url> --json isDraft,title,body,url` and
    compare it with the requested draft state, prepared title, body, and
    publication checklist before reporting success.
@@ -52,9 +51,9 @@ Read and follow the `managing-stacked-changes` skill before publishing a Stack.
    review unit before committing or syncing.
 3. Use the `creating-commits` skill for any uncommitted review unit, deriving
    its message from the prepared PR title and body.
-4. Unless the user explicitly asks to open the Stack ready for review, run the
-   dry-run and synchronization sequence from the `managing-stacked-changes`
-   skill with `--draft`. Omit `--draft` only for that explicit override.
+4. Unless the user explicitly asks for drafts, run the dry-run and
+   synchronization sequence from the `managing-stacked-changes` skill without
+   `--draft`. Pass `--draft` only for that explicit override.
 5. Run `wt-stack --json --stack <name> status` and collect every pull request
    URL.
 6. For every newly created pull request, always run
@@ -269,8 +268,8 @@ Before creating or updating the pull request, verify all of the following:
 - PR screenshots and videos are uploaded through Codex Computer Use with Chrome,
   accessible from the live description, and absent from the Git commit. A `gh`
   attachment limitation hasn't been used to skip the upload workflow.
-- Every newly created pull request is in draft unless the user explicitly asked
-  to open it ready for review.
+- Every newly created pull request is ready for review unless the user
+  explicitly asked for a draft.
 - The ticket footer is exact when a ticket exists and absent when one does not.
 
 Do not claim the PR follows the message contract until the live body has been

@@ -127,15 +127,15 @@ pull request; that generated description is not the final publication step.
 Preview the complete mutation, then publish:
 
 ```console
-wt-stack --dry-run --stack <stack> sync --draft
-wt-stack --stack <stack> sync --draft
+wt-stack --dry-run --stack <stack> sync
+wt-stack --stack <stack> sync
 wt-stack --json --stack <stack> status
 ```
 
 `sync` refreshes pull request state, rebases active branches from bottom to top,
-pushes them atomically with explicit leases, creates missing pull requests as
-drafts, repairs their bases, and creates or updates the GitHub Stack. Omit
-`--draft` only when the user explicitly asks to open the Stack ready for review.
+pushes them atomically with explicit leases, creates missing pull requests ready
+for review, repairs their bases, and creates or updates the GitHub Stack. Pass
+`--draft` only when the user explicitly asks to create the Stack as drafts.
 
 Do not manually rebase Stack branches, push them individually, or create their
 pull requests with `gh pr create`. After `sync`, apply the prepared metadata to

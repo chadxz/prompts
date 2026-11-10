@@ -1,5 +1,5 @@
 ---
-name: checking-convergint-access
+name: managing-convergint-access
 description: >-
   Use whenever Chad asks about a Convergint employee's access, onboarding,
   membership, seat, tier, or team for a company tool (Cursor, GitHub, Linear,
@@ -7,7 +7,7 @@ description: >-
   or change it. The onboard CLI is the tool for these questions.
 ---
 
-# Checking and changing Convergint employee access
+# Managing Convergint employee access
 
 Use the `onboard` CLI from ee-monorepo for every question about whether a
 Convergint employee has access to a tool, what tier or team they're in, or

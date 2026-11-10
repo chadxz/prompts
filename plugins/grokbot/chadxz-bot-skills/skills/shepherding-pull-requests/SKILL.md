@@ -4,7 +4,8 @@ description: >-
   Use when keeping a set of repositories' open pull requests moving: reviewing
   colleagues' PRs, getting comments on the owner's PRs addressed, merging the
   owner's ready PRs and dependency-bot PRs, fixing broken CI, and closing out
-  post-merge follow-ups.
+  post-merge follow-ups. Also use before telling anyone whether a PR is
+  approved, lost an approval, or needs a fresh one.
 ---
 
 # Shepherding pull requests
@@ -35,11 +36,16 @@ matches the inventory count for each repo.
   requests, and CODEOWNERS for the changed paths. A required code owner team
   that hasn't approved is a different blocker from a stale approval or a missing
   review. Name the exact team.
-- **Trust live mergeability.** After a rebase or restack, do not invent a
-  "needs fresh approval" requirement. Read GitHub's current `reviewDecision`,
-  `mergeable`/`mergeStateStatus`, and checks. Only treat approval as a blocker
-  when those fields say so; if the PR is APPROVED and mergeable with green
-  checks, it is mergeable.
+- **Trust live mergeability.** After any push, including your own commit, a
+  rebase, or a restack, do not invent a "needs fresh approval" requirement or
+  say an approval was dismissed. Whenever you report a PR's approval or merge
+  state, in a shepherding run or not, read it live in the same turn first:
+  GitHub's current `reviewDecision`, the latest reviews,
+  `mergeable`/`mergeStateStatus`, and checks, plus the summary of any check
+  that counts approvals itself. Only treat approval as a blocker when those
+  fields say so; if the PR is APPROVED and mergeable with green checks, it is
+  mergeable. Don't report approval behavior from memory, and don't treat
+  merged-but-not-yet-deployed approval automation as current behavior.
 - When the owner posts LGTM on their own PR, they're telling other reviewers
   they've reviewed it themselves. Don't point out that it doesn't count as a
   review.

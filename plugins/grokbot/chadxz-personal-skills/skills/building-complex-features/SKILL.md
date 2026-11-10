@@ -3,8 +3,9 @@ name: building-complex-features
 description: >-
   Use before implementation starts on a non-trivial or major feature that spans
   multiple components (services, infrastructure, configuration, docs, or agent
-  tooling). Guides research, a simple reviewed plan, the build, PR review, CI
-  babysitting, and end-to-end verification.
+  tooling). Runs the work as a Cursor Project and guides research, a simple
+  reviewed plan, the build, PR review, CI babysitting, and end-to-end
+  verification.
 ---
 
 # Building complex features
@@ -12,6 +13,18 @@ description: >-
 A workflow for shipping features that touch several components. Each step has a
 short rationale. Skip a step only when it clearly doesn't apply, and say so;
 never skip research, docs, review, or verification.
+
+## Run it as a Cursor Project
+
+Do all complex work in a Cursor Project, not a single cloud agent or a local
+session. Launch the Project on the work's repository (for a Grok Bot, the
+CloudAgent tool's launch with `project: true`), give the coordinator the
+outcome you want, and let it plan, delegate this workflow's steps to its
+agents, and bring the results back. Send follow-ups to the same Project
+rather than starting new agents beside it. A Project only goes one level
+deep, so its agents can't start Projects of their own. _Why:_ a Project keeps
+shared context across months of work and many PRs, runs agents in parallel,
+and can follow the PRs and CI it opens.
 
 ## Workflow
 

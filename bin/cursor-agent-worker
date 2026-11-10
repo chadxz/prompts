@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+# Keep a personal Cursor Agent worker (`agent worker start`) running under
+# launchd so Cursor Cloud Agents can run on this Mac from "My Machines".
+set -euo pipefail
+
+PROMPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+LAUNCH_AGENT_LABEL="com.chad.cursor-agent-worker"
+LAUNCH_AGENT_PLIST="$HOME/Library/LaunchAgents/$LAUNCH_AGENT_LABEL.plist"
+LOG_FILE="$HOME/Library/Logs/cursor-agent-worker.log"
+# Agents start in the home directory and move into repositories as needed.
+WORK_DIR="${CURSOR_AGENT_WORKER_DIR:-$HOME}"
+AGENT_PATH="$PROMPTS_DIR/bin:$HOME/.local/bin:$HOME/.local/share/mise/shims:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+usage() {
+  cat <<EOF
+Usage: $(basename "$0") <install|uninstall|run|status>
+
+  install    Write and load the launchd agent (macOS only)
+  uninstall  Unload and remove the launchd agent
+  run        Run the worker in the foreground (used by launchd)
+  status     Show the launchd job state and recent log output
+EOF
+}
+
+# The worker signs in with the session from `agent login`. launchd has no
+# terminal to finish a browser login, so it must already be signed in.
+agent_logged_in() {
+  command -v agent >/dev/null 2>&1 && agent status 2>/dev/null | grep -q 'Logged in'
+}
+
+install_launch_agent() {
+  if [[ "$(uname -s)" != Darwin ]]; then
+    echo "Skipping Cursor Agent worker (macOS only)"
+    return 0
+  fi
+
+  mkdir -p "$(dirname "$LAUNCH_AGENT_PLIST")" "$(dirname "$LOG_FILE")" "$WORK_DIR"
+
+  cat > "$LAUNCH_AGENT_PLIST" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>$LAUNCH_AGENT_LABEL</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>$PROMPTS_DIR/bin/cursor-agent-worker</string>
+    <string>run</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>$WORK_DIR</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>$AGENT_PATH</string>
+    <key>CURSOR_AGENT_WORKER_DIR</key>
+    <string>$WORK_DIR</string>
+  </dict>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>30</integer>
+  <key>ProcessType</key>
+  <string>Interactive</string>
+  <key>StandardOutPath</key>
+  <string>$LOG_FILE</string>
+  <key>StandardErrorPath</key>
+  <string>$LOG_FILE</string>
+</dict>
+</plist>
+EOF
+
+  plutil -lint "$LAUNCH_AGENT_PLIST" >/dev/null
+  echo "Wrote $LAUNCH_AGENT_PLIST"
+
+  local domain
+  domain="gui/$(id -u)"
+  launchctl bootout "$domain" "$LAUNCH_AGENT_PLIST" >/dev/null 2>&1 || true
+
+  if ! agent_logged_in; then
+    echo "Warning: the Cursor Agent CLI is not signed in yet." >&2
+    echo "Install it (curl https://cursor.com/install -fsS | bash), run" >&2
+    echo "\`agent login\`, then rerun \`$(basename "$0") install\`." >&2
+    return 0
+  fi
+
+  launchctl bootstrap "$domain" "$LAUNCH_AGENT_PLIST"
+  launchctl kickstart -k "$domain/$LAUNCH_AGENT_LABEL" >/dev/null 2>&1 || true
+  echo "Installed Cursor Agent worker for $WORK_DIR (log: $LOG_FILE)"
+}
+
+uninstall_launch_agent() {
+  launchctl bootout "gui/$(id -u)" "$LAUNCH_AGENT_PLIST" >/dev/null 2>&1 || true
+  rm -f "$LAUNCH_AGENT_PLIST"
+  echo "Removed Cursor Agent worker"
+}
+
+# The worker exits cleanly after an idle hour so a supervisor can start a fresh
+# process; KeepAlive restarts it. `caffeinate -s` keeps the Mac awake only
+# while it is on AC power, so the worker stays reachable at a desk without
+# draining the battery on the go.
+run_worker() {
+  cd "$WORK_DIR"
+  exec /usr/bin/caffeinate -s agent worker --worker-dir "$WORK_DIR" start </dev/null
+}
+
+show_status() {
+  launchctl print "gui/$(id -u)/$LAUNCH_AGENT_LABEL" 2>/dev/null |
+    grep -E '^\s*(state|pid|last exit code|runs) =' || echo "Agent is not loaded"
+  if [[ -f "$LOG_FILE" ]]; then
+    echo "--- $LOG_FILE"
+    tail -n 20 "$LOG_FILE"
+  fi
+}
+
+main() {
+  case "${1:-}" in
+    install) install_launch_agent ;;
+    uninstall) uninstall_launch_agent ;;
+    run) run_worker ;;
+    status) show_status ;;
+    -h | --help | help) usage ;;
+    *)
+      usage >&2
+      exit 64
+      ;;
+  esac
+}
+
+main "$@"

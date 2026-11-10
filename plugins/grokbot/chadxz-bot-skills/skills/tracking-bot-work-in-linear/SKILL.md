@@ -95,6 +95,9 @@ Use the EE team's existing statuses only:
   himself. Don't list them as waiting on Chad or remind him to close them.
 - Canceled: only when Chad drops the work.
 
+Move the ticket to In Review as soon as its PRs open, and to Ready to Close
+after merge plus live verification, without waiting to be asked.
+
 When the status or the plan changes, add a short comment with a link, rather
 than rewriting the description.
 

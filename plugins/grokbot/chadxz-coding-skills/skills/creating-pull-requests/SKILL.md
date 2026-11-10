@@ -220,6 +220,21 @@ rendered diagrams when browser access is available. If that inspection is
 unavailable, use local previews in both themes and state the verification limit.
 Don't describe a local preview as verified GitHub rendering.
 
+### Temporal workflow diagrams
+
+When a PR adds or changes Temporal workflows, activities, signals, child
+workflows, schedules, or how they're triggered, `How?` includes a Mermaid
+`stateDiagram-v2` showing how the workflows and activities flow. Show what
+starts each workflow (webhook, schedule, or signal), which activities it calls
+in order, the branches that matter, child workflows and continue-as-new, retry
+and failure paths that change the outcome, and terminal states. Use the real
+workflow, activity, and signal names from the code. Build the diagram from the
+code on the branch, not from an earlier description.
+
+Apply the diagram legibility checks above: concise labels, light and dark
+rendering, and zoom checks. The `htmlLabels` frontmatter is flowchart-specific,
+so check state diagram labels visually.
+
 ### Frontend demos
 
 For changes that include frontend work, add `Demo` as the third section after
@@ -283,6 +298,9 @@ Before creating or updating the pull request, verify all of the following:
   needed. Mermaid flowcharts use SVG text labels by default. Rendering checks
   cover PR column width, light and dark themes, and multiple zoom levels; any
   limitation on inspecting the live GitHub rendering is reported.
+- A PR that changes Temporal workflows, activities, signals, child workflows,
+  schedules, or their triggers has a Mermaid `stateDiagram-v2` in `How?`, built
+  from the branch's code with real workflow, activity, and signal names.
 - Frontend changes include a third `Demo` section after `Why?` and `How?`, with
   accessible screenshots for static content and videos for interactions or
   multi-step workflows, absent from the Git commit.

@@ -43,4 +43,6 @@ means the agent will guess, and its guess shows up under Chad's name.
     architectural decision, tell the agent the PR must contain only the ADR,
     with no implementation bundled in, and must carry the
     `requires-review-by-chad` label. It never merges that PR; babysitting stops
-    once the PR is ready for Chad's LGTM.
+    once the PR is ready for Chad's LGTM. Editorial fixes that don't change an
+    ADR's meaning or decision (typos, casing, formatting, broken links) skip the
+    label and need only the usual Engineering Enablement approval.

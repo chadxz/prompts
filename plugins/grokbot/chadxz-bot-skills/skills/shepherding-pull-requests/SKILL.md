@@ -167,6 +167,21 @@ matches the inventory count for each repo.
 - **Never comment on a PR about broken CI.** Failing checks are already obvious
   to everyone on the PR.
 
+## 4b. Holding a PR from merging
+
+A comment in the PR body or conversation doesn't block a merge. To actually
+hold a PR, leave an unresolved review comment on a changed file line, written
+in your own voice, that states the hold and that you'll resolve the thread
+when it's ready.
+
+This only works when the target branch requires conversation resolution
+(`required_review_thread_resolution` on a ruleset, or
+`required_conversation_resolution` on classic branch protection). Check that
+first. If it isn't required, also convert the PR to draft.
+
+Resolve the thread yourself when you're ready to release the hold. Never merge
+a PR that still has an open hold thread from someone else.
+
 ## 5. Merging
 
 This applies to the owner's PRs, Datadog PRs (section 4) and automation PRs
@@ -185,8 +200,9 @@ This applies to the owner's PRs, Datadog PRs (section 4) and automation PRs
    these PRs as waiting on Chad's LGTM.
 4. Review the diff yourself if you haven't reviewed this head.
 5. Use judgment, and merge only when it's clearly ready: approved, all checks
-   green, no unresolved threads, no open questions, no "don't merge yet" or
-   pending manual steps, and the change looks correct and safe.
+   green, no unresolved threads (including an open hold thread from someone
+   else; see section 4b), no open questions, no "don't merge yet" or pending
+   manual steps, and the change looks correct and safe.
 6. Merge in stack order. Never bypass branch protection or use admin merge.
    GitHub rejects `gh pr merge` and the plain merge endpoint for PRs in a native
    stack; use `PUT repos/{owner}/{repo}/pulls/{n}/merge-async` with

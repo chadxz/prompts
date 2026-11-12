@@ -124,7 +124,9 @@ the author, the same way Linear does.
   about a missing label.
 - ADR and architecture-decision PRs also get the `requires-review-by-chad`
   label. Put that requirement in the cloud agent's brief. Don't treat those PRs
-  as ready to merge from your side until Chad posts LGTM.
+  as ready to merge from your side until Chad posts LGTM. Editorial fixes that
+  don't change an ADR's meaning or decision (typos, casing, formatting, broken
+  links) skip the label and need only the usual Engineering Enablement approval.
 - When a cloud agent opens a PR for you, always tell it in its brief to babysit
   its pull request after opening it: keep watching CI and review comments and
   fix what comes up until the PR is ready to merge. Also tell it that the PR

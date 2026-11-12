@@ -62,6 +62,11 @@ decision.
   creates it, the same as bot labels.
 - Leave it unmerged until Chad posts LGTM, even with green checks and other
   approvals. Babysitting ends when the PR is ready for Chad's LGTM.
+- Exception: an editorial fix to an existing ADR that doesn't change its meaning
+  or decision (typos, casing, formatting, broken links) skips the label and
+  needs only the usual Engineering Enablement approval. New ADRs, status
+  changes, and changed decisions or consequences still get the label and wait
+  for Chad's LGTM.
 
 ## Stacked pull request workflow
 
@@ -308,7 +313,8 @@ Before creating or updating the pull request, verify all of the following:
   for a draft.
 - The PR carries the bot label from the brief, when one was given.
 - An ADR PR contains only the ADR and carries the `requires-review-by-chad`
-  label.
+  label, unless it's an editorial fix that doesn't change the ADR's meaning or
+  decision.
 - The ticket footer is exact when a ticket exists and absent when one does not.
 
 Do not claim the PR follows the message contract until the live body has been

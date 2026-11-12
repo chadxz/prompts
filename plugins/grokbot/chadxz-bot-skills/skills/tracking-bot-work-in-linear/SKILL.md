@@ -56,9 +56,12 @@ create it yourself. Send the details to Marty, the EE backlog bot (agent id
 c55f687f-6f56-465a-b270-de34b0f2bd8b): title, description, context and links,
 and which bot asked for it. Marty creates the ticket, attributes it to the
 requesting bot with a "Filed by <bot>." line at the end of the description
-(not the bot's label), leaves it unassigned, ranks it against the rest of the EE Todo
-work, and drags it into the right place in the list. Tickets for work you're
-starting right away you still create yourself.
+(not the bot's label), leaves it unassigned, and creates it in the Triage
+status. Tickets for work you're starting right away you still create yourself.
+
+Any ticket created for work nobody is actioning right away goes in Triage, no
+matter who creates it. Never create later work straight into Todo, Backlog, or
+In Progress. The team pulls it out of Triage when it decides to take it on.
 
 ## How to fill it in
 
@@ -84,8 +87,9 @@ starting right away you still create yourself.
 
 Use the EE team's existing statuses only:
 
-- Todo: not started yet, unlabeled and unassigned. Tickets for later work
-  come from Marty, who places them in the Todo list. If you move a ticket back
+- Triage: new tickets for later work, unlabeled and unassigned, waiting for
+  the team to decide when to take them on.
+- Todo: not started yet, unlabeled and unassigned. If you move a ticket back
   to Todo unfinished, remove your bot label and unassign Chad.
 - In Progress: you're actively working on it.
 - In Review: there's a PR or draft waiting for someone to review it.

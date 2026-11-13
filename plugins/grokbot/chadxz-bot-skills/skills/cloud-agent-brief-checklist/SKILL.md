@@ -52,3 +52,7 @@ means the agent will guess, and its guess shows up under Chad's name.
     once the PR is ready for Chad's LGTM. Editorial fixes that don't change an
     ADR's meaning or decision (typos, casing, formatting, broken links) skip the
     label and need only the usual Engineering Enablement approval.
+11. **Model for deep work.** When the work is architecture, design, an ADR, a
+    complex feature, or deep problem solving (an investigation, a root cause,
+    hard debugging), launch the agent with `claude-fable-5-2` and
+    `model_params.effort: medium`.

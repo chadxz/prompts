@@ -18,13 +18,14 @@ never skip research, docs, review, or verification.
 
 Do all complex work in a Cursor Project, not a single cloud agent or a local
 session. Launch the Project on the work's repository (for a Grok Bot, the
-CloudAgent tool's launch with `project: true`), give the coordinator the
-outcome you want, and let it plan, delegate this workflow's steps to its
-agents, and bring the results back. Send follow-ups to the same Project
-rather than starting new agents beside it. A Project only goes one level
-deep, so its agents can't start Projects of their own. _Why:_ a Project keeps
-shared context across months of work and many PRs, runs agents in parallel,
-and can follow the PRs and CI it opens.
+CloudAgent tool's launch with `project: true`, model `claude-fable-5-2` and
+`model_params.effort: medium`), give the coordinator the outcome you want,
+and let it plan, delegate this workflow's steps to its agents, and bring the
+results back. Send follow-ups to the same Project rather than starting new
+agents beside it. A Project only goes one level deep, so its agents can't
+start Projects of their own. _Why:_ a Project keeps shared context across
+months of work and many PRs, runs agents in parallel, and can follow the PRs
+and CI it opens.
 
 ## Workflow
 

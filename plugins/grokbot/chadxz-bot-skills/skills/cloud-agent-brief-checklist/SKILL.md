@@ -18,9 +18,15 @@ means the agent will guess, and its guess shows up under Chad's name.
    (see `tracking-bot-work-in-linear`). Put the ticket ID in the brief and tell
    the agent to reference it in the PR title or body. Name the `bot:<label>` PR
    label to apply.
-3. **Babysit the PR.** Tell the agent to keep watching CI and review comments
-   after it opens the PR, and to fix what comes up until the PR is ready to
-   merge. It never merges.
+3. **Babysit the PR, then report back.** Tell the agent to keep watching CI
+   and review comments after it opens the PR, and to fix what comes up until
+   the PR is ready to merge: approved, checks green, no merge conflicts, and
+   no unresolved review comments. It never merges. As soon as the PR is ready,
+   the agent ends its run with a final report that says the PR is ready to
+   merge and links it. Ending the run is what wakes the bot that launched it,
+   so the bot can merge and take care of follow-up work right away. Tell the
+   agent not to keep polling an already-ready PR, and not to end its run early
+   while the PR still needs work.
 4. **Merge conflicts.** Tell the agent to resolve merge conflicts itself without
    asking.
 5. **Stacked work.** When the work spans several PRs, tell the agent to use

@@ -220,6 +220,17 @@ This applies to the owner's PRs, Datadog PRs (section 4) and automation PRs
    merge-async that one; it merges everything below it in one step, which is
    faster than merging bottom-up. Never merge an upper PR if any PR below it
    isn't ready.
+   **Who can make the call:** the GitHub connector, `gh pr merge` and cloud
+   agents can't run merge-async, so don't hand a stacked merge to any of them.
+   Run it with a `gh` CLI that's logged in as the owner's account, on your own
+   computer or the owner's machine. Check `gh auth status` first; if your own
+   computer is logged in, use it and don't wait on the owner's machine. Example:
+   `gh api -X PUT repos/{owner}/{repo}/pulls/{top}/merge-async -f
+   merge_method=merge -f sha={top head sha}` returns `"status":"pending"` and a
+   `uuid`. Poll `gh api repos/{owner}/{repo}/pulls/{top}/merge-async/{uuid}`
+   every few seconds until it reads `"status":"merged"` with the merge commit
+   `sha`. Then run `gh pr view` on every PR in the stack and confirm each one
+   reads MERGED with that commit before you report the merge.
 7. When in doubt, don't merge. Report what gave you pause.
 
 ## 6. After every merge

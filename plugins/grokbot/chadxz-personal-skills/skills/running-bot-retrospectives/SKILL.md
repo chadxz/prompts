@@ -30,7 +30,10 @@ tend to claim success they haven't verified.
   questions than generic ones. Each read is capped at a few dozen messages, so
   page back with the `before` value each result gives until you reach the start
   of the period; user messages carry timestamps you can search to find day
-  boundaries. Don't settle for the newest slice.
+  boundaries. Don't settle for the newest slice. Transcript search can stop at a
+  bot's newest 2000 messages and doesn't page its Slack sessions separately, so
+  read busy bots in day-sized slices and say in the report which reads were
+  partial.
 - Scheduled runs and background workers may not be able to read conversations
   even when your main chat can. If so, have the scheduled run do the parts that
   don't need conversations (tickets, PRs, files, Pages) and end its report with
@@ -81,8 +84,13 @@ guessing?" Record the format you chose and why.
   tell the bot to ask the user itself in its own chat, rather than relaying the
   question or arguing. Most bots do want it, so also ask each bot to gather
   every change that needs the user into one batched ask, rather than sending
-  several separate questions. Don't add rules that push bots to escalate to the
-  user; prefer clear guidance they can follow on their own.
+  several separate questions. When a bot's ask is a decision about how the bots
+  work (permissions, memory access, ownership across bots), collect it into your
+  report's Needs-the-user questions so the user gets one batched ask; the bot
+  still asks the user itself only for changes to its own setup. Tie each prep
+  moment to one specific question in the opener; that gets a complete answer in
+  one reply. Don't add rules that push bots to escalate to the user; prefer
+  clear guidance they can follow on their own.
 - Retros span turns. A reply arrives on a later turn, so track which bots you're
   still waiting on. If a bot hasn't replied by the end of the day, note it and
   move on.

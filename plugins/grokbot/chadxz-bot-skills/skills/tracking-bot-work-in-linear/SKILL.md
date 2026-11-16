@@ -27,8 +27,9 @@ Open one when you are about to do any of these:
 - End a turn with the work unfinished.
 - Wait on Chad or anyone else before you can continue.
 - Work on follow-ups from a recurring job (a weekly review, a garden pass) right
-  away. Use one ticket for that run's follow-ups. Follow-ups you won't work on
-  now go to Marty (see below). A run that produced nothing gets no ticket.
+  away. Use one ticket for that run's follow-ups. Follow-ups nobody plans to
+  start soon go to Marty (see below). A run that produced nothing gets no
+  ticket.
 
 Don't open one for:
 
@@ -36,7 +37,7 @@ Don't open one for:
 - Routine runs that end with nothing to do.
 - Work that's already tracked on an existing ticket. Comment on that ticket
   instead.
-- Work for later, meaning work you aren't starting right now. Send it to Marty
+- Work for later, meaning work nobody plans to start soon. Send it to Marty
   instead.
 - Work in the `chadxz/prompts` repository, including its PRs. It's Chad's
   personal repo, not work, so it never gets a Linear ticket, and its PRs don't
@@ -51,30 +52,35 @@ covers the work, so you don't make duplicates.
 
 ## Work for later goes to Marty
 
-When you want a ticket for work you aren't planning to do right now, don't
-create it yourself. Send the details to Marty, the EE backlog bot (agent id
+When you want a ticket for work nobody plans to start soon, don't create it
+yourself. Send the details to Marty, the EE backlog bot (agent id
 c55f687f-6f56-465a-b270-de34b0f2bd8b): title, description, context and links,
 and which bot asked for it. Marty creates the ticket, attributes it to the
 requesting bot with a "Filed by <bot>." line at the end of the description
 (not the bot's label), leaves it unassigned, and creates it in the Triage
 status. Tickets for work you're starting right away you still create yourself.
 
-Any ticket created for work nobody is actioning right away goes in Triage, no
-matter who creates it. Never create later work straight into Todo, Backlog, or
-In Progress. The team pulls it out of Triage when it decides to take it on.
+Work you'll start as soon as a blocker clears isn't later work, even if you
+can't start it this turn. An investigation waiting only on Chad's Mac coming
+back online is one example. Create that ticket yourself in Todo, assigned to
+Chad with your bot label.
+
+Any ticket created for work nobody is actioning soon goes in Triage, no matter
+who creates it. Never create later work straight into Todo, Backlog, or In
+Progress. The team pulls it out of Triage when it decides to take it on.
 
 ## How to fill it in
 
 - Team: EE (Engineering Enablement).
 - Assignee: Chad McElligott, set when a bot starts the ticket (moves it to In
-  Progress), including tickets created for work starting right away. The work
-  is his, even when a bot is doing it. Tickets filed for later stay unassigned.
-- Labels: when you start the ticket, add your own name from the `bot` label
-  group (Cully, Doc Brown, Samwise, Soxy, Coach Lasso, Kaizen, Scotty, Marty,
-  Mrs. Frizzle, or Scooby). Tickets filed for later get no bot label, since a
-  label reads like an assignment.
-  Add `waiting-on-chad` only under the rules in "The waiting-on-chad label"
-  below.
+  Progress) or queues it in Todo to start as soon as a blocker clears, including
+  tickets created for that work. The work is his, even when a bot is doing it.
+  Tickets filed for later stay unassigned.
+- Labels: when you start or queue the ticket, add your own name from the `bot`
+  label group (Cully, Doc Brown, Samwise, Soxy, Coach Lasso, Kaizen, Scotty,
+  Marty, Mrs. Frizzle, or Scooby). Tickets filed for later get no bot label,
+  since a label reads like an assignment. Add `waiting-on-chad` only under the
+  rules in "The waiting-on-chad label" below.
 - Title: a plain description of the outcome, not the task chatter.
 - Description:
   - What the work is and why.
@@ -87,10 +93,13 @@ In Progress. The team pulls it out of Triage when it decides to take it on.
 
 Use the EE team's existing statuses only:
 
-- Triage: new tickets for later work, unlabeled and unassigned, waiting for
-  the team to decide when to take them on.
-- Todo: not started yet, unlabeled and unassigned. If you move a ticket back
-  to Todo unfinished, remove your bot label and unassign Chad.
+- Triage: new tickets for work nobody plans to start soon, unlabeled and
+  unassigned, waiting for the team to decide when to take them on.
+- Todo: not started yet, unlabeled and unassigned. The exception is your own
+  ticket queued to start as soon as a blocker clears, which carries your bot
+  label and has Chad assigned. If you move a ticket back to Todo unfinished and
+  you're no longer planning to pick it up, remove your bot label and unassign
+  Chad.
 - In Progress: you're actively working on it.
 - In Review: there's a PR or draft waiting for someone to review it.
 - Ready to Close: you're finished. Never move a ticket to Done or close it

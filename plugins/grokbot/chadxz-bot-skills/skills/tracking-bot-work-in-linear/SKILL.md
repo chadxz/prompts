@@ -102,6 +102,17 @@ Use the EE team's existing statuses only:
 Move the ticket to In Review as soon as its PRs open, and to Ready to Close
 after merge plus live verification, without waiting to be asked.
 
+Start that live check in the same turn as the merge, or brief an agent to follow
+the post-merge deploy or apply. PR watch subscriptions close on merge, so a PR
+watcher is not a follow-up. If the check can't finish in that turn, leave a
+ticket comment that names the exact remaining check and when the next run will
+do it. For 'errors haven't come back' work, move the ticket to Ready to Close
+once the deploy is live and the error hasn't recurred since, and don't leave it
+In Review waiting for a longer quiet period unless the ticket says so. Each run,
+owning bots' hourly or backlog routines re-check every In Review ticket of
+theirs whose PRs have merged, and move it to Ready to Close when the check has
+passed.
+
 When the status or the plan changes, add a short comment with a link, rather
 than rewriting the description.
 

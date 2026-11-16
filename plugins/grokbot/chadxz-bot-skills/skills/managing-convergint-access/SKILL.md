@@ -49,6 +49,10 @@ the CLI has no command for what's asked.
   unclear.
 - GitHub onboarding opens a Terraform pull request. Access lands only after that
   PR merges and `mise //infrastructure/github:apply` runs.
+- GitHub onboarding needs the Linear ticket for the access request, passed as
+  `--linear EE-123`. Create or find the ticket first. A ticket for later work
+  goes in Triage. The only exception is Entra-only onboarding with
+  `--skip-pull-request`, which doesn't take `--linear`.
 - Use the person's Convergint email (usually `first.last@convergint.com`). If
   you had to guess it and status reports the user isn't found, say so rather
   than reporting that they lack access.

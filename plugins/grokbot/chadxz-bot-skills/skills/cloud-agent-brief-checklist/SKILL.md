@@ -30,7 +30,9 @@ means the agent will guess, and its guess shows up under Chad's name.
 4. **Merge conflicts.** Tell the agent to resolve merge conflicts itself without
    asking.
 5. **Stacked work.** When the work spans several PRs, tell the agent to use
-   GitHub's native stacked PRs (`gh stack`), not hand-chained bases.
+   GitHub's native stacked PRs (`gh stack`), not hand-chained bases. This
+   includes an ADR PR and the implementation that depends on it: the ADR goes at
+   the bottom of the stack.
 6. **Who it posts as.** The PR title, body, and commits show up under Chad's
    GitHub account (chadxz), so they're in Chad's first person. Comments the
    agent posts under its own Cursor bot identity are written as itself. Any
@@ -45,13 +47,15 @@ means the agent will guess, and its guess shows up under Chad's name.
 9. **Carry review rules.** When the brief delegates a review, copy the caller's
    review rules into it: what to check, what not to repeat, where to post, and
    whose voice to use.
-10. **ADR PRs.** When the work is an ADR or documents a major feature or
-    architectural decision, tell the agent the PR must contain only the ADR,
-    with no implementation bundled in, and must carry the
-    `requires-review-by-chad` label. It never merges that PR; babysitting stops
-    once the PR is ready for Chad's LGTM. Editorial fixes that don't change an
-    ADR's meaning or decision (typos, casing, formatting, broken links) skip the
-    label and need only the usual Engineering Enablement approval.
+10. **ADR PRs.** When the work is an ADR, or needs one (a major feature, an
+    architectural decision, or a change the repo's review policy would tag
+    Design), tell the agent to write the ADR first and stack any implementation
+    PR on it with `gh stack`. The ADR PR must contain only the ADR, with no
+    implementation bundled in, and must carry the `requires-review-by-chad`
+    label. The agent never merges that PR; babysitting stops once the PR is
+    ready for Chad's LGTM. Editorial fixes that don't change an ADR's meaning or
+    decision (typos, casing, formatting, broken links) skip the label and need
+    only the usual Engineering Enablement approval.
 11. **Model for deep work.** When the work is architecture, design, an ADR, a
     complex feature, or deep problem solving (an investigation, a root cause,
     hard debugging), launch the agent with `claude-fable-5-2` and

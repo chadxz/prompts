@@ -39,9 +39,10 @@ and CI it opens.
    the ADR in its own pull request, with no implementation in it, and label it
    `requires-review-by-chad` (see the `creating-pull-requests` skill). Don't
    start implementation until Chad posts LGTM on the ADR, unless he explicitly
-   says to proceed without it. _Why:_ Chad reviews major decisions before
-   they're built, and a standalone ADR is quick to review and easy to find
-   later.
+   says to proceed without it. When Chad says to proceed before his LGTM, stack
+   the implementation on the ADR PR with `gh stack`. _Why:_ Chad reviews major
+   decisions before they're built, and a standalone ADR is quick to review and
+   easy to find later.
 
 3. **Design public interfaces up front.** Explicitly design every public
    interface the feature adds or changes, in whatever form it takes: shared

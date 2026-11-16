@@ -139,6 +139,9 @@ matches the inventory count for each repo.
   another agent, since it won't share your memory): flag leftover dual-mode or
   optional code for an approach the team dropped, so only the chosen path
   remains.
+- Post reviews as the owner only with your own `gh` (check that `gh auth status`
+  shows the owner). Never post through Linear's diff-review tools or a cloud
+  agent's Cursor bot.
 - **Never repeat a finding someone else already raised, even in different
   words.** Only post new findings. If an existing finding needs emphasis, a
   short +1 reply on its thread is enough. If there's nothing new, post nothing.

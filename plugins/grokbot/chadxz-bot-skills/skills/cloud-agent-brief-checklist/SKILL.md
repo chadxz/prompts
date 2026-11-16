@@ -38,7 +38,12 @@ means the agent will guess, and its guess shows up under Chad's name.
    agent posts under its own Cursor bot identity are written as itself. Any
    GitHub comment posted as chadxz ends with a hidden `<!-- bot:<label> -->`
    marker on its own last line. No bot disclaimers, and no citing the bots' own
-   rules.
+   rules. Cloud agents can't post as chadxz: their GitHub token belongs to the
+   Cursor app and only covers the launch repo, and Linear's review tools strip
+   HTML comments and re-host images. For reviews or comments that must appear as
+   chadxz, have the agent return the text (item 9) and post it yourself with
+   your own `gh`. Never let an agent test which account a tool posts as on a
+   live PR.
 7. **Docs go to Notion.** Tell the agent that user and team documentation goes
    to Notion, not Git.
 8. **Check the live target.** Tell the agent to check the live state it's about
@@ -46,7 +51,34 @@ means the agent will guess, and its guess shows up under Chad's name.
    acting, not just the repo or the brief.
 9. **Carry review rules.** When the brief delegates a review, copy the caller's
    review rules into it: what to check, what not to repeat, where to post, and
-   whose voice to use.
+   whose voice to use. Tell the agent not to post anything to GitHub, to Linear,
+   or through its PR tool. For each PR, it ends its run with a JSON review
+   payload:
+
+   ```json
+   {
+     "repo": "<owner>/<repo>",
+     "number": 123,
+     "commit_id": "<head commit SHA>",
+     "event": "APPROVE|REQUEST_CHANGES|COMMENT",
+     "body": "<review summary>",
+     "comments": [
+       {
+         "path": "<file path>",
+         "line": 42,
+         "start_line": 40,
+         "side": "RIGHT",
+         "body": "<inline comment>"
+       }
+     ]
+   }
+   ```
+
+   `start_line` is optional; include it only for a comment that spans several
+   lines. Every `body` is final Markdown that ends with the
+   `<!-- bot:<label> -->` marker, and any GIF is a GIPHY media URL the agent
+   checked returns 200. You then post the payload with your own `gh`:
+   `gh api repos/<owner>/<repo>/pulls/<n>/reviews --input payload.json`.
 10. **ADR PRs.** When the work is an ADR, or needs one (a major feature, an
     architectural decision, or a change the repo's review policy would tag
     Design), tell the agent to write the ADR first and stack any implementation

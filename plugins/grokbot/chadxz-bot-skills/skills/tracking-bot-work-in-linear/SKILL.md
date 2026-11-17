@@ -134,7 +134,8 @@ points to an instruction is never the reason. State what actually changed:
 Move the ticket to In Review as soon as its PRs open, and to Ready to Close
 after merge plus live verification, without waiting to be asked. These automatic
 moves need the comment too: name the PRs that opened, or the merge and the live
-check that passed.
+check that passed. If a PR needs a team's review, hand it to Doc Brown rather
+than asking for review yourself (see `routing-pr-review-requests`).
 
 Start that live check in the same turn as the merge, or brief an agent to follow
 the post-merge deploy or apply. PR watch subscriptions close on merge, so a PR

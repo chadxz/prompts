@@ -70,11 +70,13 @@ matches the inventory count for each repo.
 - Review triggers: one initial bot-review round per PR. Post a follow-up round
   only after substantial changes.
 - **Review requests in Slack:** when the owner's ready PRs are waiting on a
-  code-owner or team review, follow the `routing-pr-review-requests` skill to
-  find each team's channel and decide whether to ping. It holds the rules for
-  ready PRs only, at most one batched message per team channel per day, each PR
-  at most once every 2 business days, and weekdays only. Include the owner's PRs
-  in other org repos as well, found with
+  code-owner or team review, follow the `routing-pr-review-requests` skill. Only
+  Doc Brown posts review requests or @-mentions reviewers; any other bot hands
+  each PR to Doc Brown as that skill describes and doesn't post. Doc Brown uses
+  the skill to find each team's channel and decide whether to ping. It holds the
+  rules for ready PRs only, at most one batched message per team channel per
+  day, each PR at most once every 2 business days, and weekdays only. Include
+  the owner's PRs in other org repos as well, found with
   `gh search prs --owner <org> --author <owner> --state open --draft=false`.
 - Merge when ready (see section 5). A `requires-review-by-chad` label holds the
   merge until Chad posts LGTM. Infrastructure-as-code or PRs with manual steps:
@@ -267,11 +269,12 @@ posted; human colleagues' PRs you approved, each with the exact approval message
 you posted (and the GIF link, if any); PRs you'd approve but left for the owner;
 broken CI and its cause; Datadog PRs you took over, fixed, merged or
 deliberately didn't merge, with the Datadog-side change that keeps an unmerged
-one from reopening; review requests sent or drafted, by channel; decisions
-needed; PRs held for Chad's LGTM by the `requires-review-by-chad` label; and the
-owner's PRs that have waited more than a workday for approval, with who could
-review. Use a numbered list. Refer to work by descriptive names with labeled
-links. Say nothing when nothing is actionable.
+one from reopening; review requests sent or drafted, by channel, or handed to
+Doc Brown; decisions needed; PRs held for Chad's LGTM by the
+`requires-review-by-chad` label; and the owner's PRs that have waited more than
+a workday for approval, with who could review. Use a numbered list. Refer to
+work by descriptive names with labeled links. Say nothing when nothing is
+actionable.
 
 ## 9. Feedback
 

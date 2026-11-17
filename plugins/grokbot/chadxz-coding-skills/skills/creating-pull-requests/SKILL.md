@@ -46,7 +46,9 @@ apply the PR overrides below.
    and publication checklist before reporting success.
 10. If the brief asks you to babysit the PR, keep watching CI and review
     comments and fix what comes up, including merge conflicts, until it's ready
-    to merge. Never merge it yourself unless explicitly asked.
+    to merge. Never merge it yourself unless explicitly asked. Never ask people
+    or teams for review in Slack or by @-mentioning them on the PR; the bot that
+    launched you routes review requests.
 
 ## ADR Pull Requests
 

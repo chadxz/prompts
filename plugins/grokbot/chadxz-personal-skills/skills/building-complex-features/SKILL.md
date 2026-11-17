@@ -42,8 +42,9 @@ and CI it opens.
    says to proceed without it. When Chad says to proceed before his LGTM, stack
    the implementation on the ADR PR with `gh stack`. Don't attribute the
    decision: no decided-by, approved-by, or deciders line, and no crediting a
-   person or team. _Why:_ Chad reviews major decisions before they're built, and
-   a standalone ADR is quick to review and easy to find later.
+   person or team. The status line is just the status ("Status: Accepted"), with
+   no repeated date. _Why:_ Chad reviews major decisions before they're built,
+   and a standalone ADR is quick to review and easy to find later.
 
 3. **Design public interfaces up front.** Explicitly design every public
    interface the feature adds or changes, in whatever form it takes: shared

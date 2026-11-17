@@ -235,10 +235,11 @@ These are always wrong in my writing:
   us", "the conversation moved"). Name who decided, read, changed, or pushed.
 - No decision attribution in ADRs. An ADR records a team decision, so it has no
   decided-by, approved-by, or deciders line and never credits a person or team
-  with the decision ("Chad decided", "per Chad"). Status and dates are fine.
-  This overrides naming who decided and naming contributors.
+  with the decision ("Chad decided", "per Chad"). The template's date field
+  holds the date, so the status line is just the status, with no repeated date
+  and no attribution. This overrides naming who decided and naming contributors.
   - Bad: "Status: Accepted. Decided by Chad on 2026-11-16."
-  - Good: "Status: Accepted (2026-11-16)."
+  - Good: "Status: Accepted"
 - No metaphorical "shape of ..." phrasing. Avoid "the shape of the problem",
   "the shape of the work", "the shape of the solution", "the shape of the
   conversation", and similar constructions. Say the concrete thing instead:

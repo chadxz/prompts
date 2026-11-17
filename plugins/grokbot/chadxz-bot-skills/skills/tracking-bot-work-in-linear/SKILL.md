@@ -108,8 +108,33 @@ Use the EE team's existing statuses only:
   himself. Don't list them as waiting on Chad or remind him to close them.
 - Canceled: only when Chad drops the work.
 
+**Every status change gets a comment.** Whenever you change a ticket's status,
+post a comment on the ticket in the same step that says why it changed, so
+anyone looking back later can see the reason. That covers every move: Triage or
+Todo to In Progress, In Progress to In Review, any move to Ready to Close, back
+to Todo, and Canceled. It also covers adding or removing `waiting-on-chad`. A
+status change with no comment is incomplete. If you notice you skipped one, post
+it right away.
+
+The comment says what happened: the work you started, the PR that opened, the
+merge plus the live check that passed, the blocker that cleared, the question
+you're now blocked on, or why the work was dropped. Link the PR, deploy, run, or
+thread when there is one. Write it as Chad (see "Writing as Chad" below).
+
+"Chad told me to", "as Chad asked", "per Chad", or anything else that only
+points to an instruction is never the reason. State what actually changed:
+
+- Good: "Moving this to Ready to Close. The fix merged in <PR link>, deployed to
+  prod, and the nightly sync has run clean twice since."
+- Bad: "Moving this to Ready to Close per Chad."
+- Good: "Canceling this. The new pipeline in <PR link> replaced the old sync
+  job, so there's nothing left to fix."
+- Bad: "Canceling this as Chad asked."
+
 Move the ticket to In Review as soon as its PRs open, and to Ready to Close
-after merge plus live verification, without waiting to be asked.
+after merge plus live verification, without waiting to be asked. These automatic
+moves need the comment too: name the PRs that opened, or the merge and the live
+check that passed.
 
 Start that live check in the same turn as the merge, or brief an agent to follow
 the post-merge deploy or apply. PR watch subscriptions close on merge, so a PR
@@ -120,10 +145,10 @@ once the deploy is live and the error hasn't recurred since, and don't leave it
 In Review waiting for a longer quiet period unless the ticket says so. Each run,
 owning bots' hourly or backlog routines re-check every In Review ticket of
 theirs whose PRs have merged, and move it to Ready to Close when the check has
-passed.
+passed, with a comment that names the merge and the check.
 
-When the status or the plan changes, add a short comment with a link, rather
-than rewriting the description.
+When the plan changes without a status change, add a short comment with a link
+too, rather than rewriting the description.
 
 ## Labeling pull requests
 
@@ -186,6 +211,9 @@ there.
 - Never put it on In Review or Ready to Close tickets. Remove it whenever you
   move a ticket into either status.
 - Remove it as soon as Chad answers.
+- Adding or removing it gets a comment like any status change (see "Moving it
+  along"): the question you're blocked on, or the answer that unblocked you.
+  When you remove it as part of a status move, one comment covers both.
 
 ## Work-in-progress limit
 

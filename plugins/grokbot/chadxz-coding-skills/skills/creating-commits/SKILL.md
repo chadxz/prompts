@@ -164,7 +164,8 @@ personal repository under `github.com/chadxz/` or hosted on Tangled:
    available in your environment (a Linear MCP server, or
    `linctl issue create
    --team EE --assign-me` on Chad's Mac). Move it to
-   `In Review`.
+   `In Review` with a comment that says why, such as the change now waiting on
+   review (see `tracking-bot-work-in-linear` when it's available).
 4. Use the returned ticket identifier in the commit message.
 
 If no Linear tool is available, commit without the `Related to` line and report

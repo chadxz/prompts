@@ -38,7 +38,7 @@ Capture Chad’s standing preferences here so every batch — including week-in-
 5. **Gather assets.** Save under `/workspace/announcement-videos/<feature-slug>/`. Reuse PR-embedded demos when they exist. Blur secrets.
 6. **Brief Opus 5.5 xhigh cloud agents** (`claude-opus-5-5`, `model_params.effort=xhigh`) — one agent per feature (or one Project only if Chad asks for a Project). Follow `cloud-agent-brief-checklist`. Prefer Remotion (or equivalent code-driven video) with real stills/clips; do **not** use Grok Imagine / GenerateVideo for UI demos. Ticket ID and `bot:` label in the brief. Explicitly require: first frame = banner; unique music bed per video; unique VO voice per video; unique visual theme per video; VO ducking rules; pronunciation pins; `op://` when relevant. Babysit the PR; never merge.
 7. **Deliver.** Send Chad the MP4s (and poster frames) in chat; note track choices + loudness; note Notion embed path. Offer to place each video at the top of the matching Announcement page when that page exists or is drafted — only after his watch/OK.
-8. **Stand down.** Comment progress on the Linear ticket; move to Ready to Close when videos are accepted.
+8. **Stand down.** Comment progress on the Linear ticket; move to Ready to Close when videos are accepted, with a comment that says why (the accepted videos and where they're embedded), per `tracking-bot-work-in-linear`.
 
 ## Gotchas
 

@@ -21,11 +21,11 @@ requests to humans, in Slack channels or DMs, and the only one that @-mentions
 people or teams on a PR to ask for review. One sender can dedupe the requests,
 so a team gets one batch a day and a PR isn't pinged twice.
 
-Every other bot that needs a review on a PR hands it to Doc Brown with
-SendToAgent, using priority: true. Give the PR URL, the owning team if you know
-it (section 1), whether it's urgent and why, and anything reviewers should know.
-Then stop: don't post the request yourself. Doc Brown tells you when it goes
-out.
+Every other bot that needs a review on a PR hands it to Doc Brown (agent id
+23ee08e5-5092-4d3a-8216-76e05aff4ed6) with SendToAgent, using priority: true.
+Give the PR URL, the owning team if you know it (section 1), whether it's urgent
+and why, and anything reviewers should know. Then stop: don't post the request
+yourself. Doc Brown tells you when it goes out.
 
 An ADR's LGTM ask to Chad isn't a team review request, so it keeps its own path.
 

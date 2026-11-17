@@ -59,6 +59,11 @@ decision.
   that decision into it; implementation goes in a separate PR. If that PR is
   opened before the ADR merges, stack it on the ADR PR with `gh stack`, with the
   ADR at the bottom of the stack.
+- ADRs are team decisions, so don't attribute them. Leave out decided-by,
+  approved-by, and deciders lines, and never credit a person or team with the
+  decision ("Chad decided", "per Chad"). Status and dates are fine.
+  - Bad: "Status: Accepted. Decided by Chad on 2026-11-16."
+  - Good: "Status: Accepted (2026-11-16)."
 - Add the `requires-review-by-chad` label in addition to any `bot:<label>`. If
   the repository doesn't have it yet, adding it through the PR labels API
   creates it, the same as bot labels.
@@ -317,6 +322,8 @@ Before creating or updating the pull request, verify all of the following:
 - An ADR PR contains only the ADR and carries the `requires-review-by-chad`
   label, unless it's an editorial fix that doesn't change the ADR's meaning or
   decision.
+- The ADR has no decided-by, approved-by, or deciders line and credits no person
+  or team with the decision.
 - The ticket footer is exact when a ticket exists and absent when one does not.
 
 Do not claim the PR follows the message contract until the live body has been

@@ -233,6 +233,12 @@ These are always wrong in my writing:
   or use a specific cause-and-effect relationship.
 - No false agency or disembodied actors ("the decision emerged", "the data tells
   us", "the conversation moved"). Name who decided, read, changed, or pushed.
+- No decision attribution in ADRs. An ADR records a team decision, so it has no
+  decided-by, approved-by, or deciders line and never credits a person or team
+  with the decision ("Chad decided", "per Chad"). Status and dates are fine.
+  This overrides naming who decided and naming contributors.
+  - Bad: "Status: Accepted. Decided by Chad on 2026-11-16."
+  - Good: "Status: Accepted (2026-11-16)."
 - No metaphorical "shape of ..." phrasing. Avoid "the shape of the problem",
   "the shape of the work", "the shape of the solution", "the shape of the
   conversation", and similar constructions. Say the concrete thing instead:

@@ -84,10 +84,12 @@ means the agent will guess, and its guess shows up under Chad's name.
     Design), tell the agent to write the ADR first and stack any implementation
     PR on it with `gh stack`. The ADR PR must contain only the ADR, with no
     implementation bundled in, and must carry the `requires-review-by-chad`
-    label. The agent never merges that PR; babysitting stops once the PR is
-    ready for Chad's LGTM. Editorial fixes that don't change an ADR's meaning or
-    decision (typos, casing, formatting, broken links) skip the label and need
-    only the usual Engineering Enablement approval.
+    label. The ADR has no decided-by, approved-by, or deciders line and credits
+    no person or team with the decision; Status and dates are fine. The agent
+    never merges that PR; babysitting stops once the PR is ready for Chad's
+    LGTM. Editorial fixes that don't change an ADR's meaning or decision (typos,
+    casing, formatting, broken links) skip the label and need only the usual
+    Engineering Enablement approval.
 11. **Model for deep work.** When the work is architecture, design, an ADR, a
     complex feature, or deep problem solving (an investigation, a root cause,
     hard debugging), launch the agent with `claude-fable-5-2` and

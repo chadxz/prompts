@@ -91,7 +91,10 @@ Progress. The team pulls it out of Triage when it decides to take it on.
 
 ## Moving it along
 
-Use the EE team's existing statuses only:
+Use the EE team's existing statuses only, and never Backlog. A ticket that
+isn't decided or scheduled goes in Triage, and one that's ready to work goes in
+Todo. If you find a bot's ticket in Backlog, move it to Triage or Todo with a
+comment saying why.
 
 - Triage: new tickets for work nobody plans to start soon, unlabeled and
   unassigned, waiting for the team to decide when to take them on.

@@ -131,10 +131,13 @@ matches the inventory count for each repo.
   the PR's branch: rebase or merge main, regenerate the lockfile with the repo's
   package manager, push, and wait for green. Then review and merge it in the
   same pass. Dependabot PRs can still use `@dependabot rebase`.
-- **Exception: release-version bump PRs** (for example the release daemon's PR
-  that updates the platform-deploy version) are not merged on a schedule. Leave
-  them open until the owner needs a feature or fix from that release; just track
-  them.
+- **Release-version bump PRs** (for example the release daemon's PR that
+  updates the platform-deploy version) ship whatever has merged since the last
+  release. Any bot may approve and merge one whenever it judges the release is
+  worth cutting, such as when a merged fix or feature should reach users, with
+  no need to ask the owner or wait for another reviewer. It still has to be
+  green, follow section 5, and never bypass branch protections or rulesets.
+  Tell the owner afterward which release went out and why.
 - Read the description, every existing comment, review and inline thread from
   people and bots, and the diff.
 - **Review checklist** (spell these out in any brief that hands a review to

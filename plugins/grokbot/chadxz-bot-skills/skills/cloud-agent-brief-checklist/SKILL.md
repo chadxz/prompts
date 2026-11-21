@@ -16,8 +16,10 @@ means the agent will guess, and its guess shows up under Chad's name.
    exists, hand the work to it or coordinate instead of starting a second one.
 2. **Ticket first.** Open or find the Linear ticket before you write the brief
    (see `tracking-bot-work-in-linear`). Put the ticket ID in the brief and tell
-   the agent to reference it in the PR title or body. Name the `bot:<label>` PR
-   label to apply.
+   the agent to reference it in the PR title or body. Give it the exact
+   `<!-- opened-by-bot: <name> -->` line to put on its own line in the PR body,
+   which is how you'll tell later that you opened the PR, and name the
+   `bot:<name>` PR label to apply when the repo allows it.
 3. **Babysit the PR, then report back.** Tell the agent to keep watching CI
    and review comments after it opens the PR, and to fix what comes up until
    the PR is ready to merge: approved, checks green, no merge conflicts, and

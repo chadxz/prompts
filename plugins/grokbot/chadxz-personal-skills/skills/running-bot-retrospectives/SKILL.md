@@ -89,8 +89,12 @@ guessing?" Record the format you chose and why.
   report's Needs-the-user questions so the user gets one batched ask; the bot
   still asks the user itself only for changes to its own setup. Tie each prep
   moment to one specific question in the opener; that gets a complete answer in
-  one reply. Don't add rules that push bots to escalate to the user; prefer
-  clear guidance they can follow on their own.
+  one reply. When a bot claims something was done in an earlier week, name the
+  evidence you want in the opener (routine id and run time, PR, ticket
+  comment). Check timestamps before saying which bot should have caught a
+  duplicate; bots correct a wrong premise, and that costs a round. Don't add
+  rules that push bots to escalate to the user; prefer clear guidance they can
+  follow on their own.
 - Retros span turns. A reply arrives on a later turn, so track which bots you're
   still waiting on. If a bot hasn't replied by the end of the day, note it and
   move on.

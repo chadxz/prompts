@@ -129,6 +129,10 @@ learning. Only some of it is an action.
 - **The bot owns it:** the bot can change it itself, for example its own skill,
   memory, or routine wording. It makes the change and confirms with evidence (a
   link or quoted text). You never edit another bot's setup.
+- **Shared by default:** a learning belongs in the shared plugin skills (the
+  chadxz/prompts plugins), not in each bot's memory, unless it genuinely applies
+  to one bot for a specific reason. You propose or make the shared-skill edit
+  yourself; the shared skills aren't another bot's setup.
 - Keep fixes simple: the smallest change to a bot's habits, skill or files that
   solves the real problem seen this week, not a framework for edge cases nobody
   has hit.
@@ -189,14 +193,18 @@ finishes, so the way the project went improves future projects.
   only the user can do into one ask right after the plan, and building the rest
   meanwhile).
 - **Land the learnings where future work will read them:** for each takeaway,
-  name the exact home and the change: a skill (the bot's own or a shared one),
-  the bot's instructions or memory, a repo's agent instructions (AGENTS.md,
+  name the exact home and the change: a shared skill by default, or the bot's
+  own skill, instructions or memory only when it applies to that bot alone, a
+  repo's agent instructions (AGENTS.md,
   CONTRIBUTING.md, or similar), or a team file. Prefer updating an existing
   skill or file over adding a new rule.
 - **Who makes the change:** the bot makes changes to its own setup itself and
   confirms with evidence. Repo instruction changes go through a pull request
-  from the bot that owns that repo work. Changes to shared skills, new team
-  rules, and role changes go to the user for a decision. You stay read-only
+  from the bot that owns that repo work. The user's standing rule is that
+  learnings go into the shared skills by default (see section 5), so make those
+  edits without asking: commit straight to main, skip a file that has a
+  conflicting open PR, and report what changed. New team rules and role changes
+  still go to the user for a decision. You stay read-only
   toward other bots' setups.
 - **Record it:** when a project retro closes, write it to the running retro Page
   right away, not just to memory.

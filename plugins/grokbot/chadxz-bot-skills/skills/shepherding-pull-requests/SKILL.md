@@ -247,11 +247,12 @@ Make sure nothing is left hanging:
 
 - Stacked children moved onto the default branch.
 - CD deployed, and the change still works in staging when it's user-facing.
-- Manual steps in the PR body are done.
+- Manual steps in the PR body are done. Do them yourself rather than splitting
+  them into a new ticket, unless you truly can't.
 - Follow-ups from threads or the PR body are tracked.
-- The work ticket is moved to the team's finished-but-not-closed status, with a
-  comment that says why, such as the merge and the check that passed (see
-  `tracking-bot-work-in-linear`).
+- Once no step is still open, the work ticket is moved to the team's
+  finished-but-not-closed status, with a comment that says why, such as the
+  merge and the check that passed (see `tracking-bot-work-in-linear`).
 
 ## 7. Broken CI
 

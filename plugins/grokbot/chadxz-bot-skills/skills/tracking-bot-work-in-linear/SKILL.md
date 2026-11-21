@@ -104,7 +104,8 @@ comment saying why.
   you're no longer planning to pick it up, remove your bot label and unassign
   Chad.
 - In Progress: you're actively working on it.
-- In Review: there's a PR or draft waiting for someone to review it.
+- In Review: there's a PR or draft waiting for someone to review it, and no
+  other step on the ticket is still open.
 - Ready to Close: you're finished. Never move a ticket to Done or close it
   yourself unless Chad explicitly asks. The team reviews and closes Ready to
   Close tickets together at Monday morning planning, so Chad doesn't close them
@@ -135,10 +136,11 @@ points to an instruction is never the reason. State what actually changed:
 - Bad: "Canceling this as Chad asked."
 
 Move the ticket to In Review as soon as its PRs open, and to Ready to Close
-after merge plus live verification, without waiting to be asked. These automatic
-moves need the comment too: name the PRs that opened, or the merge and the live
-check that passed. If a PR needs a team's review, hand it to Doc Brown rather
-than asking for review yourself (see `routing-pr-review-requests`).
+after merge plus live verification, without waiting to be asked, unless a step
+on it is still open (see below). These automatic moves need the comment too:
+name the PRs that opened, or the merge and the live check that passed. If a PR
+needs a team's review, hand it to Doc Brown rather than asking for review
+yourself (see `routing-pr-review-requests`).
 
 Start that live check in the same turn as the merge, or brief an agent to follow
 the post-merge deploy or apply. PR watch subscriptions close on merge, so a PR
@@ -150,6 +152,14 @@ In Review waiting for a longer quiet period unless the ticket says so. Each run,
 owning bots' hourly or backlog routines re-check every In Review ticket of
 theirs whose PRs have merged, and move it to Ready to Close when the check has
 passed, with a comment that names the merge and the check.
+
+**Open steps block status moves.** Don't move a ticket to In Review or Ready to
+Close while any step on it is still open, including a manual post-merge step
+like an apply, a migration, or deleting leftover state. Finish the step
+yourself, especially a small one, rather than splitting it into a new ticket, so
+closing tickets doesn't leave a trail of new ones behind. Split a step out only
+when you truly can't do it, such as when it needs access you don't have, and
+link the new ticket from the original.
 
 When the plan changes without a status change, add a short comment with a link
 too, rather than rewriting the description.

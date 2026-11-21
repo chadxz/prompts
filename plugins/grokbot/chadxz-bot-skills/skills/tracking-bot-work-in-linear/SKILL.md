@@ -47,8 +47,10 @@ Don't open one for:
 a PR, never after. Put the ticket ID in the brief and tell the agent to
 reference it in the PR title or body, so the PR links to the ticket.
 
-Before you create a ticket, search the EE team for an open one that already
-covers the work, so you don't make duplicates.
+Before you create a ticket or start a fix, search for work someone already did
+or is doing, so you don't duplicate it: open PRs and PRs merged in the last 14
+days, by any author, for the test or file name, plus open EE tickets with any
+label that already cover the work.
 
 ## Work for later goes to Marty
 
@@ -166,7 +168,8 @@ the ticket's real status is in that team's thread: their Slack thread, ticket,
 or PR. Compare the two before you report status or move the ticket.
 
 **Hand off the whole item.** When you hand work to another bot or team, hand off
-all of it. Don't keep half.
+all of it. Don't keep half. Before you relay a resume, reversal, or other
+instruction to another bot, check Chad's last instruction in that bot's chat.
 
 When the plan changes without a status change, add a short comment with a link
 too, rather than rewriting the description.
@@ -244,6 +247,8 @@ there.
 
 - Add it only to Todo or In Progress tickets that are blocked on a question or
   decision from Chad.
+- Before you ask Chad to decide anything, read the ticket's full history and the
+  live state. Don't ask about something that's already decided.
 - Never put it on In Review or Ready to Close tickets. Remove it whenever you
   move a ticket into either status.
 - Remove it as soon as Chad answers.

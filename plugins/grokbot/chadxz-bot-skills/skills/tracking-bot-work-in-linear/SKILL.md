@@ -161,6 +161,13 @@ closing tickets doesn't leave a trail of new ones behind. Split a step out only
 when you truly can't do it, such as when it needs access you don't have, and
 link the new ticket from the original.
 
+**Another team's work lives in their thread.** When another team owns the work,
+the ticket's real status is in that team's thread: their Slack thread, ticket,
+or PR. Compare the two before you report status or move the ticket.
+
+**Hand off the whole item.** When you hand work to another bot or team, hand off
+all of it. Don't keep half.
+
 When the plan changes without a status change, add a short comment with a link
 too, rather than rewriting the description.
 

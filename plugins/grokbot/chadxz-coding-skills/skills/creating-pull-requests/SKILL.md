@@ -35,11 +35,13 @@ apply the PR overrides below.
 5. Create the commit from that prepared title and body through the
    `creating-commits` skill, hard-wrapping only the commit body.
 6. Push the branch.
-7. Open the PR with the prepared title and body. In a Cursor cloud agent run,
+7. Open the PR with the prepared title and body, plus the
+   `<!-- opened-by-bot: <name> -->` line from the brief on its own line in the
+   PR body (it stays out of the commit message). In a Cursor cloud agent run,
    use the run's pull request tool and open it ready for review. Elsewhere, use
    `gh pr create --title <title> --body <body>`, never `--fill`. Pass `--draft`
    only when the user or brief explicitly asks for a draft.
-8. Apply the labels from the brief, such as `bot:<label>`, plus
+8. Apply the labels from the brief, such as `bot:<name>`, plus
    `requires-review-by-chad` on ADR pull requests (see below).
 9. Read the live PR with `gh pr view <url> --json isDraft,title,body,labels,url`
    and compare it with the requested draft state, prepared title, body, labels,
@@ -322,7 +324,9 @@ Before creating or updating the pull request, verify all of the following:
   multi-step workflows, absent from the Git commit.
 - Every newly created pull request is ready for review unless explicitly asked
   for a draft.
-- The PR carries the bot label from the brief, when one was given.
+- The PR body carries the `<!-- opened-by-bot: <name> -->` line from the brief
+  on its own line, and the PR carries the bot label from the brief, when they
+  were given.
 - An ADR PR contains only the ADR and carries the `requires-review-by-chad`
   label, unless it's an editorial fix that doesn't change the ADR's meaning or
   decision.

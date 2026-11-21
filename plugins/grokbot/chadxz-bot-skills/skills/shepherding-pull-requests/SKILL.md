@@ -2,8 +2,8 @@
 name: shepherding-pull-requests
 description: >-
   Use when keeping a set of repositories' open pull requests moving: reviewing
-  colleagues' PRs, getting comments on the owner's PRs addressed, merging the
-  owner's ready PRs and dependency-bot PRs, fixing broken CI, and closing out
+  colleagues' PRs, getting comments on the owner's PRs addressed, merging ready
+  PRs you opened and dependency-bot PRs, fixing broken CI, and closing out
   post-merge follow-ups. Also use before telling anyone whether a PR is
   approved, lost an approval, or needs a fresh one.
 ---
@@ -20,7 +20,8 @@ List every open PR in each repo, excluding drafts, plus the latest CI on each
 default branch. Paginate fully; never stop at a default page size. Sort each PR
 into one group: the owner's PRs (including ones agents opened under the owner's
 account), dependency bots (Renovate, Dependabot), other people's PRs, and broken
-CI.
+CI. Tell which bot opened a PR from the `<!-- opened-by-bot: <name> -->` line in
+its body, not from its labels (see `tracking-bot-work-in-linear`).
 
 **Skip draft PRs entirely**, including the owner's: no reviews, comments,
 triggers, merges or fixes until they're marked ready.
@@ -78,10 +79,12 @@ matches the inventory count for each repo.
   day, each PR at most once every 2 business days, and weekdays only. Include
   the owner's PRs in other org repos as well, found with
   `gh search prs --owner <org> --author <owner> --state open --draft=false`.
-- Merge when ready (see section 5). A `requires-review-by-chad` label holds the
-  merge until Chad posts LGTM. Infrastructure-as-code or PRs with manual steps:
-  diff the live state against main and the branch, check other open PRs, and ask
-  the owner if anything differs.
+- Merge the ones you opened when they're ready (see section 5). Leave the
+  owner's own PRs and other bots' PRs unmerged unless you're specifically asked
+  to merge them. A `requires-review-by-chad` label holds the merge until Chad
+  posts LGTM. Infrastructure-as-code or PRs with manual steps: diff the live
+  state against main and the branch, check other open PRs, and ask the owner if
+  anything differs.
 
 ## 4. Other people's PRs
 
@@ -192,8 +195,10 @@ a PR that still has an open hold thread from someone else.
 
 ## 5. Merging
 
-This applies to the owner's PRs, Datadog PRs (section 4) and automation PRs
-(dependency and release bots) only.
+This applies only to PRs you opened (their body carries your `opened-by-bot`
+line), Datadog PRs (section 4), automation PRs (dependency and release bots),
+and any other PR you're specifically asked to merge. The Datadog and automation
+rules in section 4 are standing asks. Don't merge any other PR you didn't open.
 
 1. Read the full description and every comment and thread.
 2. **Check for holds outside GitHub.** A hold is often said in chat, not on the

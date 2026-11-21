@@ -5,8 +5,8 @@ description: >-
   finish a piece of work for Chad that lasts beyond the current reply, so it is
   tracked as a Linear ticket on the Engineering Enablement (EE) board. Also use
   when you want a ticket for work for later (send it to Marty), or when you open
-  or work on a GitHub pull request for Chad, so the PR carries your bot label
-  and links its ticket.
+  or work on a GitHub pull request for Chad, so the PR carries your bot marker
+  and label and links its ticket.
 ---
 
 # Tracking bot work in Linear
@@ -164,27 +164,42 @@ link the new ticket from the original.
 When the plan changes without a status change, add a short comment with a link
 too, rather than rewriting the description.
 
-## Labeling pull requests
+## Marking and labeling pull requests
 
-Every GitHub pull request a bot opens or takes over for Chad carries a label
-naming that bot, so anyone can see which bot did the work. The PR shows Chad as
-the author, the same way Linear does.
+Every GitHub pull request a bot opens, or has a cloud agent open, for Chad
+carries an HTML comment in its body naming that bot, on its own line, in exactly
+this form:
 
-- Use `bot:` plus your name in lowercase with hyphens for spaces: `bot:cully`,
-  `bot:doc-brown`, `bot:samwise`, `bot:soxy`, `bot:coach-lasso`, `bot:kaizen`,
-  `bot:scotty`, `bot:marty`, `bot:mrs-frizzle`, or `bot:scooby`.
+```markdown
+<!-- opened-by-bot: <name> -->
+```
+
+That comment is how a bot tells whether it opened a PR. Decide ownership from
+it, not from labels. The PR shows Chad as the author, the same way Linear does.
+
+- Use your name in lowercase with hyphens for spaces: `cully`, `doc-brown`,
+  `samwise`, `soxy`, `coach-lasso`, `kaizen`, `scotty`, `marty`, `mrs-frizzle`,
+  or `scooby`.
+- Also add a `bot:` label with the same name, such as `bot:marty`, when the
+  repository allows it, so people can see at a glance which bot did the work.
+  It's for humans. Bots don't decide ownership from it.
 - Before you open a PR or launch the cloud agent that will (except in
   `chadxz/prompts`, which never gets a ticket), check the PR has a ticket (see
   "Ticket first" above). If it doesn't, create or find the ticket first.
-- This covers PRs opened by a cloud agent you launch. Put the label requirement
-  in the cloud agent's instructions, and check the live PR afterward.
+- This covers PRs opened by a cloud agent you launch. Put the exact marker line
+  and the label in the cloud agent's instructions, and check the live PR's body
+  and labels afterward.
+- Don't merge a PR you didn't open unless you're specifically asked to. Chad's
+  standing asks count, such as the one that lets any bot merge release-version
+  bump PRs (see `shepherding-pull-requests`).
 - Add the label when the PR is created, or right after with
   `gh pr edit <url> --add-label bot:<name>`. If you pick up an existing PR, add
-  your label next to any that are already on it.
+  your label next to any that are already on it, and leave its marker alone.
 - If the repository doesn't have the label yet, adding it to the PR through
   GitHub's add-labels API (a cloud agent's PR label tool does this) creates it
   on the fly, and that's fine. It doesn't need a description. Don't stop and ask
-  about a missing label.
+  about a missing label. If the repository won't take the label at all, the
+  marker is enough.
 - ADR and architecture-decision PRs also get the `requires-review-by-chad`
   label. Put that requirement in the cloud agent's brief. Don't treat those PRs
   as ready to merge from your side until Chad posts LGTM. Editorial fixes that

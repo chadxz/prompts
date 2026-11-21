@@ -283,7 +283,9 @@ Doc Brown; decisions needed; PRs held for Chad's LGTM by the
 `requires-review-by-chad` label; and the owner's PRs that have waited more than
 a workday for approval, with who could review. Use a numbered list. Refer to
 work by descriptive names with labeled links. Say nothing when nothing is
-actionable.
+actionable. When you write a status list of PRs, re-read every PR with
+`gh pr view` (state, mergedAt, mergedBy) in the same step. Don't report from
+memory.
 
 ## 9. Feedback
 

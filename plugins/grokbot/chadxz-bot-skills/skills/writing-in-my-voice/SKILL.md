@@ -98,17 +98,23 @@ without a concession-pivot formula, context before the reveal, no fanfare.
   precision.
 - Ground everything in specifics: real app names, real URLs, real numbers ("over
   ten integration partners", "~2-hour SEV-1 outage"). Specifics are more
-  persuasive than adjectives.
+  persuasive than adjectives. Get every number from a query you ran this turn,
+  and reconcile a count before you report it: re-run the query with no status
+  filter, page to the end, and confirm a sample by item. If the two sources
+  disagree, report the reconciled number and why.
 - Set up context before the point. Tell the story of how we got here, then
   reveal what's new. The reader should understand why before they see what.
 - Don't hedge. Hedging is softening a claim you believe ("it could potentially
   be argued that..."). If something is true, state it. This is different from
   honesty about real limitations, which you should state directly ("The process
-  put us in the middle of every operational change").
+  put us in the middle of every operational change"). A claim about a cause or
+  what you can or can't do is stated only when you read the evidence this turn;
+  otherwise label it "unverified, checking."
 - Link to the specific PR, ADR, doc, or Slack channel when referencing work.
   Don't describe something vaguely when you can point to it.
 - Name the people who contributed. Don't generalize with "the team". If you
-  don't know who contributed, insert `[TODO: names]` and flag it.
+  don't know who contributed, insert `[TODO: names]` and flag it. Take every
+  name and ID from a source (Entra, a Slack profile, a ticket), never a guess.
 
 ## Plain speech
 

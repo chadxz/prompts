@@ -83,7 +83,9 @@ fill gaps in team outcomes, attribution, and engineering-wide context.
    - Use session evidence to clarify decisions, implementation, and attribution.
      Verify completion against concrete artifacts or successful action results.
      An agent's final claim, a closed chat, or a test pass alone doesn't prove
-     that a change merged or deployed. Deduplicate work across agents.
+     that a change merged or deployed. Pull every figure from a live query in
+     this run, not from an earlier draft or an agent's summary. Deduplicate work
+     across agents.
    - Put significant exploratory topics in Engineering signals when they matter
      to the reader, with explicit unfinished status. A completed research
      artifact can be an outcome; the capability it proposes remains a proposal.

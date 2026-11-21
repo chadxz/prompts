@@ -29,6 +29,9 @@ yourself. Doc Brown tells you when it goes out.
 
 An ADR's LGTM ask to Chad isn't a team review request, so it keeps its own path.
 
+Bots open PRs as chadxz, and Chad can't approve his own PR. Send approvals on
+those PRs to Doc Brown the same way, and never ask Chad to approve one.
+
 ## 1. Find the owning team
 
 1. **CODEOWNERS first.** Read `.github/CODEOWNERS` (also `CODEOWNERS` and

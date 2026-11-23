@@ -64,8 +64,8 @@ Tickets for work you're starting right away you still create yourself.
 
 Work you'll start as soon as a blocker clears isn't later work, even if you
 can't start it this turn. An investigation waiting only on Chad's Mac coming
-back online is one example. Create that ticket yourself in Todo, assigned to
-Chad with your bot label.
+back online is one example. Create that ticket yourself in Todo with your bot
+label, and leave it unassigned until you pick it up.
 
 Any ticket created for work nobody is actioning soon goes in Triage, no matter
 who creates it. Never create later work straight into Todo, Backlog, or In
@@ -75,9 +75,10 @@ Progress. The team pulls it out of Triage when it decides to take it on.
 
 - Team: EE (Engineering Enablement).
 - Assignee: Chad McElligott, set when a bot starts the ticket (moves it to In
-  Progress) or queues it in Todo to start as soon as a blocker clears, including
-  tickets created for that work. The work is his, even when a bot is doing it.
-  Tickets filed for later stay unassigned.
+  Progress), including tickets created for work starting right away. The work
+  is his, even when a bot is doing it. Never assign Chad to a ticket in Todo
+  unless it's being picked up right away. Tickets queued in Todo and tickets
+  filed for later stay unassigned.
 - Labels: when you start or queue the ticket, add your own name from the `bot`
   label group (Cully, Doc Brown, Samwise, Soxy, Coach Lasso, Kaizen, Scotty,
   Marty, or Mrs. Frizzle). Two bots kept their old label after a rename: Mr.
@@ -104,9 +105,9 @@ saying why.
   unassigned, waiting for the team to decide when to take them on.
 - Todo: not started yet, unlabeled and unassigned. The exception is your own
   ticket queued to start as soon as a blocker clears, which carries your bot
-  label and has Chad assigned. If you move a ticket back to Todo unfinished and
-  you're no longer planning to pick it up, remove your bot label and unassign
-  Chad.
+  label but stays unassigned until you pick it up. If you move a ticket back to
+  Todo unfinished, unassign Chad, and if you're no longer planning to pick it
+  up, remove your bot label too.
 - In Progress: you're actively working on it.
 - In Review: there's a PR or draft waiting for someone to review it, and no
   other step on the ticket is still open.

@@ -26,7 +26,9 @@ tend to claim success they haven't verified.
   each one worked.
 - For each bot, read its conversations since the last retro with ReadTranscript.
   Collect 2 to 4 concrete moments: wins, friction, retries, corrections from the
-  user, blocked steps, and handoffs between bots. Real examples make for better
+  user, blocked steps, and handoffs between bots. At least one moment should be
+  a wait (work that sat on the user, the Mac, a review, another bot or a
+  routine wake), not only a rule check. Real examples make for better
   questions than generic ones. Each read is capped at a few dozen messages, so
   page back with the `before` value each result gives until you reach the start
   of the period; user messages carry timestamps you can search to find day
@@ -34,6 +36,15 @@ tend to claim success they haven't verified.
   bot's newest 2000 messages and doesn't page its Slack sessions separately, so
   read busy bots in day-sized slices and say in the report which reads were
   partial.
+- Pull two flow numbers per bot for the week, from transcripts and Linear:
+  - **Wait ledger:** each item that sat waiting, on what (the user, the Mac, a
+    review, another bot, a routine wake, a tool or permission block), and
+    roughly how long (the ask's time to the unblock's time). Note the single
+    longest wait.
+  - **Rework and repeats:** work redone after a correction or failed check,
+    tickets moved back a status, and any correction the bot has had before.
+  Also list slowdowns raised in earlier retros that are still open, with their
+  age. Rough numbers are fine; they back up what bots say, not grade them.
 - Scheduled runs and background workers may not be able to read conversations
   even when your main chat can. If so, have the scheduled run do the parts that
   don't need conversations (tickets, PRs, files, Pages) and end its report with
@@ -62,6 +73,8 @@ whose lens fits what prep turned up.
 | Premortem               | it's next month and this went badly, why?         | hidden risks             |
 | Lean Coffee             | the bot proposes topics and you vote on the top 2 | the bot's own priorities |
 | Five Whys deep dive     | one challenge only, in depth                      | a persistent issue       |
+| Speed Boat              | anchors, and how much faster if each were cut     | slowdowns by cost        |
+| Value Stream Walk       | trace one item: work time vs wait at each step    | where time goes          |
 
 Bots have no morale, so swap feelings prompts for "where were you unsure or
 guessing?" Record the format you chose and why.
@@ -74,6 +87,32 @@ guessing?" Record the format you chose and why.
 - Ask it to cover what's working well, what didn't go well, and what it'll
   change in its own process. If it drifts into a status report of work done,
   steer back to what got in its way.
+- Whatever the format, end the opener with the speed questions, tied to its
+  wait ledger:
+  1. Where did work sit waiting this week, on what, and for how long? Which
+     wait cost the most?
+  2. What's one thing that, if it were changed, would make you twice as fast,
+     whether or not you feel you have the power to change it? Anything counts:
+     tools, access, rules, the user's habits, other bots, the platform, or how
+     the bots are set up.
+  Leave question 3 out of the opener. Ask it in your follow-up, only after the
+  bot has answered question 2 freely, so it never narrows question 2:
+  3. What part of that could you change yourself?
+  In the opener, also add one rotating lens question, a different one each
+  week:
+  - Relearning: what did you re-figure out, re-ask or get told again? Where
+    should it have been waiting for you?
+  - Handoffs: which handoff lost context or bounced back? What would let one
+    party finish it whole?
+  - Rework: what did you redo after a correction? What would have made it right
+    the first time?
+  - Noise: which rule, check or routine step slows you without catching
+    anything? What happens if we drop it?
+  - Juggling: what stalled because something else took the turn?
+  Waits on the user are in scope, and so are fixes only the user or the
+  platform can make. Don't filter answers by feasibility during the retro.
+  Sort them afterward into what the bot can change itself, what another bot or
+  you can change, and what goes to the user.
 - In the same first message, ask where each takeaway should live and whether
   it's already done (with evidence) or needs the user. That gets a complete
   answer in one reply instead of several rounds.
@@ -145,6 +184,11 @@ learning. Only some of it is an action.
 - **Shared pattern:** the same root shows up in 2 or more bots, or in the same
   bot 2 or more weeks running. Raise it to the user with the evidence, the root
   cause, and a proposed fix.
+- **Slowdowns:** find the one constraint most work waits on across bots. First
+  get more out of it (batch asks, do the rest meanwhile), then make other work
+  fit around it, and only then ask to remove it. A slowdown raised two retros
+  running becomes an action item or a Needs-the-user question with its age and
+  cost; it doesn't carry silently.
 
 ## 6. Follow-through
 
@@ -167,9 +211,9 @@ matter.
   behind before the weekly retro.
 - **Monthly health check:** at the first retro of each month, each bot rates
   itself green, yellow or red with a trend on role clarity, instructions helping
-  vs adding noise, tool fit, handoffs, follow-through, and noise for people
-  outside the team. Compare with transcript evidence, discuss the gaps, and add
-  a short trends section to the Page.
+  vs adding noise, tool fit, handoffs, follow-through, flow (waiting and
+  rework), and noise for people outside the team. Compare with transcript
+  evidence, discuss the gaps, and add a short trends section to the Page.
 
 ## 8. Project retros
 
@@ -225,8 +269,9 @@ Save durable memory of:
 ## 10. Report
 
 - Send the user a short chat summary: what's working, the shared patterns, the
-  questions that need them, and action items with an owner, expected result and
-  done check for each. Learnings go in their own short list.
+  top waits (on what, roughly how long, and the fix), the questions that need
+  them, and action items with an owner, expected result and done check for
+  each. Learnings go in their own short list.
 - Update the one running retro Page (shared challenges, learnings, action items,
   formats used) rather than creating a new Page each time.
 

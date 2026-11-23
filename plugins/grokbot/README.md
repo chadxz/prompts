@@ -28,9 +28,10 @@ and my bots' routing rules, and they change without notice.
 
 `chadxz-bot-skills` holds the orchestration skills every bot shares: tracking
 work in Linear, writing in my voice, shepherding pull requests, routing PR
-review requests to Slack, choosing Notion tools, and the checklist every brief
-to a cloud agent has to carry. Team bots in Slack can only see plugin skills and
-their own team skills, so anything they need has to live here.
+review requests to Slack, choosing Notion tools, managing Convergint employee
+access, writing RFCs, and the checklist every brief to a cloud agent has to
+carry. Team bots in Slack can only see plugin skills and their own team skills,
+so anything they need has to live here.
 
 `chadxz-coding-skills` holds the skills cloud agents use while coding: creating
 commits and creating pull requests. Cloud agents install team marketplace
@@ -39,8 +40,9 @@ work on my Mac are conditional.
 
 `chadxz-personal-skills` holds skills that only make sense for my personal bots:
 building complex features, enriching idea cards, briefing engineering
-leadership, reporting work activity, creating DATABASICS expense reports, and
-running bot retrospectives. Add it only to personal bots.
+leadership, reporting work activity, making product announcement videos,
+creating DATABASICS expense reports, and running bot retrospectives. Add it only
+to personal bots.
 
 ## Importing the marketplace
 
@@ -68,12 +70,13 @@ bot.
 
 ## Changing a plugin skill
 
-Bots can't edit plugin skills. To change one, open a pull request against this
-repository. After it merges, Auto Refresh picks up the change, and bots and
-cloud agents get it on their next start.
+Bots can't edit plugin skills in place. To change one, commit the change
+straight to `main` in this repository, with no pull request or ticket. Auto
+Refresh picks up the push, and bots and cloud agents get it on their next start.
+Change only the copies under `plugins/grokbot/`, not their counterparts in the
+top-level `skills/` folder.
 
-Before opening the pull request, run Cursor's plugin template validator from the
-repository root:
+Before pushing, run Cursor's plugin template validator from the repository root:
 
 ```bash
 curl -fsSL -o /tmp/validate-template.mjs \

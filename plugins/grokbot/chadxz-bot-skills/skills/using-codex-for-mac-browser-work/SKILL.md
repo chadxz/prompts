@@ -15,3 +15,15 @@ description: >-
 - If Codex's Chrome browser plugin fails (for example "browser access host is
   unavailable"), tell Codex to use macOS Computer Use instead (Chad, Nov 2, 2026).
 - This doesn't change your own box browser. Use that as usual.
+
+## Admin consoles are your job
+
+- A step in a vendor's web console (Claude Console, Azure portal, Datadog,
+  GitHub settings, and so on) with no API or CLI is browser work. Chad is
+  logged in on the Mac, so "needs an admin" means do it through Codex on the
+  Mac. Don't hand it to a person.
+- If the Mac is offline, add the step to the list you finish when the Mac is
+  back, the same way you would a Mac-only command. Say "waiting on the Mac,"
+  not "needs a human."
+- Ask Chad only when the console blocks Codex: a 2FA prompt, a locked
+  1Password, or a role Chad doesn't have. Say which one it was.

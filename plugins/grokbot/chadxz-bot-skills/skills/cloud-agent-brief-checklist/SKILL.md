@@ -99,3 +99,11 @@ means the agent will guess, and its guess shows up under Chad's name.
     complex feature, or deep problem solving (an investigation, a root cause,
     hard debugging), launch the agent with `claude-fable-5-2` and
     `model_params.effort: medium`.
+12. **Steps outside the repo are yours.** A cloud agent can't reach Chad's Mac
+    or vendor consoles. Before launching, list any console or live setup step
+    the work needs, plan to do it yourself (see
+    `using-codex-for-mac-browser-work`), and do it before the agent finishes if
+    you can, so the PR ships with real values. If the agent must use
+    placeholders, tell it to name each one in its final report, not to call
+    them a manual or human step, and not to leave a review thread saying so.
+    Then fill them in yourself.

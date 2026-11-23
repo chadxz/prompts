@@ -163,8 +163,10 @@ Close while any step on it is still open, including a manual post-merge step
 like an apply, a migration, or deleting leftover state. Finish the step
 yourself, especially a small one, rather than splitting it into a new ticket, so
 closing tickets doesn't leave a trail of new ones behind. Split a step out only
-when you truly can't do it, such as when it needs access you don't have, and
-link the new ticket from the original.
+when you truly can't do it, such as when it needs access Chad doesn't have
+either. A console step Chad's Mac browser can reach isn't missing access (see
+`using-codex-for-mac-browser-work`). The same applies to steps that block a
+merge, not just steps after one. Link the new ticket from the original.
 
 **Another team's work lives in their thread.** When another team owns the work,
 the ticket's real status is in that team's thread: their Slack thread, ticket,

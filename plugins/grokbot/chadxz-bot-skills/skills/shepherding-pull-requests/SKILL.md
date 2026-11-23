@@ -111,7 +111,10 @@ matches the inventory count for each repo.
   off. After your own review finds the change clean and safe, approve it as the
   owner, merge it (section 5), and tell the owner afterward with a one-line
   verdict per PR. Anything with manual steps, skipped deploy jobs or
-  infrastructure-as-code still follows section 3's check-and-ask rule.
+  infrastructure-as-code still follows section 3's check-and-ask rule. PRs
+  opened by `eng-enablement-release-daemon[bot]` can always be merged without
+  asking anyone to review them, as long as they're green and you don't bypass
+  branch protections or rulesets.
 - **No cute comments or GIFs on automation PRs.** Don't leave jokes, playful
   remarks or GIFs on bot-authored PRs. Any approval text or comment you leave is
   for the other engineers reading the PR, not the bot: never address the bot

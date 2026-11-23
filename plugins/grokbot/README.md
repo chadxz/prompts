@@ -27,7 +27,7 @@ and my bots' routing rules, and they change without notice.
 | `chadxz-personal-skills` | My personal bots only, never team bots  |
 
 `chadxz-bot-skills` holds the orchestration skills every bot shares: tracking
-work in Linear, writing in my voice, shepherding pull requests, routing PR
+work in Linear, weighing requests before agreeing, using Codex for browser work on my Mac, writing in my voice, shepherding pull requests, routing PR
 review requests to Slack, choosing Notion tools, managing Convergint employee
 access, writing RFCs, and the checklist every brief to a cloud agent has to
 carry. Team bots in Slack can only see plugin skills and their own team skills,

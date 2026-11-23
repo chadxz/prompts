@@ -2,7 +2,7 @@
   "name": "chadxz-bot-skills",
   "displayName": "Chad's Bot Skills",
   "version": "0.1.0",
-  "description": "Orchestration skills shared by all of Chad's Grok Bot bots, including team bots in Slack: Linear tracking, writing in Chad's voice, PR shepherding and review routing, Notion tool choice, writing RFCs, and the cloud agent brief checklist. Chad's personal bot plugin, not team-approved tooling.",
+  "description": "Orchestration skills shared by all of Chad's Grok Bot bots, including team bots in Slack: Linear tracking, weighing requests, Mac browser work through Codex, writing in Chad's voice, PR shepherding and review routing, Notion tool choice, writing RFCs, and the cloud agent brief checklist. Chad's personal bot plugin, not team-approved tooling.",
   "author": {
     "name": "Chad McElligott"
   },

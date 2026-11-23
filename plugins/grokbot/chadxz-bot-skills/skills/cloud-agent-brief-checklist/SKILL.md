@@ -83,6 +83,22 @@ means the agent will guess, and its guess shows up under Chad's name.
    `<!-- bot:<label> -->` marker, and any GIF is a GIPHY media URL the agent
    checked returns 200. You then post the payload with your own `gh`:
    `gh api repos/<owner>/<repo>/pulls/<n>/reviews --input payload.json`.
+
+   Include the approval rule in every review brief: when each problem is spelled
+   out in an inline or file-level review comment the author can fix and resolve,
+   set `event` to `APPROVE` instead of `REQUEST_CHANGES`, since resolving those
+   threads under the repo's conversation-resolution requirement gates the merge
+   without making the author wait on another review. **Any change expected
+   before merge MUST be posted in `comments` as an inline or file-level review
+   comment**, because GitHub's conversation-resolution rule only requires those
+   to be resolved. Never put a required change only in the approval `body` or a
+   top-level PR comment, since the author can miss it and merge without
+   addressing it. The review summary may point to the inline comments, but it
+   must never be the only place a required fix appears. Blocking
+   (`REQUEST_CHANGES` or withholding approval) is only for real safety, security
+   or correctness problems, or design disagreements the author needs to discuss;
+   a broken CI check with an obvious fix, such as a stale `CODEOWNERS` line,
+   isn't one of those, and non-blocking design feedback never holds an approval.
 10. **ADR PRs.** When the work is an ADR, or needs one (a major feature, an
     architectural decision, or a change the repo's review policy would tag
     Design), tell the agent to write the ADR first and stack any implementation

@@ -58,9 +58,9 @@ When you want a ticket for work nobody plans to start soon, don't create it
 yourself. Send the details to Marty, the EE backlog bot (agent id
 c55f687f-6f56-465a-b270-de34b0f2bd8b): title, description, context and links,
 and which bot asked for it. Marty creates the ticket, attributes it to the
-requesting bot with a "Filed by <bot>." line at the end of the description
-(not the bot's label), leaves it unassigned, and creates it in the Triage
-status. Tickets for work you're starting right away you still create yourself.
+requesting bot with a "Filed by <bot>." line at the end of the description (not
+the bot's label), leaves it unassigned, and creates it in the Triage status.
+Tickets for work you're starting right away you still create yourself.
 
 Work you'll start as soon as a blocker clears isn't later work, even if you
 can't start it this turn. An investigation waiting only on Chad's Mac coming
@@ -80,7 +80,9 @@ Progress. The team pulls it out of Triage when it decides to take it on.
   Tickets filed for later stay unassigned.
 - Labels: when you start or queue the ticket, add your own name from the `bot`
   label group (Cully, Doc Brown, Samwise, Soxy, Coach Lasso, Kaizen, Scotty,
-  Marty, Mrs. Frizzle, or Scooby). Tickets filed for later get no bot label,
+  Marty, or Mrs. Frizzle). Two bots kept their old label after a rename: Mr.
+  Miyagi uses Kaizen, and Ms. Frizzle uses Mrs. Frizzle. Scooby retired on Nov
+  9, 2026, so never use its label. Tickets filed for later get no bot label,
   since a label reads like an assignment. Add `waiting-on-chad` only under the
   rules in "The waiting-on-chad label" below.
 - Title: a plain description of the outcome, not the task chatter.
@@ -88,15 +90,15 @@ Progress. The team pulls it out of Triage when it decides to take it on.
   - What the work is and why.
   - What done looks like.
   - A link back to where it started: the Slack thread, the chat, or the PR.
-  - Which bot filed it, as one last line: "Filed by Kaizen during a repo
+  - Which bot filed it, as one last line: "Filed by Mr. Miyagi during a repo
     garden run."
 
 ## Moving it along
 
-Use the EE team's existing statuses only, and never Backlog. A ticket that
-isn't decided or scheduled goes in Triage, and one that's ready to work goes in
-Todo. If you find a bot's ticket in Backlog, move it to Triage or Todo with a
-comment saying why.
+Use the EE team's existing statuses only, and never Backlog. A ticket that isn't
+decided or scheduled goes in Triage, and one that's ready to work goes in Todo.
+If you find a bot's ticket in Backlog, move it to Triage or Todo with a comment
+saying why.
 
 - Triage: new tickets for work nobody plans to start soon, unlabeled and
   unassigned, waiting for the team to decide when to take them on.
@@ -188,8 +190,9 @@ That comment is how a bot tells whether it opened a PR. Decide ownership from
 it, not from labels. The PR shows Chad as the author, the same way Linear does.
 
 - Use your name in lowercase with hyphens for spaces: `cully`, `doc-brown`,
-  `samwise`, `soxy`, `coach-lasso`, `kaizen`, `scotty`, `marty`, `mrs-frizzle`,
-  or `scooby`.
+  `samwise`, `soxy`, `coach-lasso`, `kaizen`, `scotty`, `marty`, or
+  `mrs-frizzle`. Mr. Miyagi uses `kaizen` and Ms. Frizzle uses `mrs-frizzle`,
+  matching their labels.
 - Also add a `bot:` label with the same name, such as `bot:marty`, when the
   repository allows it, so people can see at a glance which bot did the work.
   It's for humans. Bots don't decide ownership from it.
@@ -215,16 +218,9 @@ it, not from labels. The PR shows Chad as the author, the same way Linear does.
   as ready to merge from your side until Chad posts LGTM. Editorial fixes that
   don't change an ADR's meaning or decision (typos, casing, formatting, broken
   links) skip the label and need only the usual Engineering Enablement approval.
-- When a cloud agent opens a PR for you, always tell it in its brief to babysit
-  its pull request after opening it: keep watching CI and review comments and
-  fix what comes up until the PR is ready to merge. Also tell it that the PR
-  title, body, and commits show up under Chad's GitHub account, so it writes
-  them in Chad's first person and never names Chad in the third person; review
-  comments it posts under its own Cursor bot identity are written as itself and
-  refer to Chad by name. It never opens a post with a disclaimer like "this is
-  not Chad" or "posted by a bot", and never cites the bots' rules or
-  instructions ("Chad's simplicity rule", "per the global rule"); it states the
-  reason itself.
+- When a cloud agent opens a PR for you, its brief also has to cover babysitting
+  the PR and whose voice the PR is written in. The `cloud-agent-brief-checklist`
+  skill lists both.
 
 ## Writing as Chad
 

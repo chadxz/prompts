@@ -102,10 +102,22 @@ matches the inventory count for each repo.
   GIF (the owner likes them; skip only on serious or sensitive changes) embedded
   as Markdown from a GIPHY media URL you've checked loads. Keep it clean and
   light, and vary the GIFs. The warm message and GIF are for human teammates
-  only, never automation PRs. If your comments aren't blockers, approve anyway,
-  but post every comment you want addressed as its own inline or file-level
-  comment (never only in the review summary) so the author has to resolve it
-  before merging. Skip feedback a bot or someone else already left.
+  only, never automation PRs. Skip feedback a bot or someone else already left.
+- **Approve when every fix can be tracked as a review thread.** When reviewing
+  someone else's PR, if each problem you found is spelled out in an inline or
+  file-level review comment the author can fix and resolve, `APPROVE` the PR.
+  Don't `REQUEST_CHANGES` and make them wait on another review; resolving those
+  threads under the repo's conversation-resolution requirement gates the merge.
+  **Any change you expect before merge MUST be posted as an inline or file-level
+  review comment**, because GitHub's conversation-resolution rule only requires
+  those to be resolved. Never put a required change only in the approval body or
+  a top-level PR comment, since the author can miss it and merge without
+  addressing it. The review summary may point to the inline comments, but it
+  must never be the only place a required fix appears. Blocking
+  (`REQUEST_CHANGES` or withholding approval) is only for real safety, security
+  or correctness problems, or design disagreements the author needs to discuss.
+  A broken CI check with an obvious fix, such as a stale `CODEOWNERS` line,
+  isn't one of those, and non-blocking design feedback never holds an approval.
 - **Automation PRs** (Renovate, Dependabot, release-daemon release PRs, other
   bot-authored dependency or release bumps): if the owner allows it, don't hold
   off. After your own review finds the change clean and safe, approve it as the
@@ -152,7 +164,11 @@ matches the inventory count for each repo.
 - **Review checklist** (spell these out in any brief that hands a review to
   another agent, since it won't share your memory): flag leftover dual-mode or
   optional code for an approach the team dropped, so only the chosen path
-  remains.
+  remains. `APPROVE` when every fix is spelled out in an inline or file-level
+  review comment the author can resolve, put every required pre-merge change in
+  an inline or file-level comment (never only in the approval body or summary),
+  and reserve blocking for real safety, security, correctness, or design
+  disagreements.
 - Post reviews as the owner only with your own `gh` (check that `gh auth status`
   shows the owner). Never post through Linear's diff-review tools or a cloud
   agent's Cursor bot.

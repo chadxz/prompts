@@ -65,9 +65,12 @@ matches the inventory count for each repo.
 - Obvious mistakes in an agent's own work, like an inaccurate comment or doc:
   have the agent fix them, then mention it.
 - Review feedback on any PR: when it points at a mistake that could happen
-  again, make sure it becomes a rule at the narrowest level that fits (a
-  subdirectory agent rule, a repo-wide agent rule, a bot rule, or a global bot
-  rule), following "Turn feedback into a rule" in the `commenting-on-prs` skill.
+  again, make sure it becomes a rule at the narrowest level that fits: the
+  subdirectory's `AGENTS.md`, the repo's root agent instructions, the bot's own
+  skill or memory, or a shared skill in `chadxz/prompts` when any bot could make
+  it. Add repo rules to the same PR when they fit its scope, or open a
+  follow-up. Tell the owner about any new bot or shared rule rather than adding
+  it silently. Skip one-off typos and feedback that doesn't generalize.
 - Review triggers: one initial bot-review round per PR. Post a follow-up round
   only after substantial changes.
 - **Review requests in Slack:** when the owner's ready PRs are waiting on a
@@ -239,8 +242,8 @@ rules in section 4 are standing asks. Don't merge any other PR you didn't open.
    computer or the owner's machine. Check `gh auth status` first; if your own
    computer is logged in, use it and don't wait on the owner's machine. Example:
    `gh api -X PUT repos/{owner}/{repo}/pulls/{top}/merge-async -f
-   merge_method=merge -f sha={top head sha}` returns `"status":"pending"` and a
-   `uuid`. Poll `gh api repos/{owner}/{repo}/pulls/{top}/merge-async/{uuid}`
+   merge_method=merge -f merge_action=direct_merge -f sha={top head sha} -F
+   bypass_rules=false` returns `"status":"pending"` and a `uuid`. Poll `gh api repos/{owner}/{repo}/pulls/{top}/merge-async/{uuid}`
    every few seconds until it reads `"status":"merged"` with the merge commit
    `sha`. Then run `gh pr view` on every PR in the stack and confirm each one
    reads MERGED with that commit before you report the merge.

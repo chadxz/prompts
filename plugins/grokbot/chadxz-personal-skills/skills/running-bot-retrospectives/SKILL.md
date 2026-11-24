@@ -113,6 +113,8 @@ guessing?" Record the format you chose and why.
   platform can make. Don't filter answers by feasibility during the retro.
   Sort them afterward into what the bot can change itself, what another bot or
   you can change, and what goes to the user.
+- Also ask whether it asked a person, the user or another bot to do something
+  it could have done itself. Treat a yes as a rule slip and fix its source.
 - In the same first message, ask where each takeaway should live and whether
   it's already done (with evidence) or needs the user. That gets a complete
   answer in one reply instead of several rounds.

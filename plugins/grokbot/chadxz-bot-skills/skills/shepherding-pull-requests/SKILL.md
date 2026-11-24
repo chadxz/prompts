@@ -79,8 +79,11 @@ matches the inventory count for each repo.
   each PR to Doc Brown as that skill describes and doesn't post. Doc Brown uses
   the skill to find each team's channel and decide whether to ping. It holds the
   rules for ready PRs only, at most one batched message per team channel per
-  day, each PR at most once every 2 business days, and weekdays only. Include
-  the owner's PRs in other org repos as well, found with
+  day, each PR at most once every 2 business days, and weekdays only. The daily
+  and 2-business-day limits don't apply to #team-eng-enablement-internal (EE's
+  own channel, C08MGCF1FHN), where asks and re-asks can go out on any weekday
+  pass when useful, without spamming the same PR more than once per pass.
+  Include the owner's PRs in other org repos as well, found with
   `gh search prs --owner <org> --author <owner> --state open --draft=false`.
 - Merge the ones you opened when they're ready (see section 5). Leave the
   owner's own PRs and other bots' PRs unmerged unless you're specifically asked

@@ -19,7 +19,7 @@ workspace. Chad confirmed it on Oct 27, 2026. The research behind it is in
 Doc Brown is the review coordinator. It's the only bot that posts review
 requests to humans, in Slack channels or DMs, and the only one that @-mentions
 people or teams on a PR to ask for review. One sender can dedupe the requests,
-so a team gets one batch a day and a PR isn't pinged twice.
+so teams outside EE get one batch a day and a PR isn't pinged twice.
 
 Every other bot that needs a review on a PR hands it to Doc Brown (agent id
 23ee08e5-5092-4d3a-8216-76e05aff4ed6) with SendToAgent, using priority: true.
@@ -98,6 +98,13 @@ bot hands it.
    sending rules in your instructions. Record what you sent, so the next pass
    can respect rule 5, and tell each bot that handed you a PR when its request
    went out.
+
+**Exception for #team-eng-enablement-internal (EE's own channel, C08MGCF1FHN):**
+EE's channel has none of the posting limits. The limits in rules 4 and 5 (one
+batched message per channel per day, holding the rest until the next weekday,
+and the once-every-2-business-days per-PR re-ask limit) don't apply there. EE
+asks and re-asks can go out on any pass when useful, without spamming the same
+PR more than once per pass. Weekdays only (rule 6) still applies.
 
 ## 4. Keeping the map current
 

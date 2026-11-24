@@ -205,8 +205,12 @@ matter.
   overrides something a bot did, or the same correction happens twice. Run a
   short blameless whys with that bot and land one action item (within the cap)
   or a learning. Open with your timeline from its conversation and ask it to
-  correct you and confirm the trigger from logs; that usually gets the root
-  cause, the fix and its evidence in one reply. When it closes, write it to the
+  correct you and confirm the trigger from logs, then ask the whys and the
+  smallest fix as three numbered questions; that usually gets the root cause,
+  the fix and its evidence in one reply. When a bot broke a rule it had already
+  saved, ask what source told it otherwise (a repo doc, ADR, runbook or cloud
+  agent brief) and fix that source, because a specific written instruction met
+  mid-task beats a general rule in memory. When it closes, write it to the
   running retro Page right away, not just to memory, so the Page doesn't fall
   behind before the weekly retro.
 - **Monthly health check:** at the first retro of each month, each bot rates

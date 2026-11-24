@@ -30,10 +30,10 @@ and my bots' routing rules, and they change without notice.
 work in Linear, weighing requests before agreeing, using Codex for browser work
 on my Mac, writing in my voice, shepherding pull requests, routing PR review
 requests to Slack, choosing Notion tools, working in Notion, writing Diataxis
-documentation, managing Convergint employee access, writing RFCs, and the
-checklist every brief to a cloud agent has to carry. Team bots in Slack can only
-see plugin skills and their own team skills, so anything they need has to live
-here.
+documentation, managing Convergint employee access, writing RFCs, enriching idea
+cards, and the checklist every brief to a cloud agent has to carry. Team bots in
+Slack can only see plugin skills and their own team skills, so anything they
+need has to live here.
 
 `chadxz-coding-skills` holds the skills cloud agents use while coding: creating
 commits and creating pull requests. Cloud agents install team marketplace
@@ -41,10 +41,9 @@ plugins when they start, so these are written for cloud VMs. The parts that only
 work on my Mac are conditional.
 
 `chadxz-personal-skills` holds skills that only make sense for my personal bots:
-building complex features, enriching idea cards, briefing engineering
-leadership, reporting work activity, making product announcement videos,
-creating DATABASICS expense reports, and running bot retrospectives. Add it only
-to personal bots.
+building complex features, briefing engineering leadership, reporting work
+activity, making product announcement videos, creating DATABASICS expense
+reports, and running bot retrospectives. Add it only to personal bots.
 
 ## Importing the marketplace
 

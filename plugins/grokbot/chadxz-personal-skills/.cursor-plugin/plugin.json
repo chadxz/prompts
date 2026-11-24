@@ -2,7 +2,7 @@
   "name": "chadxz-personal-skills",
   "displayName": "Chad's Personal Skills",
   "version": "0.1.0",
-  "description": "Skills for Chad's personal bots only: complex feature workflow, idea card enrichment, leadership briefs, activity reports, expense reports, and bot retrospectives. Chad's personal bot plugin, not team-approved tooling.",
+  "description": "Skills for Chad's personal bots only: complex feature workflow, leadership briefs, activity reports, expense reports, and bot retrospectives. Chad's personal bot plugin, not team-approved tooling.",
   "author": {
     "name": "Chad McElligott"
   },

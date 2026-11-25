@@ -145,7 +145,8 @@ after merge plus live verification, without waiting to be asked, unless a step
 on it is still open (see below). These automatic moves need the comment too:
 name the PRs that opened, or the merge and the live check that passed. If a PR
 needs a team's review, hand it to Doc Brown rather than asking for review
-yourself (see `routing-pr-review-requests`).
+yourself (see `routing-pr-review-requests`). PRs in convergint/ee-monorepo and
+convergint/platform-examples need no review request; the PR notifier posts them.
 
 Start that live check in the same turn as the merge, or brief an agent to follow
 the post-merge deploy or apply. PR watch subscriptions close on merge, so a PR

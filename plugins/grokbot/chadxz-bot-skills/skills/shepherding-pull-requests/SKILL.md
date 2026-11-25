@@ -76,7 +76,9 @@ matches the inventory count for each repo.
 - **Review requests in Slack:** when the owner's ready PRs are waiting on a
   code-owner or team review, follow the `routing-pr-review-requests` skill. Only
   Doc Brown posts review requests or @-mentions reviewers; any other bot hands
-  each PR to Doc Brown as that skill describes and doesn't post. Doc Brown uses
+  each PR to Doc Brown as that skill describes and doesn't post. PRs in
+  convergint/ee-monorepo and convergint/platform-examples get no review request
+  at all; the PR notifier bot posts them. Doc Brown uses
   the skill to find each team's channel and decide whether to ping. It holds the
   rules for ready PRs only, at most one batched message per team channel per
   day, each PR at most once every 2 business days, and weekdays only. The daily

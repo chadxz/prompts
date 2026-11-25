@@ -30,7 +30,9 @@ means the agent will guess, and its guess shows up under Chad's name.
    agent not to keep polling an already-ready PR, and not to end its run early
    while the PR still needs work. Tell it never to ask people or teams for
    review, in Slack or by @-mentioning them on the PR. If the PR needs a team's
-   review, you hand it to Doc Brown (see `routing-pr-review-requests`).
+   review, you hand it to Doc Brown (see `routing-pr-review-requests`), except
+   in convergint/ee-monorepo and convergint/platform-examples, where the PR
+   notifier posts it and no request is needed.
 4. **Merge conflicts.** Tell the agent to resolve merge conflicts itself without
    asking.
 5. **Stacked work.** When the work spans several PRs, tell the agent to use

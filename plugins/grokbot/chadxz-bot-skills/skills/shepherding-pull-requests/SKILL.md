@@ -74,7 +74,9 @@ matches the inventory count for each repo.
 - Review triggers: one initial bot-review round per PR. Post a follow-up round
   only after substantial changes.
 - **Review requests in Slack:** when the owner's ready PRs are waiting on a
-  code-owner or team review, follow the `routing-pr-review-requests` skill. Only
+  code-owner or team review, follow the `routing-pr-review-requests` skill.
+  Skip ee-monorepo and platform-examples PRs: the PR notifier posts those in
+  the Engineering Enablement channel, so nobody sends a review ask. Only
   Doc Brown posts review requests or @-mentions reviewers; any other bot hands
   each PR to Doc Brown as that skill describes and doesn't post. PRs in
   convergint/ee-monorepo and convergint/platform-examples get no review request

@@ -27,6 +27,12 @@ Give the PR URL, the owning team if you know it (section 1), whether it's urgent
 and why, and anything reviewers should know. Then stop: don't post the request
 yourself. Doc Brown tells you when it goes out.
 
+**Except ee-monorepo and platform-examples.** PRs in convergint/ee-monorepo and
+convergint/platform-examples get no review request at all: don't hand them to
+Doc Brown, and Doc Brown doesn't post Slack asks for them. The PR notifier bot
+already posts them in the team Engineering Enablement GitHub channel, and the
+team reviews what shows up there. Every other repo still goes through Doc Brown.
+
 An ADR's LGTM ask to Chad isn't a team review request, so it keeps its own path.
 
 Bots open PRs as chadxz, and Chad can't approve his own PR. Send approvals on

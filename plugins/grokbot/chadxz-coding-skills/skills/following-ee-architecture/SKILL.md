@@ -72,8 +72,11 @@ RFC, and again before you write any "Rejected because" line.
 
 ## When you diverge from what's there
 
-Diverging is fine when another approach suits the problem better. The design
-just has to show it was a choice, so reviewers can weigh it.
+Diverging is fine when another approach suits the problem better. An
+architectural divergence from an existing pattern is an architectural decision,
+so it gets an ADR. Follow the repo's ADR process in `docs/adrs/README.md` and
+the "Architecture decisions" section of `CONTRIBUTING.md` in ee-monorepo. In the
+ADR:
 
 1. Name the existing primitive or pattern you're not using, and link the most
    recent app that uses it.
@@ -84,8 +87,6 @@ just has to show it was a choice, so reviewers can weigh it.
    what it would cost from scratch.
 4. Mention anything the divergence adds for others, such as a new runtime or
    library to maintain.
-5. If other apps would likely adopt the new approach too, consider writing it up
-   as its own ADR, or an RFC if it reaches beyond EE.
 
 ## Example: Temporal
 
@@ -118,8 +119,9 @@ you.
   workload types such as `web-application` and `worker`, and library paths.
 - In Alternatives, if you don't use an existing primitive, name it and say why
   something else fits better, as in the divergence steps above.
-- Follow the `writing-rfcs` skill for RFCs and `docs/adrs/README.md` in
-  ee-monorepo for ADRs. ADRs carry no attribution.
+- Follow the `writing-rfcs` skill for RFCs, and the ADR process in
+  `docs/adrs/README.md` in ee-monorepo for ADRs, including when a decision also
+  needs an RFC.
 
 ## When an ADR contradicts the code
 

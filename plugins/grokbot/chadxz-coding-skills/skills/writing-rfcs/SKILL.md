@@ -15,7 +15,7 @@ An RFC asks for feedback. It isn't an approval gate, a project plan, or a resear
 
 - Write an RFC when the change reaches beyond one team, or when you want input from people outside it (another team's area, unknown unknowns).
 - Don't write one when the author can't act on the decision, or when the change doesn't clearly beat the status quo.
-- A decision that stays inside one repo goes in an ADR instead.
+- A decision that stays inside one repo goes in an ADR instead (see the `writing-adrs` skill).
 
 ## 2. Set up the page
 

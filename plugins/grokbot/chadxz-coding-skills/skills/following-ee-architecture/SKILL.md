@@ -119,9 +119,9 @@ you.
   workload types such as `web-application` and `worker`, and library paths.
 - In Alternatives, if you don't use an existing primitive, name it and say why
   something else fits better, as in the divergence steps above.
-- Follow the `writing-rfcs` skill for RFCs, and the ADR process in
-  `docs/adrs/README.md` in ee-monorepo for ADRs, including when a decision also
-  needs an RFC.
+- Follow the `writing-rfcs` skill for RFCs. For ADRs, follow the `writing-adrs`
+  skill and the ADR process in `docs/adrs/README.md` in ee-monorepo, including
+  when a decision also needs an RFC.
 
 ## When an ADR contradicts the code
 

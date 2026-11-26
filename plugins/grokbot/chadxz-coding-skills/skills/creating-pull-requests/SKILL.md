@@ -60,6 +60,7 @@ Major features and architectural decisions get documented as an ADR
 deliverable is an ADR or the documentation of a major feature or architectural
 decision.
 
+- Write the ADR itself with the `writing-adrs` skill.
 - Keep the PR standalone: ADR content only. Don't bundle the implementation of
   that decision into it; implementation goes in a separate PR. If that PR is
   opened before the ADR merges, stack it on the ADR PR with `gh stack`, with the

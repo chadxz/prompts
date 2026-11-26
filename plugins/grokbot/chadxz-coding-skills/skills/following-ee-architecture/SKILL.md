@@ -17,7 +17,9 @@ EE's platform already gives teams a lot for free: workload types, secrets,
 databases, Temporal, auth, observability, and deploys. A design that builds its
 own version of one of those, or rejects one for the wrong reason, makes the
 platform harder to run and harder to learn. Before you propose anything, find
-out what's already there and build on it.
+out what's already there and start from it. Existing code is the default
+starting point, not a rule. When a different approach fits the problem better,
+use it and say why.
 
 ## The code is the precedent, not the ADRs
 
@@ -64,29 +66,26 @@ RFC, and again before you write any "Rejected because" line.
    it traded away. Use that to judge whether the same reasons apply to your
    case. Don't treat an ADR's decision or its rejected alternatives as binding;
    the code from steps 3 and 4 is what we do now.
-7. **Use the existing pattern by default.** Build it the way the newest app
-   does. Copy that app's pattern rather than inventing a variant.
-8. **If you still want to depart, say so in the design.** See the next section.
+7. **Start from the existing pattern.** Build it the way the newest app does,
+   unless a different approach fits this problem better.
+8. **If you diverge, say so in the design.** See the next section.
 
-## When you depart from what's there
+## When you diverge from what's there
 
-A departure is fine when it's earned. The design has to show it was a choice,
-not an accident.
+Diverging is fine when another approach suits the problem better. The design
+just has to show it was a choice, so reviewers can weigh it.
 
 1. Name the existing primitive or pattern you're not using, and link the most
    recent app that uses it.
-2. Give the reason it doesn't fit this case. The reason has to be a fact you
-   checked this session, specific to this case, and decisive. "Adds complexity"
-   isn't a reason. "This needs a synchronous answer inside the caller's HTTP
-   request, and a workflow would make the caller poll" is.
-3. Price the existing primitive at what it really costs on our platform, not
-   what it would cost from scratch. Check what the platform already provides
-   before you count setup work against it.
-4. Say what the departure costs others: a new runtime to patch, a new library to
-   learn, a second way to do the same thing, a new on-call surface.
-5. If the departure would make sense for other apps too, it's a platform change.
-   Write it as its own ADR, or an RFC if it reaches beyond EE, rather than
-   burying it in one app's design.
+2. Say plainly why something else fits better here, for example "this needs a
+   synchronous answer inside the caller's HTTP request, and a workflow would
+   make the caller poll."
+3. Compare against what the existing primitive really costs on our platform, not
+   what it would cost from scratch.
+4. Mention anything the divergence adds for others, such as a new runtime or
+   library to maintain.
+5. If other apps would likely adopt the new approach too, consider writing it up
+   as its own ADR, or an RFC if it reaches beyond EE.
 
 ## Example: Temporal
 
@@ -117,8 +116,8 @@ you.
 - In Decision, use the platform's own names for things: manifest fields such as
   `useTemporal`, `authenticationGate`, `databases`, and `deploymentGate`,
   workload types such as `web-application` and `worker`, and library paths.
-- In Alternatives, if you reject an existing primitive, follow the departure
-  steps above. Every "Rejected because" line needs a checked reason.
+- In Alternatives, if you don't use an existing primitive, name it and say why
+  something else fits better, as in the divergence steps above.
 - Follow the `writing-rfcs` skill for RFCs and `docs/adrs/README.md` in
   ee-monorepo for ADRs. ADRs carry no attribution.
 

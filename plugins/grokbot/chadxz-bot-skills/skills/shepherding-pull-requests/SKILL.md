@@ -220,6 +220,17 @@ first. If it isn't required, also convert the PR to draft.
 Resolve the thread yourself when you're ready to release the hold. Never merge
 a PR that still has an open hold thread from someone else.
 
+**Always hold a PR that has a sequencing requirement.** Whenever you see that
+merging or deploying a PR before something else happens would break systems or
+open a security gap, leave a hold thread on that PR right away. Examples are
+an infrastructure change that has to be applied first, another PR that has to
+merge or deploy first, or a secret or permission that has to exist first. The
+thread names the requirement, why merging early would break things, and the
+exact steps that resolve it (what to apply or merge, and how to verify it).
+It's there so the requirement survives if you lose context: the blocking
+thread reminds you, and stops anyone else from merging early. Don't rely on
+memory, a task note or the PR body alone (Chad, Nov 26, 2026).
+
 ## 5. Merging
 
 This applies only to PRs you opened (their body carries your `opened-by-bot`

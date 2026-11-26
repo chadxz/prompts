@@ -42,7 +42,8 @@ apply the PR overrides below.
    `gh pr create --title <title> --body <body>`, never `--fill`. Pass `--draft`
    only when the user or brief explicitly asks for a draft.
 8. Apply the labels from the brief, such as `bot:<name>`, plus
-   `requires-review-by-chad` on ADR pull requests (see below).
+   `requires-review-by-chad` on ADR pull requests (see below and
+   `marking-bot-pull-requests`).
 9. Read the live PR with `gh pr view <url> --json isDraft,title,body,labels,url`
    and compare it with the requested draft state, prepared title, body, labels,
    and publication checklist before reporting success.

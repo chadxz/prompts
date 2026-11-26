@@ -20,30 +20,48 @@ and my bots' routing rules, and they change without notice.
 
 ## Which plugin is for whom
 
-| Plugin                   | Install on                              |
-| ------------------------ | --------------------------------------- |
-| `chadxz-bot-skills`      | Every bot, including team bots in Slack |
-| `chadxz-coding-skills`   | Cursor cloud agents that bots launch    |
-| `chadxz-personal-skills` | My personal bots only, never team bots  |
+| Plugin                   | Install on                                         |
+| ------------------------ | -------------------------------------------------- |
+| `chadxz-coding-skills`   | Every bot, and the Cursor cloud agents bots launch |
+| `chadxz-bot-skills`      | Every bot, including team bots in Slack            |
+| `chadxz-personal-skills` | My personal bots only, never team bots             |
+
+Each skill lives in exactly one plugin.
+
+`chadxz-coding-skills` holds the writing and building skills anyone doing the
+work needs, bot or cloud agent: creating commits, creating pull requests,
+marking bot pull requests with their marker and label, writing in my voice,
+writing RFCs, writing Diataxis documentation, working in Notion, and choosing
+Notion tools. It's the only plugin a cloud agent should see. These skills are
+written for cloud VMs, and the parts that only work on my Mac are conditional.
 
 `chadxz-bot-skills` holds the orchestration skills every bot shares: tracking
 work in Linear, weighing requests before agreeing, using Codex for browser work
-on my Mac, writing in my voice, shepherding pull requests, routing PR review
-requests to Slack, choosing Notion tools, working in Notion, writing Diataxis
-documentation, managing Convergint employee access, writing RFCs, enriching idea
-cards, and the checklist every brief to a cloud agent has to carry. Team bots in
-Slack can only see plugin skills and their own team skills, so anything they
-need has to live here.
-
-`chadxz-coding-skills` holds the skills cloud agents use while coding: creating
-commits and creating pull requests. Cloud agents install team marketplace
-plugins when they start, so these are written for cloud VMs. The parts that only
-work on my Mac are conditional.
+on my Mac, shepherding pull requests, routing PR review requests to Slack,
+managing Convergint employee access, creating skills, enriching idea cards, and
+the checklist every brief to a cloud agent has to carry. Team bots in Slack can
+only see plugin skills and their own team skills, so anything they need has to
+live here or in `chadxz-coding-skills`.
 
 `chadxz-personal-skills` holds skills that only make sense for my personal bots:
 building complex features, briefing engineering leadership, reporting work
 activity, making product announcement videos, creating DATABASICS expense
 reports, and running bot retrospectives. Add it only to personal bots.
+
+### Cloud agents and bots share one plugin set
+
+A hosted cloud agent loads the plugins installed for my Cursor account and my
+team ([Customize Cursor][customize]), and so does Grok Bot: the bots' box lists
+the same plugin IDs the cloud agents report. Cursor doesn't document a way to
+pick plugins per cloud agent, environment, or repository. Installation modes
+and marketplace access apply to whole people or groups ([Plugins][plugins]),
+and the bots and their cloud agents all run as me. So uninstalling
+`chadxz-bot-skills` or `chadxz-personal-skills` from my account probably
+removes them from the bots too. Until there's a supported way to split them,
+their descriptions say they're for bots, so a cloud agent can skip them.
+
+[customize]: https://cursor.com/docs/customize-cursor#what-each-surface-reads-from-your-home-folder
+[plugins]: https://cursor.com/docs/plugins#plugin-installation-modes
 
 ## Importing the marketplace
 

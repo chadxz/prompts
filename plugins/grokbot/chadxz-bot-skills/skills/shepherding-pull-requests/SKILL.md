@@ -21,7 +21,7 @@ default branch. Paginate fully; never stop at a default page size. Sort each PR
 into one group: the owner's PRs (including ones agents opened under the owner's
 account), dependency bots (Renovate, Dependabot), other people's PRs, and broken
 CI. Tell which bot opened a PR from the `<!-- opened-by-bot: <name> -->` line in
-its body, not from its labels (see `tracking-bot-work-in-linear`).
+its body, not from its labels (see `marking-bot-pull-requests`).
 
 **Skip draft PRs entirely**, including the owner's: no reviews, comments,
 triggers, merges or fixes until they're marked ready.

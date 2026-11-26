@@ -41,7 +41,19 @@ separates reference from explanation when both contain theoretical knowledge.
 6. Draft or revise in the user's requested format. Diataxis labels don't need to
    appear as headings.
 7. Check the result against the chosen quadrant. Check technical accuracy and
-   completeness separately.
+   completeness separately. Then check that it's evergreen.
+
+## Keep it evergreen
+
+Write documentation that stays true. Describe how things are and how to do
+them, not where the work stands today.
+
+- Leave out status notes, dated caveats, and hedges that go stale quickly:
+  "still open", "not yet merged", "nobody has tested this yet", "as of today".
+- Track in-flight status in the ticket or pull request. Link to a pull request
+  for what it changes, not for whether it's merged.
+- When a real caveat is needed, phrase it as a lasting condition: "IIS reports
+  `Started` even when no worker exists", not "we haven't confirmed this yet".
 
 ## Authority
 

@@ -55,6 +55,8 @@ description: Conventions for searching, creating and editing pages and databases
    the `writing-diataxis-documentation` skill for the details.
 2. When touching an existing page, nudge it toward its type. Don't rewrite it
    wholesale.
+3. Keep docs evergreen. Leave status notes and dated caveats ("still open", "as
+   of today") out of the page, and track them in the ticket or pull request.
 
 ## Titles and opening
 

@@ -2,8 +2,9 @@
 name: marking-bot-pull-requests
 description: >-
   Use whenever you open or work on a GitHub pull request for Chad, whether
-  you're one of Chad's bots or a Cursor cloud agent working for one, so the PR
-  carries the bot marker and `bot:` label and links its Linear ticket.
+  you're one of Chad's bots or a Cursor cloud agent working on Chad's behalf
+  through one, so the PR carries the bot marker and `bot:` label and links its
+  Linear ticket.
 ---
 
 # Marking bot pull requests
@@ -19,8 +20,8 @@ this form:
 That comment is how a bot tells whether it opened a PR. Decide ownership from
 it, not from labels. The PR shows Chad as the author, the same way Linear does.
 
-If you're a cloud agent, `<name>` is the bot you're working for, the one your
-brief names, not yourself.
+If you're a cloud agent working on Chad's behalf, `<name>` is the bot you're
+working through, the one your brief names, not yourself.
 
 - Use the bot's name in lowercase with hyphens for spaces: `cully`,
   `doc-brown`, `samwise`, `soxy`, `coach-lasso`, `kaizen`, `scotty`, `marty`,

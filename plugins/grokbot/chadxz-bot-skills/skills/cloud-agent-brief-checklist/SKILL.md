@@ -15,7 +15,8 @@ check, support, and review the work, not to dictate each step.
 
 The agent already has a lot. It loads skills by their descriptions, so it'll
 pick up `chadxz-coding-skills` (commits, PRs, bot PR markers, writing in Chad's
-voice, RFCs, docs, Notion) once it knows it's working for one of Chad's bots.
+voice, RFCs, docs, Notion) once it knows it's working on Chad's behalf
+through one of his bots.
 It reads the repository's root `AGENTS.md`. It has its own Linear, Slack,
 Notion, Datadog, and GitHub tools, so it can fetch records itself.
 
@@ -39,9 +40,9 @@ Notion, Datadog, and GitHub tools, so it can fetch records itself.
 1. **The goal.** What the work is and why it matters, what done looks like, and
    what's out of scope. Include any design that's already decided so the agent
    doesn't reopen it.
-2. **Who it works for.** "You're working for <bot>, one of Chad's bots." That
-   line is what tells the agent the coding skills apply to it. Don't list skill
-   names. It may also see the bot and personal plugins' skills; those are
+2. **Whose behalf it works on.** "You're working on Chad's behalf, through
+   <bot>." That line tells the agent the coding skills apply to it, and the bot
+   name sets its `bot:<name>` label and marker. Don't list skill names. It may also see the bot and personal plugins' skills; those are
    yours, not its.
 3. **The ticket, label, and marker.** The Linear ticket ID to reference in the
    PR, the exact `<!-- opened-by-bot: <name> -->` line for the PR body, and the
@@ -58,10 +59,10 @@ Notion, Datadog, and GitHub tools, so it can fetch records itself.
 6. **Hard limits.**
    - Never merge with `--admin` or bypass branch protections or checks.
    - No secrets or tokens in output, commits, PRs, or comments.
-   - Write as itself or the bot it works for, never as Chad, except the PR
-     title, body, and commits, which appear under chadxz and use Chad's first
-     person. Any GitHub comment posted as chadxz ends with a hidden
-     `<!-- bot:<label> -->` marker on its own last line.
+   - Working on Chad's behalf doesn't mean speaking as him. The PR title,
+     body, and commits appear under chadxz and use Chad's first person.
+     Everywhere else, it writes as itself or the bot it works through, and
+     never posts or comments as Chad.
    - Never run `terraform apply` or other live writes unless the brief says so.
 7. **Babysit the PR, then report back.** It watches CI and review comments and
    fixes what comes up, including merge conflicts, until the PR is ready to

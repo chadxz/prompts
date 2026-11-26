@@ -1,10 +1,9 @@
 ---
 name: writing-rfcs
 description: >-
-  Use whenever you (one of Chad's bots, or a cloud agent working for one)
-  draft, port, revise, or share a Convergint RFC (Request for Comments) in
-  Notion, including turning an ADR or
-  research into an RFC.
+  Use whenever you (one of Chad's bots, or a cloud agent working on Chad's
+  behalf through one) draft, port, revise, or share a Convergint RFC (Request
+  for Comments) in Notion, including turning an ADR or research into an RFC.
 ---
 # Writing RFCs
 

@@ -1,6 +1,6 @@
 ---
 name: working-in-notion
-description: Conventions for searching, creating and editing pages and databases in Chad's work Notion (Convergint Tech). Use whenever a bot, or a cloud agent working for one, searches Notion, creates or edits a page or database row, comments, uploads a file, or decides where a doc should live.
+description: Conventions for searching, creating and editing pages and databases in Chad's work Notion (Convergint Tech). Use whenever a bot, or a cloud agent working on Chad's behalf through one, searches Notion, creates or edits a page or database row, comments, uploads a file, or decides where a doc should live.
 ---
 
 # Working in Notion

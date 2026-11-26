@@ -11,4 +11,4 @@ description: >-
 Chad's skills are now on disk. From here on, open whichever ones apply by
 reading their `SKILL.md`: writing in Chad's voice, creating commits, creating
 pull requests, marking bot pull requests, writing RFCs, writing Diataxis
-documentation, and working in Notion.
+documentation, working in Notion, and following EE architecture.

@@ -2,7 +2,7 @@
   "name": "chadxz-coding-skills",
   "displayName": "Chad's Coding Skills",
   "version": "0.1.0",
-  "description": "Writing and building skills for Chad's bots and the Cursor cloud agents they launch: commits and pull requests to Chad's conventions, marking bot PRs, writing in Chad's voice, RFCs, Diataxis documentation, and Notion conventions and tool choice. The only plugin cloud agents get. Chad's personal bot plugin, not team-approved tooling.",
+  "description": "Writing and building skills for Chad's bots and the Cursor cloud agents they launch: commits and pull requests to Chad's conventions, marking bot PRs, writing in Chad's voice, RFCs, Diataxis documentation, building on EE's existing architecture, and Notion conventions and tool choice. The only plugin cloud agents get. Chad's personal bot plugin, not team-approved tooling.",
   "author": {
     "name": "Chad McElligott"
   },

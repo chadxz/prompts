@@ -13,11 +13,11 @@ collaborators, not script runners: share the context, the goal, and any design
 that's already decided, then let them work out how to solve it. Your job is to
 check, support, and review the work, not to dictate each step.
 
-The agent already has a lot. It loads skills by their descriptions, so it'll
-pick up `chadxz-coding-skills` (commits, PRs, bot PR markers, writing in Chad's
-voice, RFCs, docs, Notion) once it knows it's working on Chad's behalf
-through one of his bots.
-It reads the repository's root `AGENTS.md`. It has its own Linear, Slack,
+The agent already has a lot. It picks skills by their descriptions, so it'll
+use `chadxz-coding-skills` (commits, PRs, bot PR markers, writing in Chad's
+voice, RFCs, docs, Notion) once it knows it's working on Chad's behalf through
+one of his bots and the skill files are on disk (see below). It reads the
+repository's root `AGENTS.md`. It has its own Linear, Slack,
 Notion, Datadog, and GitHub tools, so it can fetch records itself.
 
 ## Before you write it
@@ -37,13 +37,17 @@ Notion, Datadog, and GitHub tools, so it can fetch records itself.
 
 ## What every brief carries
 
+Make the first line of every brief `/loading-chadxz-skills`. On a cloud agent,
+Chad's plugin skill files only appear on disk after a skill is invoked with a
+slash command, so without it the agent sees skill names but can't read them.
+
 1. **The goal.** What the work is and why it matters, what done looks like, and
    what's out of scope. Include any design that's already decided so the agent
    doesn't reopen it.
 2. **Whose behalf it works on.** "You're working on Chad's behalf, through
    <bot>." That line tells the agent the coding skills apply to it, and the bot
-   name sets its `bot:<name>` label and marker. Don't list skill names. It may also see the bot and personal plugins' skills; those are
-   yours, not its.
+   name sets its `bot:<name>` label and marker. Don't list skill names. It may
+   also see the bot and personal plugins' skills; those are yours, not its.
 3. **The ticket, label, and marker.** The Linear ticket ID to reference in the
    PR, the exact `<!-- opened-by-bot: <name> -->` line for the PR body, and the
    `bot:<name>` label (see `marking-bot-pull-requests`). Add

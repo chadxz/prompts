@@ -32,8 +32,11 @@ Each skill lives in exactly one plugin.
 work needs, bot or cloud agent: creating commits, creating pull requests,
 marking bot pull requests with their marker and label, writing in my voice,
 writing RFCs, writing Diataxis documentation, working in Notion, and choosing
-Notion tools. It's the only plugin a cloud agent should see. These skills are
-written for cloud VMs, and the parts that only work on my Mac are conditional.
+Notion tools. It's the only plugin a cloud agent should see. It also holds
+`loading-chadxz-skills`, which every cloud agent brief calls first: on a cloud
+agent, the plugin skill files only appear on disk after a skill is invoked with
+a slash command. These skills are written for cloud VMs, and the parts that
+only work on my Mac are conditional.
 
 `chadxz-bot-skills` holds the orchestration skills every bot shares: tracking
 work in Linear, weighing requests before agreeing, using Codex for browser work

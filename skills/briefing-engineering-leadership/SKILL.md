@@ -157,8 +157,8 @@ fill gaps in team outcomes, attribution, and engineering-wide context.
      the headline's project (for example its app or announcement art) when one
      exists and has no baked-in text; otherwise generate one, using the owning
      bot's idea if it gave one, with no text, letters, or logos in the image.
-     Use the owning bot's current, approved art, not older or superseded
-     versions, and confirm with that bot when you're unsure which is current. Crop it so the subject stays clear of the headline, and put a
+     When there are several options, confirm with Chad or the owning bot
+     which art to use; the newest version isn't always the one to pick. Crop it so the subject stays clear of the headline, and put a
      dark gradient behind the text so it reads.
    - Give each story a big work-specific icon or an accurate contributor
      portrait (about 25pt square, in its own column to the left of the

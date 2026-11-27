@@ -148,10 +148,12 @@ fill gaps in team outcomes, attribution, and engineering-wide context.
    - Open the page with a full-width hero image that matches this week's
      headline, with the week's headline set over it in live text. Use a fresh
      hero every week; never reuse an earlier week's hero for a different
-     headline. Prefer an existing approved asset for the headline's project
-     (for example its app or announcement art) when one exists and has no
-     baked-in text; otherwise generate one with no text, letters, or logos in
-     the image. Crop it so the subject stays clear of the headline, and put a
+     headline. Before generating one, ask the bot that owns the headline story
+     whether it has a fitting image or an idea for one, and use its
+     safe-to-share asset when it has one. Prefer an existing approved asset for
+     the headline's project (for example its app or announcement art) when one
+     exists and has no baked-in text; otherwise generate one, using the owning
+     bot's idea if it gave one, with no text, letters, or logos in the image. Crop it so the subject stays clear of the headline, and put a
      dark gradient behind the text so it reads.
    - Give each story a big work-specific icon or an accurate contributor
      portrait (about 25pt square, in its own column to the left of the

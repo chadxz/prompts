@@ -212,7 +212,10 @@ matter.
   the fix and its evidence in one reply. When a bot broke a rule it had already
   saved, ask what source told it otherwise (a repo doc, ADR, runbook or cloud
   agent brief) and fix that source, because a specific written instruction met
-  mid-task beats a general rule in memory. When it closes, write it to the
+  mid-task beats a general rule in memory. When a bot held back and the user
+  reversed it, ask the bot to name the rule it read and check whether it was
+  following an earlier user rule literally before calling it over-caution; if
+  so, the fix is the rule's missing exception. When it closes, write it to the
   running retro Page right away, not just to memory, so the Page doesn't fall
   behind before the weekly retro.
 - **Monthly health check:** at the first retro of each month, each bot rates

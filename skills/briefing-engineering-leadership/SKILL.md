@@ -101,6 +101,9 @@ fill gaps in team outcomes, attribution, and engineering-wide context.
      and PR.
    - Keep every sentence about the item it sits under. Cut tangential add-ons,
      such as an alert-noise aside on an unrelated incident-routing item.
+   - Name the feature or product in every story (for example PR notifier,
+     authentication gate, Actions Values Sync, iQuote, or Platform Operations
+     app), so a reader knows what it's about without clicking a link.
    - Keep the text minimal: a short headline plus one or two short sentences
      per story. Cut background, mechanism, and secondary detail; the
      learn-more link carries it. Drop the weakest stories before the page
@@ -153,11 +156,14 @@ fill gaps in team outcomes, attribution, and engineering-wide context.
      safe-to-share asset when it has one. Prefer an existing approved asset for
      the headline's project (for example its app or announcement art) when one
      exists and has no baked-in text; otherwise generate one, using the owning
-     bot's idea if it gave one, with no text, letters, or logos in the image. Crop it so the subject stays clear of the headline, and put a
+     bot's idea if it gave one, with no text, letters, or logos in the image.
+     Use the owning bot's current, approved art, not older or superseded
+     versions, and confirm with that bot when you're unsure which is current. Crop it so the subject stays clear of the headline, and put a
      dark gradient behind the text so it reads.
    - Give each story a big work-specific icon or an accurate contributor
      portrait (about 25pt square, in its own column to the left of the
-     headline and body) when one fits. Omit the visual only when it would mislead, add
+     headline and body) when one fits. A product's icon matches the icon it
+     actually uses live, such as its Slack app icon. Omit the visual only when it would mislead, add
      clutter, or compete with the one-page reading hierarchy.
    - Prefer the capability's actual Notion page icon when available, including
      the Static Sites icon. Fetch the page's icon metadata and download its

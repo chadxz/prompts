@@ -163,7 +163,13 @@ fill gaps in team outcomes, attribution, and engineering-wide context.
    - Give each story a big work-specific icon or an accurate contributor
      portrait (about 25pt square, in its own column to the left of the
      headline and body) when one fits. A product's icon matches the icon it
-     actually uses live, such as its Slack app icon. Omit the visual only when it would mislead, add
+     actually uses live, such as its Slack app icon.
+   - Give every platform feature story that feature's official icon: its
+     app or Slack app icon, its favicon or logo in ee-monorepo, or its Notion
+     page icon (for example the authentication gate's custom emoji). Never use
+     a generic emoji or clip-art stand-in for a platform feature. If you can't
+     find an official icon, say so and ask Chad or the owning bot; don't make
+     one up. Vendor products keep their official vendor logos. Omit the visual only when it would mislead, add
      clutter, or compete with the one-page reading hierarchy.
    - Prefer the capability's actual Notion page icon when available, including
      the Static Sites icon. Fetch the page's icon metadata and download its

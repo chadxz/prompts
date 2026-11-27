@@ -1,6 +1,6 @@
 ---
 name: briefing-engineering-leadership
-description:
+description: >-
   Creates a manager-facing weekly engineering outcomes brief as a one-page PDF
   after a research-informed interview. Use when Chad asks for an outcomes
   brief, leadership brief, executive summary report, or update for his boss
@@ -83,7 +83,9 @@ fill gaps in team outcomes, attribution, and engineering-wide context.
    - Use session evidence to clarify decisions, implementation, and attribution.
      Verify completion against concrete artifacts or successful action results.
      An agent's final claim, a closed chat, or a test pass alone doesn't prove
-     that a change merged or deployed. Deduplicate work across agents.
+     that a change merged or deployed. Pull every figure from a live query in
+     this run, not from an earlier draft or an agent's summary. Deduplicate work
+     across agents.
    - Put significant exploratory topics in Engineering signals when they matter
      to the reader, with explicit unfinished status. A completed research
      artifact can be an outcome; the capability it proposes remains a proposal.
@@ -99,12 +101,23 @@ fill gaps in team outcomes, attribution, and engineering-wide context.
      and PR.
    - Keep every sentence about the item it sits under. Cut tangential add-ons,
      such as an alert-noise aside on an unrelated incident-routing item.
-   - Include a compact "By the numbers" strip above the three sections by
-     default. Select three or four interesting, evidence-backed statistics for
-     Chad and/or his team. Keep the stories organized around outcomes.
+   - Keep the text minimal: a short headline plus one or two short sentences
+     per story. Cut background, mechanism, and secondary detail; the
+     learn-more link carries it. Drop the weakest stories before the page
+     overflows rather than shrinking type or squeezing spacing.
+   - Include exactly three stat tiles below the hero and above the three
+     sections. In a tile that names something shipped, the name of what
+     shipped (such as "PR notifier") is the biggest, boldest text, with a
+     small upper label and a short description. Use a big number only in a
+     tile that's genuinely a count, and only when that count earns a tile.
+     Link each tile to its source. Keep the stories organized around outcomes.
    - Label scope clearly: Chad-authored merged PRs, examples shipped, duplicate
      checks retired, or team contributions accepted upstream. Avoid presenting
      team totals as Chad's personal work or activity counts as measured impact.
+   - Label organization-wide cost figures as global or org-wide (for example,
+     "global monthly AI spend") in every stat label, heading, and sentence that
+     shows them, so readers don't take them as Chad's personal spend. Keep
+     Chad's own numbers, like his merged PRs, labeled as his.
    - Apply the reporting window's timezone boundaries and record a snapshot
      cutoff for a partial week. Note when merged PRs include work opened before
      the week. An issue's current completed state is not proof it completed
@@ -125,12 +138,24 @@ fill gaps in team outcomes, attribution, and engineering-wide context.
    - Link a Slack or Teams conversation when the conversation itself is material
      and the intended reader can access it. Prefer a durable source when one
      covers the same evidence.
+   - Give every story at least one clickable learn-more link to its PR,
+     ticket, RFC, or Notion page, either inline or as a short labeled link at
+     the end of its body. Cutting text never removes a story's link.
    - Keep a compact evidence footer with short, human-readable link labels.
      Verify that every PDF link annotation resolves to the intended URL.
 8. Include representative iconic images by default to add personality and
    reinforce the work or attribution:
-   - Give each major story a small work-specific icon or an accurate contributor
-     portrait when one fits. Omit the visual only when it would mislead, add
+   - Open the page with a full-width hero image that matches this week's
+     headline, with the week's headline set over it in live text. Use a fresh
+     hero every week; never reuse an earlier week's hero for a different
+     headline. Prefer an existing approved asset for the headline's project
+     (for example its app or announcement art) when one exists and has no
+     baked-in text; otherwise generate one with no text, letters, or logos in
+     the image. Crop it so the subject stays clear of the headline, and put a
+     dark gradient behind the text so it reads.
+   - Give each story a big work-specific icon or an accurate contributor
+     portrait (about 25pt square, in its own column to the left of the
+     headline and body) when one fits. Omit the visual only when it would mislead, add
      clutter, or compete with the one-page reading hierarchy.
    - Prefer the capability's actual Notion page icon when available, including
      the Static Sites icon. Fetch the page's icon metadata and download its
@@ -157,16 +182,15 @@ fill gaps in team outcomes, attribution, and engineering-wide context.
      lower-value content instead of shrinking or muting one item's typography.
    - Keep typography uniform across peer items, including dense maintenance or
      component-upgrade details.
-   - Give summary boxes visible space below the introductory deck. Vertically
-     center their primary bold text, and render each upper label in a darker
-     shade of the box color instead of gray.
-   - Align the left edge of each icon or portrait with the body copy below it.
-     Vertically center single-line headings against their visual; keep wrapped
-     headings naturally balanced.
+   - Give the stat tiles visible space below the hero, and render each upper
+     label in a darker shade of the tile color instead of gray.
+   - Lay each story out as a two-column row: the big icon or portrait on the
+     left, top-aligned with the headline, and the headline and body stacked to
+     its right with aligned left edges.
    - Keep the evidence footer when omitting an empty leadership callout.
 10. Render and inspect the final page. Verify exact pagination, spacing,
-    typography, portrait crops, brand icons, alignment, and link annotations
-    before delivering it. Check every expected inline link as well as the
+    typography, the hero crop and headline legibility, portrait crops, brand
+    icons, alignment, and link annotations before delivering it. Check every expected inline link as well as the
     headline, statistics, and footer links. Wrapped linked phrases may create
     multiple annotations; verify their destinations and coverage, not just the
     annotation count. Confirm the three section headings have no number labels.

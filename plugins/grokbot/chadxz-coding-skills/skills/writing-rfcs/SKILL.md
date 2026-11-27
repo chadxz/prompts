@@ -20,6 +20,7 @@ An RFC asks for feedback. It isn't an approval gate, a project plan, or a resear
 ## 2. Set up the page
 
 - Create it in the **Docs** database from the "Request for Comments" template. Set Document Type to RFC, and set the Title, Author, Status and Review By date.
+- Keep the page at Notion's default width, never full width. The template is set to full width, so new pages copy it. Right after you create the page, turn it off with `notion-update-page`, command `update_properties`, `full_width: false`, and check that a fetch shows `"full_width":false`.
 - Title it `RFC - <what we'll do>` as an action, for example "RFC - Issue Cloudflare Total TLS certificates from Google Trust Services".
 - Set Status to **Drafting** while you write. Set Review By 1–2 weeks out.
 - Make the first block one selling sentence that says what changes and why, so the Notion link preview shows it.
@@ -67,6 +68,7 @@ Re-read the page as a reviewer and check these:
 3. Does every number, name and "would require" claim trace to a source you checked this session?
 4. Could any paragraph be cut without losing the reviewer's ability to judge the proposal? If so, cut it.
 5. Does the draft still match the full RFC guide, which you re-read just now?
+6. Does a fetch of the page show `"full_width":false`?
 
 ## 7. Share it and close it
 

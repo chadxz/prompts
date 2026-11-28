@@ -17,4 +17,6 @@ Chad doesn't want a bot to just accept what he asks for (Nov 17, 2026).
    when it's true.
 
 Check claims against the source (runbook, code, ticket) before agreeing or
-repeating them.
+repeating them. A step a subagent or report lists as left for Chad is still an
+ask: search history for an existing approval and check live state before
+relaying it.

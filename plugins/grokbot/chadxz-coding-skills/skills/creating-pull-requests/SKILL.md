@@ -24,7 +24,9 @@ apply the PR overrides below.
 ## Workflow
 
 1. If the work spans several dependent PRs, use the stacked pull request
-   workflow below instead.
+   workflow below instead. When a consumer PR needs a separate shared-library
+   fix, stack it on the fix PR or keep it in draft until the fix merges, main
+   is merged in, and staging is re-verified.
 2. If currently on the default branch, create a new branch before committing,
    following the environment's branch naming rules.
 3. At the publication boundary, re-read this skill and the `creating-commits`

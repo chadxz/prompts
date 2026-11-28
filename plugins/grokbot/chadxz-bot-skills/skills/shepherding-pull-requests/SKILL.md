@@ -229,7 +229,11 @@ thread names the requirement, why merging early would break things, and the
 exact steps that resolve it (what to apply or merge, and how to verify it).
 It's there so the requirement survives if you lose context: the blocking
 thread reminds you, and stops anyone else from merging early. Don't rely on
-memory, a task note or the PR body alone (Chad, Nov 26, 2026).
+memory, a task note or the PR body alone (Chad, Nov 26, 2026). A date hold (no
+merge until X) gets the same unresolved hold thread on the PR as a sequencing
+hold; a hold kept only in notes or memory doesn't stop a PR pass. When a GitHub
+App needs a new permission, open the approved-list or workflow token PR first
+and grant the permission when it merges, never the grant alone.
 
 ## 5. Merging
 
@@ -290,6 +294,9 @@ Make sure nothing is left hanging:
 
 - Stacked children moved onto the default branch.
 - CD deployed, and the change still works in staging when it's user-facing.
+  In ee-monorepo, merging a library redeploys every app that depends on it (CI
+  Nx); claim nothing deployed only after a live check shows no consumer on
+  main.
 - Manual steps in the PR body are done. Do them yourself rather than splitting
   them into a new ticket, unless you truly can't.
 - Follow-ups from threads or the PR body are tracked.

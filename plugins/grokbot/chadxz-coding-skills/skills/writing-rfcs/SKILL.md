@@ -54,6 +54,7 @@ The rejection reason has to be legit:
 ## 5. Rules that come from Chad's corrections
 
 - **Keep it short.** Make length match complexity, and make every paragraph earn its place. Leave out evidence tables, test IDs, YAML, command output, rehearsal logs and in-flight PR lists. Link to the ticket or ADR for the details.
+- **Batch open questions.** Before the first draft, gather every open question into one list for Chad, rather than asking them one at a time.
 - **Check every claim against a source,** not only the rejections. Before you give a number, get it from a live query and don't estimate.
 - **No attribution.** Leave out lines like "per Chad", "decided by" or "approved by". The Author field covers it.
 - **Plain words.** Write in Chad's voice (load `writing-in-my-voice`): complete sentences, define acronyms on first use, no coined labels.

@@ -132,7 +132,8 @@ guessing?" Record the format you chose and why.
   moment to one specific question in the opener; that gets a complete answer in
   one reply. When a bot claims something was done in an earlier week, name the
   evidence you want in the opener (routine id and run time, PR, ticket
-  comment). Check timestamps before saying which bot should have caught a
+  comment). Asking each bot to quote last week's saves in the opener got
+  verified answers in one round. Check timestamps before saying which bot should have caught a
   duplicate; bots correct a wrong premise, and that costs a round. Don't add
   rules that push bots to escalate to the user; prefer clear guidance they can
   follow on their own.
@@ -212,7 +213,11 @@ matter.
   the fix and its evidence in one reply. When a bot broke a rule it had already
   saved, ask what source told it otherwise (a repo doc, ADR, runbook or cloud
   agent brief) and fix that source, because a specific written instruction met
-  mid-task beats a general rule in memory. When a bot held back and the user
+  mid-task beats a general rule in memory. When a saved rule didn't fire, ask
+  how the bot classified the action at the time (for example a relay or a nudge
+  rather than an ask); rules often miss because the action was filed under a
+  different name, and the fix is naming that case in the rule. When a bot held
+  back and the user
   reversed it, ask the bot to name the rule it read and check whether it was
   following an earlier user rule literally before calling it over-caution; if
   so, the fix is the rule's missing exception. When it closes, write it to the

@@ -48,8 +48,9 @@ reference it in the PR title or body, so the PR links to the ticket.
 
 Before you create a ticket or start a fix, search for work someone already did
 or is doing, so you don't duplicate it: open PRs and PRs merged in the last 14
-days, by any author, for the test or file name, plus open EE tickets with any
-label that already cover the work.
+days, by any author, for the test or file name, open EE tickets with any label,
+in-flight ADRs (`docs/adrs`), and existing shared libraries that already cover
+the same problem or app. If one covers it, build on it instead.
 
 ## Work for later goes to Marty
 
@@ -117,7 +118,9 @@ saying why.
 - Canceled: only when Chad drops the work.
 
 **Every status change gets a comment.** Whenever you change a ticket's status,
-post a comment on the ticket in the same step that says why it changed, so
+post a comment on the ticket in the same step that says why it changed, after
+the returned status confirms the change and never in parallel with the status
+call, so
 anyone looking back later can see the reason. That covers every move: Triage or
 Todo to In Progress, In Progress to In Review, any move to Ready to Close, back
 to Todo, and Canceled. It also covers adding or removing `waiting-on-chad`. A
@@ -127,7 +130,10 @@ it right away.
 The comment says what happened: the work you started, the PR that opened, the
 merge plus the live check that passed, the blocker that cleared, the question
 you're now blocked on, or why the work was dropped. Link the PR, deploy, run, or
-thread when there is one. Write it as Chad (see "Writing as Chad" below).
+thread when there is one. Write it as Chad (see "Writing as Chad" below). Say a
+ticket moved, or work started or merged, only after re-reading the live status
+or PR list in the same turn; an instruction you sent or an agent's plan is not
+progress.
 
 "Chad told me to", "as Chad asked", "per Chad", or anything else that only
 points to an instruction is never the reason. State what actually changed:
@@ -166,7 +172,10 @@ closing tickets doesn't leave a trail of new ones behind. Split a step out only
 when you truly can't do it, such as when it needs access Chad doesn't have
 either. A console step Chad's Mac browser can reach isn't missing access (see
 `using-codex-for-mac-browser-work`). The same applies to steps that block a
-merge, not just steps after one. Link the new ticket from the original.
+merge, not just steps after one. Link the new ticket from the original. Before
+any move to Ready to Close, check that every Done-when item on the ticket is
+met, and take items another team owns out of scope explicitly in a ticket
+comment.
 
 **Another team's work lives in their thread.** When another team owns the work,
 the ticket's real status is in that team's thread: their Slack thread, ticket,
@@ -177,7 +186,9 @@ all of it. Don't keep half. Before you relay a resume, reversal, or other
 instruction to another bot, check Chad's last instruction in that bot's chat.
 
 When the plan changes without a status change, add a short comment with a link
-too, rather than rewriting the description.
+too, rather than rewriting the description. When a tool run's number turns out
+to be wrong, comment the correction on the Linear issue that holds that run's
+record, next to the number, so no one reuses it.
 
 ## Marking and labeling pull requests
 
